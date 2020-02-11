@@ -347,7 +347,7 @@ class kolab_chat_mattermost
         }
 
         $cookie = session_get_cookie_params();
-        $secure = $cookie['secure'] || self::https_check();
+        $secure = $cookie['secure'] || rcube_utils::https_check();
 
         if ($domain = $this->rc->config->get('kolab_chat_session_domain')) {
             $cookie['domain'] = $domain;
