@@ -1313,19 +1313,10 @@ class calendar extends rcube_plugin
    */
   function load_events()
   {
-    $start  = rcube_utils::get_input_value('start', rcube_utils::INPUT_GET);
-    $end    = rcube_utils::get_input_value('end', rcube_utils::INPUT_GET);
+    $start  = $this->input_timestamp('start', rcube_utils::INPUT_GET);
+    $end    = $this->input_timestamp('end', rcube_utils::INPUT_GET);
     $query  = rcube_utils::get_input_value('q', rcube_utils::INPUT_GET);
     $source = rcube_utils::get_input_value('source', rcube_utils::INPUT_GET);
-
-    if (!is_numeric($start) || strpos($start, 'T')) {
-      $start = new DateTime($start, $this->timezone);
-      $start = $start->getTimestamp();
-    }
-    if (!is_numeric($end) || strpos($end, 'T')) {
-      $end = new DateTime($end, $this->timezone);
-      $end = $end->getTimestamp();
-    }
 
     $events = $this->driver->load_events($start, $end, $query, $source);
     echo $this->encode($events, !empty($query));
@@ -2282,31 +2273,21 @@ class calendar extends rcube_plugin
   public function freebusy_status()
   {
     $email = rcube_utils::get_input_value('email', rcube_utils::INPUT_GPC);
-    $start = rcube_utils::get_input_value('start', rcube_utils::INPUT_GPC);
-    $end   = rcube_utils::get_input_value('end', rcube_utils::INPUT_GPC);
+    $start = $this->input_timestamp('start', rcube_utils::INPUT_GPC);
+    $end   = $this->input_timestamp('end', rcube_utils::INPUT_GPC);
 
-    // convert dates into unix timestamps
-    if (!empty($start) && !is_numeric($start)) {
-      $dts = new DateTime($start, $this->timezone);
-      $start = $dts->format('U');
-    }
-    if (!empty($end) && !is_numeric($end)) {
-      $dte = new DateTime($end, $this->timezone);
-      $end = $dte->format('U');
-    }
-    
     if (!$start) $start = time();
     if (!$end) $end = $start + 3600;
-    
+
     $fbtypemap = array(calendar::FREEBUSY_UNKNOWN => 'UNKNOWN', calendar::FREEBUSY_FREE => 'FREE', calendar::FREEBUSY_BUSY => 'BUSY', calendar::FREEBUSY_TENTATIVE => 'TENTATIVE', calendar::FREEBUSY_OOF => 'OUT-OF-OFFICE');
     $status = 'UNKNOWN';
-    
+
     // if the backend has free-busy information
     $fblist = $this->driver->get_freebusy_list($email, $start, $end);
 
     if (is_array($fblist)) {
       $status = 'FREE';
-      
+
       foreach ($fblist as $slot) {
         list($from, $to, $type) = $slot;
         if ($from < $end && $to > $start) {
@@ -2315,14 +2296,14 @@ class calendar extends rcube_plugin
         }
       }
     }
-    
+
     // let this information be cached for 5min
     $this->rc->output->future_expire_header(300);
-    
+
     echo $status;
     exit;
   }
-  
+
   /**
    * Return a list of free/busy time slots within the given period
    * Echo data in JSON encoding
@@ -2330,25 +2311,15 @@ class calendar extends rcube_plugin
   public function freebusy_times()
   {
     $email = rcube_utils::get_input_value('email', rcube_utils::INPUT_GPC);
-    $start = rcube_utils::get_input_value('start', rcube_utils::INPUT_GPC);
-    $end   = rcube_utils::get_input_value('end', rcube_utils::INPUT_GPC);
+    $start = $this->input_timestamp('start', rcube_utils::INPUT_GPC);
+    $end   = $this->input_timestamp('end', rcube_utils::INPUT_GPC);
     $interval  = intval(rcube_utils::get_input_value('interval', rcube_utils::INPUT_GPC));
     $strformat = $interval > 60 ? 'Ymd' : 'YmdHis';
-
-    // convert dates into unix timestamps
-    if (!empty($start) && !is_numeric($start)) {
-      $dts = rcube_utils::anytodatetime($start, $this->timezone);
-      $start = $dts ? $dts->format('U') : null;
-    }
-    if (!empty($end) && !is_numeric($end)) {
-      $dte = rcube_utils::anytodatetime($end, $this->timezone);
-      $end = $dte ? $dte->format('U') : null;
-    }
 
     if (!$start) $start = time();
     if (!$end)   $end = $start + 86400 * 30;
     if (!$interval) $interval = 60;  // 1 hour
-    
+
     if (!$dte) {
       $dts = new DateTime('@'.$start);
       $dts->setTimezone($this->timezone);
@@ -2399,13 +2370,13 @@ class calendar extends rcube_plugin
       $slots .= $status;
       $t = $t_end;
     }
-    
+
     $dte = new DateTime('@'.$t_end);
     $dte->setTimezone($this->timezone);
-    
+
     // let this information be cached for 5min
     $this->rc->output->future_expire_header(300);
-    
+
     echo rcube_output::json_serialize(array(
       'email' => $email,
       'start' => $dts->format('c'),
@@ -2599,10 +2570,11 @@ class calendar extends rcube_plugin
     $events = array();
 
     if ($directory = $this->resources_directory()) {
-      $events = $directory->get_resource_calendar(
-        rcube_utils::get_input_value('_id', rcube_utils::INPUT_GPC),
-        rcube_utils::get_input_value('start', rcube_utils::INPUT_GET),
-        rcube_utils::get_input_value('end', rcube_utils::INPUT_GET));
+      $id    = rcube_utils::get_input_value('_id', rcube_utils::INPUT_GPC);
+      $start = $this->input_timestamp('start', rcube_utils::INPUT_GET);
+      $end   = $this->input_timestamp('end', rcube_utils::INPUT_GET);
+
+      $events = $directory->get_resource_calendar($id, $start, $end);
     }
 
     echo $this->encode($events);
@@ -3585,6 +3557,21 @@ class calendar extends rcube_plugin
     }
 
     return $recurrence->first_occurrence();
+  }
+
+  /**
+   * Get date-time input from UI and convert to unix timestamp
+   */
+  protected function input_timestamp($name, $type)
+  {
+    $ts = rcube_utils::get_input_value($name, $type);
+
+    if ($ts && (!is_numeric($ts) || strpos($ts, 'T'))) {
+      $ts = new DateTime($ts, $this->timezone);
+      $ts = $ts->getTimestamp();
+    }
+
+    return $ts;
   }
 
   /**
