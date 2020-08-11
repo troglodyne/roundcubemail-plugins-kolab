@@ -1371,8 +1371,8 @@ class kolab_storage
                 self::$subscriptions = self::$imap->list_folders_subscribed();
                 self::$with_tempsubs = true;
             }
-            self::$states = self::$subscriptions;
-            $folders = implode(self::$states, '**');
+            self::$states = (array) self::$subscriptions;
+            $folders = implode('**', self::$states);
             $rcube->user->save_prefs(array('kolab_active_folders' => $folders));
         }
 
@@ -1396,9 +1396,9 @@ class kolab_storage
         }
 
         // update user preferences
-        $folders = implode(self::$states, '**');
-        $rcube   = rcube::get_instance();
-        return $rcube->user->save_prefs(array('kolab_active_folders' => $folders));
+        $folders = implode('**', self::$states);
+
+        return rcube::get_instance()->user->save_prefs(array('kolab_active_folders' => $folders));
     }
 
     /**

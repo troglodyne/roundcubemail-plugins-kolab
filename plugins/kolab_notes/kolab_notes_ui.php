@@ -306,7 +306,7 @@ class kolab_notes_ui
 
             $path_imap = explode($delim, $folder_name);
             array_pop($path_imap);  // pop off name part
-            $path_imap = implode($path_imap, $delim);
+            $path_imap = implode($delim, $path_imap);
         }
         else {
             $path_imap = '';

@@ -2375,7 +2375,7 @@ class kolab_driver extends calendar_driver
     if (strlen($folder)) {
       $path_imap = explode($delim, $folder);
       array_pop($path_imap);  // pop off name part
-      $path_imap = implode($path_imap, $delim);
+      $path_imap = implode($delim, $path_imap);
 
       $options = $storage->folder_info($folder);
     }

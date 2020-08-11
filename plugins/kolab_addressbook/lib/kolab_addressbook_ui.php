@@ -183,7 +183,7 @@ class kolab_addressbook_ui
         if ($action == 'edit') {
             $path_imap = explode($delim, $folder);
             $name      = rcube_charset::convert(array_pop($path_imap), 'UTF7-IMAP');
-            $path_imap = implode($path_imap, $delim);
+            $path_imap = implode($delim, $path_imap);
         }
         else { // create
             $path_imap = $folder;

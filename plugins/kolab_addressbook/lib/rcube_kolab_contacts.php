@@ -460,7 +460,7 @@ class rcube_kolab_contacts extends rcube_addressbook
 
         $scount = count($fields);
         // build key name regexp
-        $regexp = '/^(' . implode($fields, '|') . ')(?:.*)$/';
+        $regexp = '/^(' . implode('|', $fields) . ')(?:.*)$/';
 
         // pass query to storage if only indexed cols are involved
         // NOTE: this is only some rough pre-filtering but probably includes false positives
