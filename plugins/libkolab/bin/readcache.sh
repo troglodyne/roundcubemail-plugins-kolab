@@ -48,17 +48,7 @@ $imap_host = $opts['host'];
 $rcmail = rcube::get_instance(rcube::INIT_WITH_DB | rcube::INIT_WITH_PLUGINS);
 
 if (empty($imap_host)) {
-    $default_host = $rcmail->config->get('default_host');
-    if (is_array($default_host)) {
-        list($k,$v) = each($default_host);
-        $imap_host = is_numeric($k) ? $v : $k;
-    }
-    else {
-        $imap_host = $default_host;
-    }
-
-    // strip protocol prefix
-    $imap_host = preg_replace('!^[a-z]+://!', '', $imap_host);
+    $imap_host = imap_host();
 }
 
 if (empty($folder) || empty($imap_host)) {
@@ -145,3 +135,25 @@ while ($result && ($sql_arr = $db->fetch_assoc($result))) {
 
 print "----------------------------------------------------------------------------------\n";
 echo "Done.\n";
+
+
+function imap_host()
+{
+    global $rcmail;
+
+    $default_host = $rcmail->config->get('default_host');
+
+    if (is_array($default_host)) {
+        $key = key($default_host);
+        $imap_host = is_numeric($key) ? $default_host[$key] : $key;
+    }
+    else {
+        $imap_host = $default_host;
+    }
+
+    // strip protocol prefix
+    $uri = parse_url($imap_host);
+    if (!empty($uri['host'])) {
+        return $uri['host'];
+    }
+}
