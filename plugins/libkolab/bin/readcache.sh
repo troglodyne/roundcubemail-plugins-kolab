@@ -22,12 +22,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-define('INSTALL_PATH', realpath('.') . '/' );
+define('INSTALL_PATH', __DIR__ . '/../../../');
 ini_set('display_errors', 1);
 libxml_use_internal_errors(true);
-
-if (!file_exists(INSTALL_PATH . 'program/include/clisetup.php'))
-    die("Execute this from the Roundcube installation dir!\n\n");
 
 require_once INSTALL_PATH . 'program/include/clisetup.php';
 

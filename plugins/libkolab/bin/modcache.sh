@@ -23,11 +23,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-define('INSTALL_PATH', realpath('.') . '/' );
+define('INSTALL_PATH', __DIR__ . '/../../../');
 ini_set('display_errors', 1);
-
-if (!file_exists(INSTALL_PATH . 'program/include/clisetup.php'))
-    die("Execute this from the Roundcube installation dir!\n\n");
 
 require_once INSTALL_PATH . 'program/include/clisetup.php';
 
@@ -57,7 +54,6 @@ $opts['username'] = !empty($opts[1]) ? $opts[1] : $opts['user'];
 $action = $opts[0];
 
 $rcmail = rcube::get_instance(rcube::INIT_WITH_DB | rcube::INIT_WITH_PLUGINS);
-
 
 // connect to database
 $db = $rcmail->get_dbh();
