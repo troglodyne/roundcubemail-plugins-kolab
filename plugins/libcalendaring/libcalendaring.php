@@ -610,33 +610,45 @@ class libcalendaring extends rcube_plugin
      */
     public static function get_next_alarm($rec, $type = 'event')
     {
-        if (!($rec['valarms'] || $rec['alarms']) || $rec['cancelled'] || $rec['status'] == 'CANCELLED')
+        if (
+            (empty($rec['valarms']) && empty($rec['alarms']))
+            || !empty($rec['cancelled'])
+            || (!empty($rec['status']) && $rec['status'] == 'CANCELLED')
+        ) {
             return null;
+        }
 
         if ($type == 'task') {
             $timezone = self::get_instance()->timezone;
-            if ($rec['startdate'])
-                $rec['start'] = new DateTime($rec['startdate'] . ' ' . ($rec['starttime'] ?: '12:00'), $timezone);
-            if ($rec['date'])
-                $rec[($rec['start'] ? 'end' : 'start')] = new DateTime($rec['date'] . ' ' . ($rec['time'] ?: '12:00'), $timezone);
+            if (!empty($rec['startdate'])) {
+                $time = !empty($rec['starttime']) ? $rec['starttime'] : '12:00';
+                $rec['start'] = new DateTime($rec['startdate'] . ' ' . $time, $timezone);
+            }
+            if (!empty($rec['date'])) {
+                $time = !empty($rec['time']) ? $rec['time'] : '12:00';
+                $rec[!empty($rec['start']) ? 'end' : 'start'] = new DateTime($rec['date'] . ' ' . $time, $timezone);
+            }
         }
 
-        if (!$rec['end'])
+        if (empty($rec['end'])) {
             $rec['end'] = $rec['start'];
+        }
 
         // support legacy format
-        if (!$rec['valarms']) {
+        if (empty($rec['valarms'])) {
             list($trigger, $action) = explode(':', $rec['alarms'], 2);
             if ($alarm = self::parse_alarm_value($trigger)) {
                 $rec['valarms'] = array(array('action' => $action, 'trigger' => $alarm[3] ?: $alarm[0]));
             }
         }
 
-        $expires  = new DateTime('now - 12 hours');
-        $alarm_id = $rec['id'];  // alarm ID eq. record ID by default to keep backwards compatibility
+        // alarm ID eq. record ID by default to keep backwards compatibility
+        $alarm_id   = isset($rec['id']) ? $rec['id'] : null;
+        $alarm_prop = null;
+        $expires    = new DateTime('now - 12 hours');
+        $notify_at  = null;
 
         // handle multiple alarms
-        $notify_at = null;
         foreach ($rec['valarms'] as $alarm) {
             $notify_time = null;
 
@@ -644,11 +656,12 @@ class libcalendaring extends rcube_plugin
                 $notify_time = $alarm['trigger'];
             }
             else if (is_string($alarm['trigger'])) {
-                $refdate = $alarm['related'] == 'END' ? $rec['end'] : $rec['start'];
+                $refdate = !empty($alarm['related']) && $alarm['related'] == 'END' ? $rec['end'] : $rec['start'];
 
                 // abort if no reference date is available to compute notification time
-                if (!is_a($refdate, 'DateTime'))
+                if (!is_a($refdate, 'DateTime')) {
                     continue;
+                }
 
                 // TODO: for all-day events, take start @ 00:00 as reference date ?
 
@@ -666,19 +679,20 @@ class libcalendaring extends rcube_plugin
 
             if ($notify_time && (!$notify_at || ($notify_time > $notify_at && $notify_time > $expires))) {
                 $notify_at  = $notify_time;
-                $action     = $alarm['action'];
+                $action     = isset($alarm['action']) ? $alarm['action'] : null;
                 $alarm_prop = $alarm;
 
                 // generate a unique alarm ID if multiple alarms are set
                 if (count($rec['valarms']) > 1) {
-                    $alarm_id = substr(md5($rec['id']), 0, 16) . '-' . $notify_at->format('Ymd\THis');
+                    $rec_id = substr(md5(isset($rec['id']) ? $rec['id'] : 'none'), 0, 16);
+                    $alarm_id = $rec_id . '-' . $notify_at->format('Ymd\THis');
                 }
             }
         }
 
         return !$notify_at ? null : array(
             'time'   => $notify_at->format('U'),
-            'action' => $action ? strtoupper($action) : 'DISPLAY',
+            'action' => !empty($action) ? strtoupper($action) : 'DISPLAY',
             'id'     => $alarm_id,
             'prop'   => $alarm_prop,
         );
@@ -716,10 +730,12 @@ class libcalendaring extends rcube_plugin
         $data['ids'] = explode(',', $data['id']);
         $plugin = $this->rc->plugins->exec_hook('dismiss_alarms', $data);
 
-        if ($plugin['success'])
+        if (!empty($plugin['success'])) {
             $this->rc->output->show_message('successfullysaved', 'confirmation');
-        else
+        }
+        else {
             $this->rc->output->show_message('calendar.errorsaving', 'error');
+        }
     }
 
     /**
@@ -731,9 +747,9 @@ class libcalendaring extends rcube_plugin
         foreach ($alarms as $alarm) {
             $out[] = array(
                 'id'       => $alarm['id'],
-                'start'    => $alarm['start'] ? $this->adjust_timezone($alarm['start'])->format('c') : '',
-                'end'      => $alarm['end']   ? $this->adjust_timezone($alarm['end'])->format('c') : '',
-                'allDay'   => $alarm['allday'] == 1,
+                'start'    => !empty($alarm['start']) ? $this->adjust_timezone($alarm['start'])->format('c') : '',
+                'end'      => !empty($alarm['end'])? $this->adjust_timezone($alarm['end'])->format('c') : '',
+                'allDay'   => !empty($alarm['allday']),
                 'action'   => $alarm['action'],
                 'title'    => $alarm['title'],
                 'location' => $alarm['location'],
@@ -1427,8 +1443,9 @@ class libcalendaring extends rcube_plugin
      */
     public static function to_rrule($recurrence, $allday = false)
     {
-        if (is_string($recurrence))
+        if (is_string($recurrence)) {
             return $recurrence;
+        }
 
         $rrule = '';
         foreach ((array)$recurrence as $k => $val) {
@@ -1437,7 +1454,7 @@ class libcalendaring extends rcube_plugin
             case 'UNTIL':
                 // convert to UTC according to RFC 5545
                 if (is_a($val, 'DateTime')) {
-                    if (!$allday && !$val->_dateonly) {
+                    if (!$allday && empty($val->_dateonly)) {
                         $until = clone $val;
                         $until->setTimezone(new DateTimeZone('UTC'));
                         $val = $until->format('Ymd\THis\Z');
@@ -1450,8 +1467,9 @@ class libcalendaring extends rcube_plugin
             case 'RDATE':
             case 'EXDATE':
                 foreach ((array)$val as $i => $ex) {
-                    if (is_a($ex, 'DateTime'))
+                    if (is_a($ex, 'DateTime')) {
                         $val[$i] = $ex->format('Ymd\THis');
+                    }
                 }
                 $val = join(',', (array)$val);
                 break;
@@ -1459,8 +1477,9 @@ class libcalendaring extends rcube_plugin
                 continue 2;
             }
 
-            if (strlen($val))
+            if (strlen($val)) {
                 $rrule .= $k . '=' . $val . ';';
+            }
         }
 
         return rtrim($rrule, ';');

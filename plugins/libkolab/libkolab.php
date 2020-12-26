@@ -60,7 +60,7 @@ class libkolab extends rcube_plugin
 
         $this->add_texts('localization/', false);
 
-        if ($rcmail->output->type == 'html') {
+        if (!empty($rcmail->output->type) && $rcmail->output->type == 'html') {
             $rcmail->output->add_handler('libkolab.folder_search_form', array($this, 'folder_search_form'));
             $this->include_stylesheet($this->local_skin_path() . '/libkolab.css');
         }
