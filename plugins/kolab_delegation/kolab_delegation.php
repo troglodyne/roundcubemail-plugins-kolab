@@ -563,7 +563,7 @@ class kolab_delegation extends rcube_plugin
 
         $names = array();
         foreach ($a_folders as $folder) {
-            $foldername = $origname = preg_replace('/^INBOX &raquo;\s+/', '', kolab_storage::object_prettyname($folder));
+            $foldername = $origname = kolab_storage::object_prettyname($folder);
 
             // find folder prefix to truncate (the same code as in kolab_addressbook plugin)
             for ($i = count($names)-1; $i >= 0; $i--) {
