@@ -47,7 +47,6 @@ class kolab_storage
     private static $with_tempsubs = true;
     private static $subscriptions;
     private static $ldapcache = array();
-    private static $typedata = array();
     private static $ldap = array();
     private static $states;
     private static $config;
@@ -869,7 +868,8 @@ class kolab_storage
             return array();
         }
 
-        // In some conditions we can skip LIST command (?)
+        // If we only want groupware folders and don't care about the subscription state,
+        // then the metadata will already contain all folder names and we can avoid the LIST below.
         if (!$subscribed && $filter != 'mail' && $prefix == '*') {
             foreach ($folderdata as $folder => $type) {
                 if (!preg_match($regexp, $type)) {
@@ -1106,11 +1106,6 @@ class kolab_storage
             return false;
         }
 
-        // return cached result
-        if (is_array(self::$typedata[$prefix])) {
-            return self::$typedata[$prefix];
-        }
-
         $type_keys = array(self::CTYPE_KEY, self::CTYPE_KEY_PRIVATE);
 
         // fetch metadata from *some* folders only
@@ -1153,10 +1148,7 @@ class kolab_storage
             return false;
         }
 
-        // keep list in memory
-        self::$typedata[$prefix] = array_map(array('kolab_storage', 'folder_select_metadata'), $folderdata);
-
-        return self::$typedata[$prefix];
+        return array_map(array('kolab_storage', 'folder_select_metadata'), $folderdata);
     }
 
     /**
@@ -1184,13 +1176,6 @@ class kolab_storage
     public static function folder_type($folder)
     {
         self::setup();
-
-        // return in-memory cached result
-        foreach (self::$typedata as $typedata) {
-            if (array_key_exists($folder, $typedata)) {
-                return $typedata[$folder];
-            }
-        }
 
         $metadata = self::$imap->get_metadata($folder, array(self::CTYPE_KEY, self::CTYPE_KEY_PRIVATE));
 
