@@ -65,7 +65,7 @@ function kolab_activesync_config()
 
     var fn = function(elem) {
       var classname = elem.className.split(' ')[0],
-        list = $(elem).closest('table').find('input.' + classname),
+        list = $(elem).closest('table').find('input.' + classname).not('[disabled]'),
         check = list.not(':checked').length > 0;
 
       list.prop('checked', check).change();

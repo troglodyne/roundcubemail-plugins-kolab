@@ -27,6 +27,7 @@ class kolab_activesync_ui
 {
     private $rc;
     private $plugin;
+    private $force_subscriptions = array();
     public  $device = array();
 
     const SETUP_URL = 'https://kb.kolabenterprise.com/documentation/setting-up-an-activesync-client';
@@ -38,6 +39,9 @@ class kolab_activesync_ui
         $this->rc        = rcube::get_instance();
         $skin_path       = $this->plugin->local_skin_path() . '/';
         $this->skin_path = 'plugins/kolab_activesync/' . $skin_path;
+
+        $this->plugin->load_config();
+        $this->force_subscriptions = $this->rc->config->get('activesync_force_subscriptions', array());
 
         $this->plugin->include_stylesheet($skin_path . 'config.css');
     }
@@ -94,6 +98,15 @@ class kolab_activesync_ui
     }
 
 
+    private function is_protected($folder, $devicetype)
+    {
+        $devicetype = strtolower($devicetype);
+        if (array_key_exists($devicetype, $this->force_subscriptions)) {
+            return array_key_exists($folder, $this->force_subscriptions[$devicetype]);
+        }
+        return false;
+    }
+
     public function folder_subscriptions($attrib = array())
     {
         if (!$attrib['id']) {
@@ -111,6 +124,9 @@ class kolab_activesync_ui
             $folder_meta = $this->plugin->folder_meta();
         }
 
+        $devicetype = strtolower($this->device['TYPE']);
+        $device_force_subscriptions = $this->force_subscriptions[$devicetype];
+
         foreach ($this->plugin->list_folders() as $folder) {
             if ($folder_types[$folder]) {
                 list($type, ) = explode('.', $folder_types[$folder]);
@@ -122,7 +138,9 @@ class kolab_activesync_ui
             if (is_array($folder_groups[$type])) {
                 $folder_groups[$type][] = $folder;
 
-                if (!empty($folder_meta) && ($meta = $folder_meta[$folder])
+                if ($device_force_subscriptions && array_key_exists($folder, $device_force_subscriptions)) {
+                    $subscribed[$folder] = intval($device_force_subscriptions[$folder]);
+                } else if (!empty($folder_meta) && ($meta = $folder_meta[$folder])
                     && $meta['FOLDER'] && $meta['FOLDER'][$imei]['S']
                 ) {
                     $subscribed[$folder] = intval($meta['FOLDER'][$imei]['S']);
@@ -210,14 +228,17 @@ class kolab_activesync_ui
             }
 
             $table->add_row();
+
+            $disabled = $this->is_protected($folder, $this->device['TYPE']);
+
             $table->add('subscription checkbox-cell', $checkbox_sync->show(
                 !empty($subscribed[$folder]) ? $folder : null,
-                array('value' => $folder, 'id' => $folder_id)));
+                array('value' => $folder, 'id' => $folder_id, 'disabled' => $disabled)));
 
             if ($alarms) {
                 $table->add('alarm checkbox-cell', $checkbox_alarm->show(
                     intval($subscribed[$folder]) > 1 ? $folder : null,
-                    array('value' => $folder, 'id' => $folder_id.'_alarm')));
+                    array('value' => $folder, 'id' => $folder_id.'_alarm', 'disabled' => $disabled)));
             }
 
             $table->add(join(' ', $classes), html::label($folder_id, $foldername));
@@ -258,15 +279,17 @@ class kolab_activesync_ui
                 }
             }
 
+            $disabled = $this->is_protected($folder_name, $device['TYPE']);
+
             $table->add_row();
             $table->add(array('class' => 'device', 'title' => $title), $name);
-            $table->add('subscription checkbox-cell', $checkbox->show(!empty($folder_data[$id]['S']) ? 1 : 0));
+            $table->add('subscription checkbox-cell', $checkbox->show(!empty($folder_data[$id]['S']) ? 1 : 0, array('disabled' => $disabled)));
 
             if ($alarms) {
                 $checkbox_alarm = new html_checkbox(array('name' => "_alarms[$id]", 'value' => 1,
                     'onchange' => 'return activesync_object.update_sync_data(this)'));
 
-                $table->add('alarm checkbox-cell', $checkbox_alarm->show($folder_data[$id]['S'] > 1 ? 1 : 0));
+                $table->add('alarm checkbox-cell', $checkbox_alarm->show($folder_data[$id]['S'] > 1 ? 1 : 0, array('disabled' => $disabled)));
             }
         }
 
