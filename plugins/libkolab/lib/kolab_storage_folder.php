@@ -571,6 +571,12 @@ class kolab_storage_folder extends kolab_storage_folder_api
             if (preg_match('!<uid>(.+)</uid>!Uims', $xml, $m))
                 $msgadd = " UID = " . trim(strip_tags($m[1]));
 
+            $rcmail = rcube::get_instance();
+
+            if ($rcmail->config->get('kolab_format_error_log') && ($log_dir = $rcmail->get_user_log_dir())) {
+                file_put_contents("$log_dir/$msguid.xml", $xml);
+            }
+
             rcube::raise_error(array(
                 'code' => 600,
                 'type' => 'php',
