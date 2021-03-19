@@ -571,12 +571,6 @@ class kolab_storage_folder extends kolab_storage_folder_api
             if (preg_match('!<uid>(.+)</uid>!Uims', $xml, $m))
                 $msgadd = " UID = " . trim(strip_tags($m[1]));
 
-            $rcmail = rcube::get_instance();
-
-            if ($rcmail->config->get('kolab_format_error_log') && ($log_dir = $rcmail->get_user_log_dir())) {
-                file_put_contents("$log_dir/$msguid.xml", $xml);
-            }
-
             rcube::raise_error(array(
                 'code' => 600,
                 'type' => 'php',
@@ -584,6 +578,8 @@ class kolab_storage_folder extends kolab_storage_folder_api
                 'line' => __LINE__,
                 'message' => "Could not parse Kolab object data in message $msguid ($this->name)." . $msgadd,
             ), true);
+
+            self::save_user_xml("$msguid.xml", $xml);
         }
 
         return false;
@@ -1149,5 +1145,23 @@ class kolab_storage_folder extends kolab_storage_folder_api
         }
 
         return true;
+    }
+
+    /**
+     * Log content to a file in per_user_loggin dir if configured
+     */
+    private static function save_user_xml($filename, $content)
+    {
+        $rcmail = rcube::get_instance();
+
+        if ($rcmail->config->get('kolab_format_error_log')) {
+            $log_dir   = $rcmail->config->get('log_dir', RCUBE_INSTALL_PATH . 'logs');
+            $user_name = $rcmail->get_user_name();
+            $log_dir   = $log_dir . '/' . $user_name;
+
+            if (!empty($user_name) && is_writable($log_dir)) {
+                file_put_contents("$log_dir/$filename", $xml);
+            }
+        }
     }
 }
