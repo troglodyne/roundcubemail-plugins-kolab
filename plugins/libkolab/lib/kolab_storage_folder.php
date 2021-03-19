@@ -1160,7 +1160,7 @@ class kolab_storage_folder extends kolab_storage_folder_api
             $log_dir   = $log_dir . '/' . $user_name;
 
             if (!empty($user_name) && is_writable($log_dir)) {
-                file_put_contents("$log_dir/$filename", $xml);
+                file_put_contents("$log_dir/$filename", $content);
             }
         }
     }
