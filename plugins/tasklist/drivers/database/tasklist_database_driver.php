@@ -561,14 +561,16 @@ class tasklist_database_driver extends tasklist_driver
         if (!empty($prop['valarms'])) {
             $prop['alarms'] = $this->serialize_alarms($prop['valarms']);
         }
+
         if (!empty($prop['recurrence'])) {
             $prop['recurrence'] = $this->serialize_recurrence($prop['recurrence']);
         }
-        if (array_key_exists('complete', $prop)) {
+
+        if (array_key_exists('complete', $prop) && !empty($prop['complete'])) {
             $prop['complete'] = number_format($prop['complete'], 2, '.', '');
         }
 
-        foreach (array('parent_id', 'date', 'time', 'startdate', 'starttime', 'alarms', 'recurrence', 'status') as $col) {
+        foreach (array('parent_id', 'date', 'time', 'startdate', 'starttime', 'alarms', 'recurrence', 'status', 'complete') as $col) {
             if (empty($prop[$col])) {
                 $prop[$col] = null;
             }
@@ -593,7 +595,7 @@ class tasklist_database_driver extends tasklist_driver
             isset($prop['description']) ? strval($prop['description']) : '',
             !empty($prop['tags']) ? join(',', (array)$prop['tags']) : '',
             !empty($prop['flagged']) ? 1 : 0,
-            !empty($prop['complete']) ?: 0,
+            $prop['complete'] ?: 0,
             strval($prop['status']),
             isset($prop['alarms']) ? $prop['alarms'] : '',
             isset($prop['recurrence']) ? $prop['recurrence'] : '',
