@@ -854,7 +854,7 @@ class kolab_driver extends calendar_driver
             }
 
             // removing an exception instance
-            if ((!empty($event['recurrence_id']) || !empty($event['isexception'])) && !empty(($master['exceptions']))) {
+            if ((!empty($event['recurrence_id']) || !empty($event['isexception'])) && !empty($master['exceptions'])) {
                 foreach ($master['exceptions'] as $i => $exception) {
                     if ($exception['_instance'] == $event['_instance']) {
                         unset($master['exceptions'][$i]);

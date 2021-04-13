@@ -859,7 +859,7 @@ $("#rcmfd_new_category").keypress(function(event) {
                 'calendar_default_calendar'     => rcube_utils::get_input_value('_default_calendar', rcube_utils::INPUT_POST),
                 'calendar_date_format'          => null,  // clear previously saved values
                 'calendar_time_format'          => null,
-                'calendar_contact_birthdays'      => !empty(rcube_utils::get_input_value('_contact_birthdays', rcube_utils::INPUT_POST)),
+                'calendar_contact_birthdays'      => (bool) rcube_utils::get_input_value('_contact_birthdays', rcube_utils::INPUT_POST),
                 'calendar_birthday_adressbooks'   => (array) rcube_utils::get_input_value('_birthday_adressbooks', rcube_utils::INPUT_POST),
                 'calendar_birthdays_alarm_type'   => rcube_utils::get_input_value('_birthdays_alarm_type', rcube_utils::INPUT_POST),
                 'calendar_birthdays_alarm_offset' => $birthdays_alarm_value ?: null,
