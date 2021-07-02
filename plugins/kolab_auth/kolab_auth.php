@@ -433,17 +433,19 @@ class kolab_auth extends rcube_plugin
             return $args;
         }
 
+        // Don't add the extra field on 2FA form
+        if (strpos($args['content'], 'plugin.kolab-2fa-login')) {
+            return $args;
+        }
+
         $input = new html_inputfield(array('name' => '_loginas', 'id' => 'rcmloginas',
             'type' => 'text', 'autocomplete' => 'off'));
-
         $row = html::tag('tr', null,
             html::tag('td', 'title', html::label('rcmloginas', rcube::Q($this->gettext('loginas'))))
             . html::tag('td', 'input', $input->show(trim(rcube_utils::get_input_value('_loginas', rcube_utils::INPUT_POST))))
         );
-
         // add icon style for Elastic
         $style = html::tag('style', [], '#login-form .input-group .icon.loginas::before { content: "\f508"; } ');
-
         $args['content'] = preg_replace('/<\/tbody>/i', $row . '</tbody>' . $style, $args['content']);
 
         return $args;
