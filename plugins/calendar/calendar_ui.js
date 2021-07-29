@@ -82,6 +82,7 @@ function rcube_calendar_ui(settings)
       dayNamesShort: settings.days_short,
       weekNumbers: settings.show_weekno > 0,
       weekNumberTitle: rcmail.gettext('weekshort', 'calendar') + ' ',
+      weekNumberCalculation: 'ISO',
       firstDay: settings.first_day,
       firstHour: settings.first_hour,
       slotDuration: {minutes: 60/settings.timeslots},
