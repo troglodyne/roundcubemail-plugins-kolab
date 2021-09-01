@@ -2102,43 +2102,44 @@ $("#rcmfd_new_category").keypress(function(event) {
         if ($organizer === null && !empty($event['organizer'])) {
             $organizer = $event['organizer'];
             $organizer['role'] = 'ORGANIZER';
-            if (!is_array($event['attendees']))
+            if (!is_array($event['attendees'])) {
                 $event['attendees'] = [$organizer];
             }
+        }
 
-            // Convert HTML description into plain text
-            if ($this->is_html($event)) {
-                $h2t = new rcube_html2text($event['description'], false, true, 0);
-                $event['description'] = trim($h2t->get_text());
-            }
+        // Convert HTML description into plain text
+        if ($this->is_html($event)) {
+            $h2t = new rcube_html2text($event['description'], false, true, 0);
+            $event['description'] = trim($h2t->get_text());
+        }
 
-            // mapping url => vurl, allday => allDay because of the fullcalendar client script
-            $event['vurl']   = $event['url'];
-            $event['allDay'] = !empty($event['allday']);
-            unset($event['url']);
-            unset($event['allday']);
+        // mapping url => vurl, allday => allDay because of the fullcalendar client script
+        $event['vurl']   = $event['url'];
+        $event['allDay'] = !empty($event['allday']);
+        unset($event['url']);
+        unset($event['allday']);
 
-            $event['className'] = !empty($event['className']) ? explode(' ', $event['className']) : [];
+        $event['className'] = !empty($event['className']) ? explode(' ', $event['className']) : [];
 
-            if ($event['allDay']) {
-                $event['end'] = $event['end']->add(new DateInterval('P1D'));
-            }
+        if ($event['allDay']) {
+            $event['end'] = $event['end']->add(new DateInterval('P1D'));
+        }
 
-            if (!empty($_GET['mode']) && $_GET['mode'] == 'print') {
-                $event['editable'] = false;
-            }
+        if (!empty($_GET['mode']) && $_GET['mode'] == 'print') {
+            $event['editable'] = false;
+        }
 
-            return [
-                '_id'     => $event['calendar'] . ':' . $event['id'],  // unique identifier for fullcalendar
-                'start'   => $this->lib->adjust_timezone($event['start'], $event['allDay'])->format('c'),
-                'end'     => $this->lib->adjust_timezone($event['end'], $event['allDay'])->format('c'),
-                // 'changed' might be empty for event recurrences (Bug #2185)
-                'changed' => !empty($event['changed']) ? $this->lib->adjust_timezone($event['changed'])->format('c') : null,
-                'created' => !empty($event['created']) ? $this->lib->adjust_timezone($event['created'])->format('c') : null,
-                'title'       => strval($event['title']),
-                'description' => strval($event['description']),
-                'location'    => strval($event['location']),
-            ] + $event;
+        return [
+            '_id'     => $event['calendar'] . ':' . $event['id'],  // unique identifier for fullcalendar
+            'start'   => $this->lib->adjust_timezone($event['start'], $event['allDay'])->format('c'),
+            'end'     => $this->lib->adjust_timezone($event['end'], $event['allDay'])->format('c'),
+            // 'changed' might be empty for event recurrences (Bug #2185)
+            'changed' => !empty($event['changed']) ? $this->lib->adjust_timezone($event['changed'])->format('c') : null,
+            'created' => !empty($event['created']) ? $this->lib->adjust_timezone($event['created'])->format('c') : null,
+            'title'       => strval($event['title']),
+            'description' => strval($event['description']),
+            'location'    => strval($event['location']),
+        ] + $event;
     }
 
     /**
