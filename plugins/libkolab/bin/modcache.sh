@@ -201,7 +201,7 @@ function authenticate(&$opts)
 
     // prompt for password
     if (empty($opts['password']) && ($opts['username'] || $opts['user'])) {
-        $opts['password'] = prompt_silent("Password: ");
+        $opts['password'] = rcube_utils::prompt_silent("Password: ");
     }
 
     // simulate "login as" feature
