@@ -553,13 +553,18 @@ class libcalendaring extends rcube_plugin
      */
     public static function alarm_text($alarm)
     {
+        $related = null;
+
         if (is_string($alarm)) {
             list($trigger, $action) = explode(':', $alarm);
         }
         else {
             $trigger = $alarm['trigger'];
             $action  = $alarm['action'];
-            $related = $alarm['related'];
+
+            if (!empty($alarm['related'])) {
+                $related = $alarm['related'];
+            }
         }
 
         $text  = '';
@@ -1119,10 +1124,12 @@ class libcalendaring extends rcube_plugin
         // check all message parts for .ics files
         foreach ((array)$this->ical_message->mime_parts as $part) {
             if (self::part_is_vcalendar($part, $this->ical_message)) {
-                if ($part->ctype_parameters['method'])
+                if (!empty($part->ctype_parameters['method'])) {
                     $itip_part = $part->mime_id;
-                else
+                }
+                else {
                     $this->ical_parts[] = $part->mime_id;
+                }
             }
         }
 
