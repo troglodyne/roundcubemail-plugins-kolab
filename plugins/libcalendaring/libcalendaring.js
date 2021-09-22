@@ -371,7 +371,7 @@ function rcube_libcalendaring(settings)
      */
     this.text2html = function(str, maxlen, maxlines)
     {
-        var html = Q(String(str));
+        var html = Q($.trim(String(str)));
 
         // limit visible text length
         if (maxlen) {
@@ -411,21 +411,35 @@ function rcube_libcalendaring(settings)
 
         // simple link parser (similar to rcube_string_replacer class in PHP)
         var utf_domain = '[^?&@"\'/\\(\\)\\s\\r\\t\\n]+\\.([^\x00-\x2f\x3b-\x40\x5b-\x60\x7b-\x7f]{2,}|xn--[a-z0-9]{2,})';
-        var url1 = '.:;,', url2 = 'a-z0-9%=#@+?&/_~\\[\\]-';
+        var url1 = '.;,', url2 = 'a-z0-9%=:#@+?&/_~\\[\\]-';
         var link_pattern = new RegExp('([hf]t+ps?://)('+utf_domain+'(['+url1+']?['+url2+']+)*)', 'ig');
         var mailto_pattern = new RegExp('([^\\s\\n\\(\\);]+@'+utf_domain+')', 'ig');
         var link_replace = function(matches, p1, p2) {
-          var title = '', text = p2;
-          if (p2 && p2.length > 55) {
-            text = p2.substr(0, 45) + '...' + p2.substr(-8);
-            title = p1 + p2;
+          var title = '', suffix = '';
+          if (p2 && p2.substr(-3) == '&gt') {
+            suffix = '&gt';
+            p2 = p2.substr(0, p2.length - 3);
           }
-          return '<a href="'+p1+p2+'" class="extlink" target="_blank" title="'+title+'">'+p1+text+'</a>'
+          var href = p1 + p2;
+          if (p2 && p2.length > 55) {
+            title = p1 + p2;
+            p2 = p2.substr(0, 45) + '...' + p2.substr(-8);
+          }
+
+          return '<a href="'+href+'" class="extlink" target="_blank" title="'+title+'">' + p1 + p2 + '</a>' + suffix
+        };
+
+        var mailto_replace = function(matches, p1, p2) {
+          // ignore links (created in link_replace() above
+          if (matches.match(/^(title|href)=/))
+            return matches;
+          else
+            return '<a href="mailto:' + p1 + '">' + p1 + '</a>';
         };
 
         return html
             .replace(link_pattern, link_replace)
-            .replace(mailto_pattern, '<a href="mailto:$1">$1</a>')
+            .replace(mailto_pattern, mailto_replace)
             .replace(/(mailto:)([^"]+)"/g, '$1$2" onclick="rcmail.command(\'compose\', \'$2\');return false"')
             .replace(/\n/g, "<br/>");
     };
