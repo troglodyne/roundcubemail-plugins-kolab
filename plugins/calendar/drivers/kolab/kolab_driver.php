@@ -823,6 +823,7 @@ class kolab_driver extends calendar_driver
     {
         $ret      = true;
         $success  = false;
+        $savemode = isset($event['_savemode']) ? $event['_savemode'] : null;
 
         if (!$force) {
             unset($event['attendees']);
@@ -832,6 +833,7 @@ class kolab_driver extends calendar_driver
         }
 
         if (($storage = $this->get_calendar($event['calendar'])) && ($event = $storage->get_event($event['id']))) {
+            $event['_savemode'] = $savemode;
             $decline  = $event['_decline'];
             $savemode = 'all';
             $master   = $event;
