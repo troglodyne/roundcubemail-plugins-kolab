@@ -2391,7 +2391,7 @@ $("#rcmfd_new_category").keypress(function(event) {
             }
 
             // set new organizer identity
-            if ($organizer !== false && $identity) {
+            if ($organizer !== false && !empty($identity)) {
                 $event['attendees'][$organizer]['name']  = $identity['name'];
                 $event['attendees'][$organizer]['email'] = $identity['email'];
             }
@@ -2401,7 +2401,7 @@ $("#rcmfd_new_category").keypress(function(event) {
                 unset($event['attendees'][$owner]['rsvp']);
             }
             // fallback to the selected identity
-            else if ($organizer === false && $identity) {
+            else if ($organizer === false && !empty($identity)) {
                 $event['attendees'][] = [
                     'role'  => 'ORGANIZER',
                     'name'  => $identity['name'],
