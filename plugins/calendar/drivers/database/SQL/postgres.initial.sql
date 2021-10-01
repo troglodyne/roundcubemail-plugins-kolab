@@ -9,9 +9,7 @@
  * @licence GNU AGPL
  * @copyright (c) 2010 Lazlo Westerhof - Netherlands
  * @copyright (c) 2014 Kolab Systems AG
- *
- **/
-
+ */
 
 CREATE SEQUENCE calendars_seq
     INCREMENT BY 1

@@ -9,8 +9,7 @@
  * @licence GNU AGPL
  * @copyright (c) 2010 Lazlo Westerhof - Netherlands
  * @copyright (c) 2014 Kolab Systems AG
- *
- **/
+ */
 
 CREATE TABLE calendars (
   calendar_id integer NOT NULL PRIMARY KEY,

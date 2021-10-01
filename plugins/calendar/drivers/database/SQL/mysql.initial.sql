@@ -8,8 +8,7 @@
  * @licence GNU AGPL
  * @copyright (c) 2010 Lazlo Westerhof - Netherlands
  * @copyright (c) 2014 Kolab Systems AG
- *
- **/
+ */
 
 CREATE TABLE IF NOT EXISTS `calendars` (
   `calendar_id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -82,4 +81,4 @@ CREATE TABLE IF NOT EXISTS `itipinvitations` (
     REFERENCES `users`(`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) /*!40000 ENGINE=INNODB */ /*!40101 CHARACTER SET utf8 COLLATE utf8_general_ci */;
 
-REPLACE INTO system (name, value) VALUES ('calendar-database-version', '2015022700');
+REPLACE INTO `system` (`name`, `value`) VALUES ('calendar-database-version', '2015022700');

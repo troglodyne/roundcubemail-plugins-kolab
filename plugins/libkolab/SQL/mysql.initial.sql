@@ -4,7 +4,7 @@
  * @version 1.2
  * @author Thomas Bruederli
  * @licence GNU AGPL
- **/
+ */
 
 /*!40014  SET FOREIGN_KEY_CHECKS=0 */;
 
