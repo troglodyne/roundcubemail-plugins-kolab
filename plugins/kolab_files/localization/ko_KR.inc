@@ -16,4 +16,5 @@ $labels['participant'] = '참가자';
 $labels['status'] = '상태';
 $labels['addparticipant'] = '참가자 추가';
 $labels['statusorganizer'] = '주최자';
+$labels['owner'] = '소유자';
 $labels['comment'] = '코멘트';

@@ -31,7 +31,7 @@ $labels['bookproperties'] = 'Eigenschaften des Adressbuchs';
 $labels['bookname'] = 'Name des Buches';
 $labels['parentbook'] = 'Übergeordnetes Buch';
 $labels['bookshowurl'] = 'CardDAV URL anzeigen';
-$labels['carddavurldescription'] = 'Diese Adresse in einen <a href="http://en.wikipedia.org/wiki/CardDAV" target="_blank">CardDAV</a>-Klienten kopieren, um dasAdressbuch mit einem Computer oder mobilen Gerät zu synchronisieren.';
+$labels['carddavurldescription'] = 'Diese Adresse in einen <a href="http://en.wikipedia.org/wiki/CardDAV" target="_blank">CardDAV</a>-Klienten kopieren, um das Adressbuch mit einem Computer oder mobilen Gerät zu synchronisieren.';
 $labels['addressbookprio'] = 'Reihenfolge der Adressbücher';
 $labels['personalfirst'] = 'Private(s) Adressbuch/Adressbücher zuerst';
 $labels['globalfirst'] = 'Globale(s) Adressbuch/Adressbücher zuerst';
