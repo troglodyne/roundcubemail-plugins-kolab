@@ -1,11 +1,9 @@
 /**
  * libkolab database schema
  *
- * @version 1.2
  * @author Aleksander Machniak
  * @licence GNU AGPL
- **/
-
+ */
 
 CREATE TABLE "kolab_folders" (
     "folder_id" number NOT NULL PRIMARY KEY,
@@ -175,4 +173,4 @@ CREATE TABLE "kolab_cache_freebusy" (
 CREATE INDEX "kolab_cache_fb_uid2msguid" ON "kolab_cache_freebusy" ("folder_id", "uid", "msguid");
 
 
-INSERT INTO "system" ("name", "value") VALUES ('libkolab-version', '2019092900');
+INSERT INTO "system" ("name", "value") VALUES ('libkolab-version', '2021101100');
