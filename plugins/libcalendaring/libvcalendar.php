@@ -1473,16 +1473,19 @@ class libvcalendar implements Iterator
 
     /*** Implement PHP 5 Iterator interface to make foreach work ***/
 
+    #[\ReturnTypeWillChange]
     function current()
     {
         return $this->objects[$this->iteratorkey];
     }
 
+    #[\ReturnTypeWillChange]
     function key()
     {
         return $this->iteratorkey;
     }
 
+    #[\ReturnTypeWillChange]
     function next()
     {
         $this->iteratorkey++;
@@ -1495,11 +1498,13 @@ class libvcalendar implements Iterator
         return $this->valid();
     }
 
+    #[\ReturnTypeWillChange]
     function rewind()
     {
         $this->iteratorkey = 0;
     }
 
+    #[\ReturnTypeWillChange]
     function valid()
     {
         return !empty($this->objects[$this->iteratorkey]);
