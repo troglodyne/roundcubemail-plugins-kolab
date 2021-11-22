@@ -378,7 +378,7 @@ class kolab_delegation_engine
         // Definition of read and write ACL
         $right_types = $this->right_types();
 
-        $delegate_lc = \strtolower($delegate);
+        $delegate_lc = strtolower($delegate);
 
         foreach ($folders as $folder) {
             // get only folders in personal namespace
@@ -397,8 +397,8 @@ class kolab_delegation_engine
             // in edit mode, get folder ACL
             if ($delegate) {
                 // @TODO: cache ACL
-                $acl = $storage->get_acl($folder);
-                if (!empty($acl) && (($acl = $acl[$delegate]) || ($acl = $acl[$delegate_lc]))) {
+                $imap_acl = $storage->get_acl($folder);
+                if (!empty($imap_acl) && (($acl = $imap_acl[$delegate]) || ($acl = $imap_acl[$delegate_lc]))) {
                     if ($this->acl_compare($acl, $right_types[self::ACL_WRITE])) {
                         $rights = self::ACL_WRITE;
                     }
