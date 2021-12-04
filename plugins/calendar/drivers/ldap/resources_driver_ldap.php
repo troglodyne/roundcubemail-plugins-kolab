@@ -41,12 +41,13 @@ class resources_driver_ldap extends resources_driver
     /**
      * Fetch resource objects to be displayed for booking
      *
-     * @param string $query Search query (optional)
-     * @param int    $num   Max size of the result
+     * @param string $query       Search query (optional)
+     * @param int    $num         Max size of the result
+     * @param string $searchField Field to search with query
      *
      * @return array List of resource records available for booking
      */
-    public function load_resources($query = null, $num = 5000)
+    public function load_resources($query = null, $num = 5000, $searchField = '*')
     {
         if (!($ldap = $this->connect())) {
             return [];
@@ -56,7 +57,7 @@ class resources_driver_ldap extends resources_driver
         $ldap->set_pagesize($num);
 
         if (isset($query)) {
-            $results = $ldap->search('*', $query, 0, true, true);
+            $results = $ldap->search($searchField, $query, 0, true, true);
         }
         else {
             $results = $ldap->list_records();
