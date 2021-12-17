@@ -136,7 +136,7 @@ class libcalendaring_itip
             'name' => $bodytext,
             'vars' => array(
                 'title'       => $event['title'],
-                'date'        => $this->lib->event_date_text($event, true) . $recurrence_info,
+                'date'        => $this->lib->event_date_text($event) . $recurrence_info,
                 'attendees'   => join(",\n ", $attendees_list),
                 'sender'      => $this->sender['name'],
                 'organizer'   => $this->sender['name'],

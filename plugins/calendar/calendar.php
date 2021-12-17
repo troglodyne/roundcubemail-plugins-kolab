@@ -3149,10 +3149,16 @@ $("#rcmfd_new_category").keypress(function(event) {
      */
     private function mail_agenda_event_row($event, $class = '')
     {
-        $time = !empty($event['allday']) ? $this->gettext('all-day') :
-            $this->rc->format_date($event['start'], $this->rc->config->get('time_format'))
-            . ' - ' .
-            $this->rc->format_date($event['end'], $this->rc->config->get('time_format'));
+        if (!empty($event['allday'])) {
+            $time = $this->gettext('all-day');
+        }
+        else {
+            $start = is_object($event['start']) ? clone $event['start'] : $event['start'];
+            $end = is_object($event['end']) ? clone $event['end'] : $event['end'];
+
+            $time = $this->rc->format_date($start, $this->rc->config->get('time_format'))
+                . ' - ' . $this->rc->format_date($end, $this->rc->config->get('time_format'));
+        }
 
         return html::div(rtrim('event-row ' . ($class ?: $event['className'])),
             html::span('event-date', $time)
@@ -3217,7 +3223,7 @@ $("#rcmfd_new_category").keypress(function(event) {
             // get prepared inline UI for this event object
             if ($ical_objects->method) {
                 $append   = '';
-                $date_str = $this->rc->format_date($event['start'], $this->rc->config->get('date_format'), empty($event['start']->_dateonly));
+                $date_str = $this->rc->format_date(clone $event['start'], $this->rc->config->get('date_format'), empty($event['start']->_dateonly));
                 $date     = new DateTime($event['start']->format('Y-m-d') . ' 12:00:00', new DateTimeZone('UTC'));
 
                 // prepare a small agenda preview to be filled with actual event data on async request

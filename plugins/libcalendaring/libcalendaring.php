@@ -288,19 +288,43 @@ class libcalendaring extends rcube_plugin
     /**
      * Compose a date string for the given event
      */
-    public function event_date_text($event, $tzinfo = false)
+    public function event_date_text($event)
     {
         $fromto  = '--';
         $is_task = !empty($event['_type']) && $event['_type'] == 'task';
 
+        $this->date_format_defaults();
+
+        $date_format = self::to_php_date_format($this->rc->config->get('calendar_date_format', $this->defaults['calendar_date_format']));
+        $time_format = self::to_php_date_format($this->rc->config->get('calendar_time_format', $this->defaults['calendar_time_format']));
+
+        $getTimezone = function ($date) {
+            if ($newTz = $date->getTimezone()) {
+                return $newTz->getName();
+            }
+
+            return '';
+        };
+
+        $formatDate = function ($date, $format) use ($getTimezone) {
+            // This is a workaround for the rcmail::format_date() which does not play nice with timezone
+            $tz = $this->rc->config->get('timezone');
+            if ($dateTz = $getTimezone($date)) {
+                $this->rc->config->set('timezone', $dateTz);
+            }
+            $result = $this->rc->format_date($date, $format);
+            $this->rc->config->set('timezone', $tz);
+
+            return $result;
+        };
+
         // handle task objects
         if ($is_task && !empty($event['due']) && is_object($event['due'])) {
-            $date_format = !empty($event['due']->_dateonly) ? self::to_php_date_format($this->rc->config->get('calendar_date_format', $this->defaults['calendar_date_format'])) : null;
-            $fromto = $this->rc->format_date($event['due'], $date_format, false);
+            $fromto = $formatDate($event['due'], !empty($event['due']->_dateonly) ? $date_format : null);
 
             // add timezone information
-            if ($fromto && $tzinfo && ($tzname = $this->timezone->getName())) {
-                $fromto .= ' (' . strtr($tzname, '_', ' ') . ')';
+            if ($fromto && empty($event['due']->_dateonly) && ($tz = $getTimezone($event['due']))) {
+                $fromto .= ' (' . strtr($tz, '_', ' ') . ')';
             }
 
             return $fromto;
@@ -311,29 +335,24 @@ class libcalendaring extends rcube_plugin
             return $fromto;
         }
 
-        $duration = $event['start']->diff($event['end'])->format('s');
-
-        $this->date_format_defaults();
-        $date_format = self::to_php_date_format($this->rc->config->get('calendar_date_format', $this->defaults['calendar_date_format']));
-        $time_format = self::to_php_date_format($this->rc->config->get('calendar_time_format', $this->defaults['calendar_time_format']));
-
         if ($event['allday']) {
-            $fromto = $this->rc->format_date($event['start'], $date_format, false);
-            if (($todate = $this->rc->format_date($event['end'], $date_format, false)) != $fromto)
+            $fromto = $formatDate($event['start'], $date_format);
+            if (($todate = $formatDate($event['end'], $date_format)) != $fromto) {
                 $fromto .= ' - ' . $todate;
+            }
         }
-        else if ($duration < 86400 && $event['start']->format('d') == $event['end']->format('d')) {
-            $fromto = $this->rc->format_date($event['start'], $date_format) . ' ' . $this->rc->format_date($event['start'], $time_format) .
-                ' - ' . $this->rc->format_date($event['end'], $time_format);
+        else if ($event['start']->format('Ymd') === $event['end']->format('Ymd')) {
+            $fromto = $formatDate($event['start'], $date_format) . ' ' . $formatDate($event['start'], $time_format) .
+                ' - ' . $formatDate($event['end'], $time_format);
         }
         else {
-            $fromto = $this->rc->format_date($event['start'], $date_format) . ' ' . $this->rc->format_date($event['start'], $time_format) .
-                ' - ' . $this->rc->format_date($event['end'], $date_format) . ' ' . $this->rc->format_date($event['end'], $time_format);
+            $fromto = $formatDate($event['start'], $date_format) . ' ' . $formatDate($event['start'], $time_format) .
+                ' - ' . $formatDate($event['end'], $date_format) . ' ' . $formatDate($event['end'], $time_format);
         }
 
         // add timezone information
-        if ($tzinfo && ($tzname = $this->timezone->getName())) {
-            $fromto .= ' (' . strtr($tzname, '_', ' ') . ')';
+        if ($fromto && empty($event['allday']) && ($tz = $getTimezone($event['start']))) {
+            $fromto .= ' (' . strtr($tz, '_', ' ') . ')';
         }
 
         return $fromto;
