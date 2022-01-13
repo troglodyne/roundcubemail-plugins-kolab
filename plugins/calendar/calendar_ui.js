@@ -399,7 +399,7 @@ function rcube_calendar_ui(settings)
         $('#event-alarm').show().find('.event-text').html(Q(event.alarms_text).replace(',', ',<br>'));
       if (calendar.name)
         $('#event-calendar').show().find('.event-text').html(Q(calendar.name)).addClass('cal-'+calendar.id);
-      if (event.categories)
+      if (event.categories && String(event.categories).length)
         $('#event-category').show().find('.event-text').text(event.categories).addClass('cat-'+String(event.categories).toLowerCase().replace(rcmail.identifier_expr, ''));
       if (event.free_busy)
         $('#event-free-busy').show().find('.event-text').text(rcmail.gettext(event.free_busy, 'calendar'));

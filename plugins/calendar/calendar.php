@@ -2349,7 +2349,7 @@ $("#rcmfd_new_category").keypress(function(event) {
         }
 
         $attachments = [];
-        $eventid     = 'cal-' . (!empty($event['id']) ? $event['id'] : 'new-event');
+        $eventid     = 'cal-' . (!empty($event['id']) ? $event['id'] : 'new');
 
         if (!empty($_SESSION[self::SESSION_KEY]) && $_SESSION[self::SESSION_KEY]['id'] == $eventid) {
             if (!empty($_SESSION[self::SESSION_KEY]['attachments'])) {

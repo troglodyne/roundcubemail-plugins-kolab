@@ -114,8 +114,9 @@ class kolab_attachments_handler
             $this->rc->upload_progress();
         }
 
-        $recid    = $id_prefix . rcube_utils::get_input_value('_id', rcube_utils::INPUT_GPC);
+        $id       = rcube_utils::get_input_value('_id', rcube_utils::INPUT_GPC);
         $uploadid = rcube_utils::get_input_value('_uploadid', rcube_utils::INPUT_GPC);
+        $recid    = $id_prefix . ($id ?: 'new');
 
         if (empty($_SESSION[$session_key]) || $_SESSION[$session_key]['id'] != $recid) {
             $_SESSION[$session_key] = array();
