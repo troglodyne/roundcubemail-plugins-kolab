@@ -2383,7 +2383,7 @@ function rcube_calendar_ui(settings)
     var is_this_me = function(email)
     {
       if (settings.identity.emails.indexOf(';'+email) >= 0
-        || (settings.identity.ownedResources && ssettings.identity.ownedResources.indexOf(';'+email) >= 0)
+        || (settings.identity.ownedResources && settings.identity.ownedResources.indexOf(';'+email) >= 0)
       ) {
         return true;
       }
