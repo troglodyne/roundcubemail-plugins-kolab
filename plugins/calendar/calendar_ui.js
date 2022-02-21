@@ -510,7 +510,6 @@ function rcube_calendar_ui(settings)
         }
 
         var show_rsvp = rsvp && !organizer && event.status != 'CANCELLED' && me.has_permission(calendar, 'v');
-        console.log(event, rsvp, organizer, status, calendar, me.has_permission(calendar, 'v'), show_rsvp);
         $('#event-rsvp')[(show_rsvp ? 'show' : 'hide')]();
         $('#event-rsvp .rsvp-buttons input').prop('disabled', false).filter('input[rel="'+(mystatus || '')+'"]').prop('disabled', true);
 
