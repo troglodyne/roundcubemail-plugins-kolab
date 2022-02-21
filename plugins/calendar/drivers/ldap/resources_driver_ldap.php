@@ -57,7 +57,8 @@ class resources_driver_ldap extends resources_driver
         $ldap->set_pagesize($num);
 
         if (isset($query)) {
-            $results = $ldap->search($searchField, $query, 0, true, true);
+            $mode = $searchField == 'owner' ? rcube_addressbook::SEARCH_STRICT : 0;
+            $results = $ldap->search($searchField, $query, $mode, true, true);
         }
         else {
             $results = $ldap->list_records();
