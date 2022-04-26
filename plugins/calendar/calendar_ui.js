@@ -866,12 +866,6 @@ function rcube_calendar_ui(settings)
             if (i.match(/^rcmfile(.+)/))
               data.attachments.push(RegExp.$1);
 
-          // read attendee roles
-          $('select.edit-attendee-role').each(function(i, elem){
-            if (data.attendees[i])
-              data.attendees[i].role = $(elem).val();
-          });
-
           if (organizer)
             data._identity = $('#edit-identities-list option:selected').val();
 
@@ -1220,13 +1214,7 @@ function rcube_calendar_ui(settings)
         freebusy_ui.endtime.val("13:00").hide();
         event.allDay = true;
       }
-      
-      // read attendee roles from drop-downs
-      $('select.edit-attendee-role').each(function(i, elem){
-        if (event_attendees[i])
-          event_attendees[i].role = $(elem).val();
-      });
-      
+
       // render time slots
       var now = new Date(), fb_start = new Date(), fb_end = new Date();
       fb_start.setTime(event.start);
@@ -1261,7 +1249,7 @@ function rcube_calendar_ui(settings)
       
       $('#schedule-attendees-list').html(list_html)
         .unbind('click.roleicons')
-        .bind('click.roleicons', function(e){
+        .bind('click.roleicons', function(e) {
           // toggle attendee status upon click on icon
           if (e.target.id && e.target.id.match(/rcmlia(.+)/)) {
             var attendee, domid = RegExp.$1,
@@ -1299,12 +1287,15 @@ function rcube_calendar_ui(settings)
             $('#edit-endtime').val(freebusy_ui.endtime.val());
 
             // write role changes back to main dialog
-            $('select.edit-attendee-role').each(function(i, elem){
-              if (event_attendees[i] && freebusy_ui.attendees[i]) {
-                event_attendees[i].role = freebusy_ui.attendees[i].role;
-                $(elem).val(event_attendees[i].role);
+            for (var domid in freebusy_ui.attendees) {
+              var attendee = freebusy_ui.attendees[domid],
+                event_attendee = event_attendees.find(function(item) { return item.email == attendee.email});
+
+              if (event_attendee && attendee.role != event_attendee.role) {
+                event_attendee.role = attendee.role;
+                $('select.edit-attendee-role').filter(function(i,elem) { return $(elem).data('email') == attendee.email; }).val(attendee.role);
               }
-            });
+            }
 
             if (freebusy_ui.needsupdate)
               update_freebusy_status(me.selected_event);
@@ -1936,6 +1927,7 @@ function rcube_calendar_ui(settings)
         dispname = rcmail.env['identities-selector'];
 
       var select = '<select class="edit-attendee-role form-control custom-select"'
+        + ' data-email="' + Q(data.email) + '"'
         + (organizer || readonly ? ' disabled="true"' : '')
         + ' aria-label="' + rcmail.gettext('role','calendar') + '">';
       for (var r in opts)
@@ -1994,6 +1986,7 @@ function rcube_calendar_ui(settings)
         var enabled = $('#edit-attendees-invite:checked').length || $('input.edit-attendee-reply:checked').length;
         $('#eventedit .attendees-commentbox')[enabled ? 'show' : 'hide']();
       });
+      tr.find('select.edit-attendee-role').change(function() { data.role = $(this).val(); });
 
       // select organizer identity
       if (data.identity_id)
