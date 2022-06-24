@@ -321,4 +321,8 @@ $labels['arialabelresourcesearchform'] = 'Resources search form';
 $labels['arialabelresourceselection'] = 'Available resources';
 $labels['arialabeleventform'] = 'Event editing form';
 
-?>
+// Nextcloud Talk integration
+$labels['createtalkroom'] = 'Create Talk room';
+$labels['talkroomcreating'] = 'Creating a Talk room for the event...';
+$labels['talkroomcreateerror'] = 'Failed to create a Talk room.';
+$labels['talkroomname'] = 'Room for an event';

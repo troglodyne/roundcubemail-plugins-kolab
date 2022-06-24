@@ -151,4 +151,5 @@ $config['kolab_invitation_calendars'] = false;
 // See freebusy_session_auth in configuration of kolab_auth plugin.
 $config['calendar_freebusy_session_auth_url'] = null;
 
-?>
+// Nextcloud installation URL (for Talk integration).
+$config['calendar_nextcloud_url'] = null;

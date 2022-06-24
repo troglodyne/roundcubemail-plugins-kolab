@@ -172,6 +172,8 @@ class calendar extends rcube_plugin
             $this->register_action('resources-owner', [$this, 'resources_owner']);
             $this->register_action('resources-calendar', [$this, 'resources_calendar']);
             $this->register_action('resources-autocomplete', [$this, 'resources_autocomplete']);
+            $this->register_action('talk-room-create', [$this, 'talk_room_create']);
+
             $this->add_hook('refresh', [$this, 'refresh']);
 
             // remove undo information...
@@ -3874,6 +3876,27 @@ $("#rcmfd_new_category").keypress(function(event) {
         }
 
         return $args;
+    }
+
+    /**
+     * Create a Nextcould Talk room
+     */
+    public function talk_room_create()
+    {
+        require_once __DIR__ . '/lib/calendar_nextcloud_api.php';
+
+        $api = new calendar_nextcloud_api();
+
+        $name = (string) rcube_utils::get_input_value('_name', rcube_utils::INPUT_POST);
+
+        $room_url = $api->talk_room_create($name);
+
+        if ($room_url) {
+            $this->rc->output->command('plugin.talk_room_created', ['url' => $room_url]);
+        }
+        else {
+            $this->rc->output->command('display_message', $this->gettext('talkroomcreateerror'), 'error');
+        }
     }
 
     /**

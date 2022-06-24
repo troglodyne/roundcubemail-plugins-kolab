@@ -3535,6 +3535,22 @@ function rcube_calendar_ui(settings)
       }
     };
 
+    /*** Nextcloud Talk integration ***/
+
+    this.talk_room_create = function()
+    {
+        var lock = rcmail.set_busy(true, 'calendar.talkroomcreating');
+
+        rcmail.http_post('talk-room-create', { _name: $('#edit-title').val() }, lock);
+    };
+
+    this.talk_room_created = function(data)
+    {
+        if (data.url) {
+            $('#edit-location').val(data.url);
+        }
+    };
+
 
     /***  startup code  ***/
 
@@ -4184,6 +4200,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
   rcmail.register_command('event-sendbymail', function(p, obj, e){ cal.event_sendbymail(cal.selected_event, e); }, true);
   rcmail.register_command('event-copy', function(){ cal.event_copy(cal.selected_event); }, true);
   rcmail.register_command('event-history', function(p, obj, e){ cal.event_history_dialog(cal.selected_event); }, false);
+  rcmail.register_command('talk-room-create', function(){ cal.talk_room_create(); }, true);
 
   // search and export events
   rcmail.register_command('export', function(){ cal.export_events(cal.calendars[cal.selected_calendar]); }, true);
@@ -4211,6 +4228,7 @@ window.rcmail && rcmail.addEventListener('init', function(evt) {
   rcmail.addEventListener('plugin.close_history_dialog', function(data){ cal.close_history_dialog(); });
   rcmail.addEventListener('plugin.event_show_revision', function(data){ cal.event_show_dialog(data, null, true); });
   rcmail.addEventListener('plugin.itip_message_processed', function(data){ cal.itip_message_processed(data); });
+  rcmail.addEventListener('plugin.talk_room_created', function(data){ cal.talk_room_created(data); });
   rcmail.addEventListener('requestrefresh', function(q){ return cal.before_refresh(q); });
 
   $(window).resize(function(e) {
