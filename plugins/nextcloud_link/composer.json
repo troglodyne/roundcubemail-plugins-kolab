@@ -1,0 +1,30 @@
+{
+    "name": "kolab/nextcloud_link",
+    "type": "roundcube-plugin",
+    "description": "Adds a link to Nextcloud in the task menu",
+    "homepage": "https://git.kolab.org/diffusion/RPK/",
+    "license": "AGPLv3",
+    "version": "1.0",
+    "authors": [
+        {
+            "name": "Aleksander Machniak",
+            "email": "machniak@apheleia-it.ch",
+            "role": "Developer"
+        }
+    ],
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://plugins.roundcube.net"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.0",
+        "roundcube/plugin-installer": ">=0.1.3"
+    },
+    "extra": {
+        "roundcube": {
+            "min-version": "1.4.0"
+        }
+    }
+}
