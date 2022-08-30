@@ -286,7 +286,7 @@ abstract class kolab_format_xcal extends kolab_format
                     $valarm['trigger'] = $prefix . 'P' . $value . ($time ? 'T' . $time : '');
 
                     if ($alarm->relativeTo() == kolabformat::End) {
-                        $valarm['related'] == 'END';
+                        $valarm['related'] = 'END';
                     }
                 }
 

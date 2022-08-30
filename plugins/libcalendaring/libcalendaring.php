@@ -614,7 +614,7 @@ class libcalendaring extends rcube_plugin
             ));
         }
         else if ($val = self::parse_alarm_value($trigger)) {
-            $r = strtoupper($related ?: 'start') == 'END' ? 'end' : '';
+            $r = $related && strtoupper($related) == 'END' ? 'end' : '';
             // TODO: for all-day events say 'on date of event at XX' ?
             if ($val[0] == 0) {
                 $text .= ' ' . $rcube->gettext('libcalendaring.triggerattime' . $r);
