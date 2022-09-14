@@ -83,7 +83,6 @@ class calendar_ui
         $this->cal->register_handler('plugin.status_select', [$this, 'status_select']);
         $this->cal->register_handler('plugin.freebusy_select', [$this, 'freebusy_select']);
         $this->cal->register_handler('plugin.priority_select', [$this, 'priority_select']);
-        $this->cal->register_handler('plugin.sensitivity_select', [$this, 'sensitivity_select']);
         $this->cal->register_handler('plugin.alarm_select', [$this, 'alarm_select']);
         $this->cal->register_handler('plugin.recurrence_form', [$this->cal->lib, 'recurrence_form']);
         $this->cal->register_handler('plugin.attendees_list', [$this, 'attendees_list']);
@@ -530,21 +529,6 @@ class calendar_ui
         $select->add('7 ', '7');
         $select->add('8 ' . $this->cal->gettext('low'), '8');
         $select->add('9 ' . $this->cal->gettext('lowest'),  '9');
-
-        return $select->show(null);
-    }
-
-    /**
-     * Render HTML input for sensitivity selection
-     */
-    function sensitivity_select($attrib = [])
-    {
-        $attrib['name'] = 'sensitivity';
-
-        $select = new html_select($attrib);
-        $select->add($this->cal->gettext('public'), 'public');
-        $select->add($this->cal->gettext('private'), 'private');
-        $select->add($this->cal->gettext('confidential'), 'confidential');
 
         return $select->show(null);
     }

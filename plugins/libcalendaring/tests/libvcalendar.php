@@ -165,7 +165,6 @@ class libvcalendar_test extends PHPUnit\Framework\TestCase
 
         // categories, class
         $this->assertEquals('libcalendaring tests', join(',', (array)$event['categories']), "Event categories");
-        $this->assertEquals('confidential', $event['sensitivity'], "Class/sensitivity = confidential");
 
         // parse a recurrence chain instance
         $events = $ical->import_from_file(__DIR__ . '/resources/recurrence-id.ics', 'UTF-8');
@@ -389,7 +388,6 @@ class libvcalendar_test extends PHPUnit\Framework\TestCase
         $this->assertSame(2, substr_count($ics, 'DTSTAMP'), "Duplicate DTSTAMP (T1148)");
         $this->assertContains('UID:ac6b0aee-2519-4e5c-9a25-48c57064c9f0', $ics, "Event UID");
         $this->assertContains('SEQUENCE:' . $event['sequence'],           $ics, "Export Sequence number");
-        $this->assertContains('CLASS:CONFIDENTIAL',                       $ics, "Sensitivity => Class");
         $this->assertContains('DESCRIPTION:*Exported by',                 $ics, "Export Description");
         $this->assertContains('ORGANIZER;CN=Rolf Test:mailto:rolf@',      $ics, "Export organizer");
         $this->assertRegExp('/ATTENDEE.*;ROLE=REQ-PARTICIPANT/',          $ics, "Export Attendee ROLE");

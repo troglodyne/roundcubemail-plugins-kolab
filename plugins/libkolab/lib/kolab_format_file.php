@@ -31,12 +31,6 @@ class kolab_format_file extends kolab_format
     protected $read_func = 'kolabformat::readKolabFile';
     protected $write_func = 'kolabformat::writeKolabFile';
 
-    protected $sensitivity_map = array(
-        'public'       => kolabformat::ClassPublic,
-        'private'      => kolabformat::ClassPrivate,
-        'confidential' => kolabformat::ClassConfidential,
-    );
-
     /**
      * Set properties to the kolabformat object
      *
@@ -47,7 +41,6 @@ class kolab_format_file extends kolab_format
         // set common object properties
         parent::set($object);
 
-        $this->obj->setClassification($this->sensitivity_map[$object['sensitivity']]);
         $this->obj->setCategories(self::array2vector($object['categories']));
 
         if (isset($object['notes'])) {
@@ -115,11 +108,8 @@ class kolab_format_file extends kolab_format
         // read common object props into local data object
         $object = parent::to_array($data);
 
-        $sensitivity_map = array_flip($this->sensitivity_map);
-
         // read object properties
         $object += array(
-            'sensitivity' => $sensitivity_map[$this->obj->classification()],
             'categories'  => self::vector2array($this->obj->categories()),
             'notes'       => $this->obj->note(),
         );

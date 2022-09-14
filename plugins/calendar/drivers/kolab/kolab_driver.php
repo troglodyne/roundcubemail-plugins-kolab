@@ -2304,7 +2304,6 @@ class kolab_driver extends calendar_driver
                 'attach'   => 'attachments',
                 'rrule'    => 'recurrence',
                 'transparency' => 'free_busy',
-                'classification' => 'sensitivity',
                 'lastmodified-date' => 'changed',
             ];
 

@@ -286,7 +286,7 @@ class calendar extends rcube_plugin
     /**
      * Get properties of the calendar this user has specified as default
      */
-    public function get_default_calendar($sensitivity = null, $calendars = null)
+    public function get_default_calendar($calendars = null)
     {
         if ($calendars === null) {
             $filter    = calendar_driver::FILTER_PERSONAL | calendar_driver::FILTER_WRITEABLE;
@@ -297,12 +297,8 @@ class calendar extends rcube_plugin
         $calendar   = !empty($calendars[$default_id]) ? $calendars[$default_id] : null;
         $first      = null;
 
-        if (!$calendar || $sensitivity) {
+        if (!$calendar) {
             foreach ($calendars as $cal) {
-                if ($sensitivity && !empty($cal['subtype']) && $cal['subtype'] == $sensitivity) {
-                    $calendar = $cal;
-                    break;
-                }
                 if (!empty($cal['default']) && $cal['editable']) {
                     $calendar = $cal;
                 }
@@ -2961,7 +2957,7 @@ $("#rcmfd_new_category").keypress(function(event) {
         }
 
         if (!empty($calendar_select)) {
-            $default_calendar   = $this->get_default_calendar($data['sensitivity'], $calendars);
+            $default_calendar   = $this->get_default_calendar($calendars);
             $response['select'] = html::span('folder-select', $this->gettext('saveincalendar')
                 . '&nbsp;'
                 . $calendar_select->show($is_shared ? $existing['calendar'] : $default_calendar['id'])
@@ -3095,7 +3091,7 @@ $("#rcmfd_new_category").keypress(function(event) {
                         $existing   = $this->driver->get_event($this->event);
 
                         // save the event to his/her default calendar if not yet present
-                        if (!$existing && ($calendar = $this->get_default_calendar($invitation['event']['sensitivity']))) {
+                        if (!$existing && ($calendar = $this->get_default_calendar())) {
                             $invitation['event']['calendar'] = $calendar['id'];
                             if ($this->driver->new_event($invitation['event'])) {
                                 $msg = $this->gettext(['name' => 'importedsuccessfully', 'vars' => ['calendar' => $calendar['name']]]);
@@ -3373,7 +3369,7 @@ $("#rcmfd_new_category").keypress(function(event) {
 
             // select default calendar except user explicitly selected 'none'
             if (!$calendar && !$dontsave) {
-                $calendar = $this->get_default_calendar($event['sensitivity'], $calendars);
+                $calendar = $this->get_default_calendar($calendars);
             }
 
             $metadata = [
@@ -3742,7 +3738,7 @@ $("#rcmfd_new_category").keypress(function(event) {
 
             foreach ($events as $event) {
                 // save to calendar
-                $calendar = !empty($calendars[$cal_id]) ? $calendars[$cal_id] : $this->get_default_calendar($event['sensitivity']);
+                $calendar = !empty($calendars[$cal_id]) ? $calendars[$cal_id] : $this->get_default_calendar();
                 if ($calendar && $calendar['editable'] && $event['_type'] == 'event') {
                     $event['calendar'] = $calendar['id'];
 

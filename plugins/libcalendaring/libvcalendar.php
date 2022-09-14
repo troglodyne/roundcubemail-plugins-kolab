@@ -541,11 +541,6 @@ class libvcalendar implements Iterator
                 }
                 break;
 
-            case 'CLASS':
-            case 'X-CALENDARSERVER-ACCESS':
-                $event['sensitivity'] = strtolower($value);
-                break;
-
             case 'X-MICROSOFT-CDO-BUSYSTATUS':
                 if ($value == 'OOF') {
                     $event['free_busy'] = 'outofoffice';
@@ -1173,9 +1168,6 @@ class libvcalendar implements Iterator
         else if (!empty($event['status'])) {
             $ve->add('STATUS', $event['status']);
         }
-
-        if (!empty($event['sensitivity']))
-            $ve->add('CLASS', strtoupper($event['sensitivity']));
 
         if (!empty($event['complete'])) {
             $ve->add('PERCENT-COMPLETE', intval($event['complete']));

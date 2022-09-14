@@ -68,7 +68,6 @@ function rcube_calendar_ui(settings)
     var count_sources = [];
     var event_sources = [];
     var exec_deferred = 1;
-    var sensitivitylabels = { 'public':rcmail.gettext('public','calendar'), 'private':rcmail.gettext('private','calendar'), 'confidential':rcmail.gettext('confidential','calendar') };
     var ui_loading = rcmail.set_busy(true, 'loading');
 
     // global fullcalendar settings
@@ -138,8 +137,7 @@ function rcube_calendar_ui(settings)
       // event rendering
       eventRender: function(event, element, view) {
         if (view.name != 'list') {
-          var prefix = event.sensitivity && event.sensitivity != 'public' ? String(sensitivitylabels[event.sensitivity]).toUpperCase()+': ' : '';
-          element.attr('title', prefix + event.title);
+          element.attr('title', event.title);
         }
         if (view.name != 'month') {
           if (view.name == 'list') {
@@ -152,8 +150,6 @@ function rcube_calendar_ui(settings)
             element.find('div.fc-title').after($('<div class="fc-event-location">').html('@&nbsp;' + Q(event.location)));
           }
           var time_element = element.find('div.fc-time');
-          if (event.sensitivity && event.sensitivity != 'public')
-            time_element.append('<i class="fc-icon-sensitive"></i>');
           if (event.recurrence)
             time_element.append('<i class="fc-icon-recurring"></i>');
           if (event.alarms || (event.valarms && event.valarms.length))
@@ -369,10 +365,10 @@ function rcube_calendar_ui(settings)
       if ($dialog.is(':ui-dialog'))
         $dialog.dialog('close');
 
-      // remove status-* and sensitivity-* classes
+      // remove status-* classes
       $dialog.removeClass(function(i, oldclass) {
           var oldies = String(oldclass).split(' ');
-          return $.grep(oldies, function(cls) { return cls.indexOf('status-') === 0 || cls.indexOf('sensitivity-') === 0 }).join(' ');
+          return $.grep(oldies, function(cls) { return cls.indexOf('status-') === 0; }).join(' ');
       });
 
       // convert start/end dates if not done yet by fullcalendar
@@ -413,11 +409,6 @@ function rcube_calendar_ui(settings)
         $('#event-status').show().find('.event-text').text(rcmail.gettext('status-'+status_lc,'calendar'));
         $('#event-status-badge > span').text(rcmail.gettext('status-'+status_lc,'calendar'));
         $dialog.addClass('status-'+status_lc);
-      }
-      if (event.sensitivity && event.sensitivity != 'public') {
-        $('#event-sensitivity').show().find('.event-text').text(sensitivitylabels[event.sensitivity]);
-        $('#event-status-badge > span').text(sensitivitylabels[event.sensitivity]);
-        $dialog.addClass('sensitivity-'+event.sensitivity);
       }
       if (event.created || event.changed) {
         var created = parseISO8601(event.created),
@@ -670,7 +661,6 @@ function rcube_calendar_ui(settings)
       var eventstatus = $('#edit-event-status').val(event.status);
       var freebusy = $('#edit-free-busy').val(event.free_busy);
       var priority = $('#edit-priority').val(event.priority);
-      var sensitivity = $('#edit-sensitivity').val(event.sensitivity);
       var syncstart = $('#edit-recurrence-syncstart input');
       var end = 'toDate' in event.end ? event.end : moment(event.end);
       var start = 'toDate' in event.start ? event.start : moment(event.start);
@@ -851,7 +841,6 @@ function rcube_calendar_ui(settings)
             vurl: vurl.val(),
             free_busy: freebusy.val(),
             priority: priority.val(),
-            sensitivity: sensitivity.val(),
             status: eventstatus.val(),
             recurrence: me.serialize_recurrence(endtime.val()),
             valarms: me.serialize_alarms('#edit-alarms'),

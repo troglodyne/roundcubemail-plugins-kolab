@@ -1972,7 +1972,7 @@ class tasklist extends rcube_plugin
     /**
      * Get properties of the tasklist this user has specified as default
      */
-    public function get_default_tasklist($sensitivity = null, $lists = null)
+    public function get_default_tasklist($lists = null)
     {
         if ($lists === null) {
             $lists = $this->driver->get_lists(tasklist_driver::FILTER_PERSONAL | tasklist_driver::FILTER_WRITEABLE);
@@ -1981,10 +1981,6 @@ class tasklist extends rcube_plugin
         $list = null;
 
         foreach ($lists as $l) {
-            if ($sensitivity && $l['subtype'] == $sensitivity) {
-                $list = $l;
-                break;
-            }
             if ($l['default']) {
                 $list = $l;
             }
@@ -2033,7 +2029,7 @@ class tasklist extends rcube_plugin
 
             foreach ($tasks as $task) {
                 // save to tasklist
-                $list   = $lists[$cal_id] ?: $this->get_default_tasklist($task['sensitivity']);
+                $list   = $lists[$cal_id] ?: $this->get_default_tasklist();
                 if ($list && $list['editable'] && $task['_type'] == 'task') {
                     $task = $this->from_ical($task);
                     $task['list'] = $list['id'];
@@ -2121,7 +2117,7 @@ class tasklist extends rcube_plugin
 
             // select default list except user explicitly selected 'none'
             if (!$list && !$dontsave) {
-                $list = $this->get_default_tasklist($task['sensitivity'], $lists);
+                $list = $this->get_default_tasklist($lists);
             }
 
             $metadata = array(
@@ -2382,7 +2378,7 @@ class tasklist extends rcube_plugin
         }
 
         if ($select) {
-            $default_list = $this->get_default_tasklist($data['sensitivity'], $lists);
+            $default_list = $this->get_default_tasklist($lists);
             $response['select'] = html::span('folder-select', $this->gettext('saveintasklist') . '&nbsp;' .
                 $select->show($is_shared ? $existing['list'] : $default_list['id']));
         }

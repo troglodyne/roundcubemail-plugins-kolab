@@ -657,8 +657,8 @@ class database_driver extends calendar_driver
         // compose vcalendar-style recurrencue rule from structured data
         $rrule = !empty($event['recurrence']) ? libcalendaring::to_rrule($event['recurrence']) : '';
 
-        $sensitivity = strtolower($event['sensitivity']);
-        $free_busy   = strtolower($event['free_busy']);
+        $sensitivity = isset($event['sensitivity']) ? strtolower($event['sensitivity']) : '';
+        $free_busy   = isset($event['free_busy']) ? strtolower($event['free_busy']) : '';
 
         $event['_recurrence'] = rtrim($rrule, ';');
         $event['free_busy']   = isset($this->free_busy_map[$free_busy]) ? $this->free_busy_map[$free_busy] : null;

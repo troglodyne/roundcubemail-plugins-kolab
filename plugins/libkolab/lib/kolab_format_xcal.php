@@ -34,12 +34,6 @@ abstract class kolab_format_xcal extends kolab_format
 
     protected $_scheduling_properties = null;
 
-    protected $sensitivity_map = array(
-        'public'       => kolabformat::ClassPublic,
-        'private'      => kolabformat::ClassPrivate,
-        'confidential' => kolabformat::ClassConfidential,
-    );
-
     protected $role_map = array(
         'REQ-PARTICIPANT' => kolabformat::Required,
         'OPT-PARTICIPANT' => kolabformat::Optional,
@@ -116,7 +110,6 @@ abstract class kolab_format_xcal extends kolab_format
         $object = parent::to_array($data);
 
         $status_map = array_flip($this->status_map);
-        $sensitivity_map = array_flip($this->sensitivity_map);
 
         $object += array(
             'sequence'    => intval($this->obj->sequence()),
@@ -125,7 +118,6 @@ abstract class kolab_format_xcal extends kolab_format
             'description' => $this->obj->description(),
             'url'         => $this->obj->url(),
             'status'      => $status_map[$this->obj->status()],
-            'sensitivity' => $sensitivity_map[$this->obj->classification()],
             'priority'    => $this->obj->priority(),
             'categories'  => self::vector2array($this->obj->categories()),
             'start'       => self::php_datetime($this->obj->start()),
@@ -356,7 +348,6 @@ abstract class kolab_format_xcal extends kolab_format
         $this->obj->setLocation($object['location']);
         $this->obj->setDescription($object['description']);
         $this->obj->setPriority($object['priority']);
-        $this->obj->setClassification($this->sensitivity_map[$object['sensitivity']]);
         $this->obj->setCategories(self::array2vector($object['categories']));
         $this->obj->setUrl(strval($object['url']));
 

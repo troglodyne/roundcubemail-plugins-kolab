@@ -680,7 +680,6 @@ class libcalendaring_itip
             $emails = $this->lib->get_user_emails();
             $title = $event['sequence'] > 0 ? $this->gettext('itipupdate') : $this->gettext('itipinvitation');
             $metadata['rsvp'] = true;
-            $metadata['sensitivity'] = $event['sensitivity'];
 
             if (is_object($event['start'])) {
                 $metadata['date'] = $event['start']->format('U');
@@ -926,10 +925,6 @@ class libcalendaring_itip
         if (isset($event['location']) && ($location = trim($event['location']))) {
             $table->add('label', $this->gettext('location'));
             $table->add('location', rcube::Q($location));
-        }
-        if (($sensitivity = trim($event['sensitivity'])) && !preg_match('/^(x-|public$)/i', $sensitivity)) {
-            $table->add('label', $this->gettext('sensitivity'));
-            $table->add('sensitivity', ucfirst($this->gettext($sensitivity)) . '!');
         }
         if (!empty($event['status']) && ($event['status'] == 'COMPLETED' || $event['status'] == 'CANCELLED')) {
             $table->add('label', $this->gettext('status'));
