@@ -1063,6 +1063,7 @@ $("#rcmfd_new_category").keypress(function(event) {
 
                 $this->cleanup_event($event);
                 $this->event_save_success($event, null, $action, true);
+                $this->talk_room_update($event);
             }
 
             $reload = $success && !empty($event['recurrence']) ? 2 : 1;
@@ -1075,6 +1076,7 @@ $("#rcmfd_new_category").keypress(function(event) {
             else if ($success = $this->driver->edit_event($event)) {
                 $this->cleanup_event($event);
                 $this->event_save_success($event, $old, $action, $success);
+                $this->talk_room_update($event);
             }
 
             $reload = $success && (!empty($event['recurrence']) || !empty($event['_savemode']) || !empty($event['_fromcalendar'])) ? 2 : 1;
@@ -3892,6 +3894,44 @@ $("#rcmfd_new_category").keypress(function(event) {
         }
         else {
             $this->rc->output->command('display_message', $this->gettext('talkroomcreateerror'), 'error');
+        }
+    }
+
+    /**
+     * Update a Nextcould Talk room
+     */
+    public function talk_room_update($event)
+    {
+        // If a room is assigned to the event...
+        if (
+            ($talk_url = $this->rc->config->get('calendar_nextcloud_url'))
+            && isset($event['attendees'])
+            && !empty($event['location'])
+            && strpos($event['location'], unslashify($talk_url) . '/call/') === 0
+        ) {
+            $participants = [];
+            $organizer = null;
+
+            // ollect participants' and organizer's email addresses
+            foreach ($event['attendees'] as $attendee) {
+                if (!empty($attendee['email'])) {
+                    if ($attendee['role'] == 'ORGANIZER') {
+                        $organizer = $attendee['email'];
+                    }
+                    else if ($attendee['cutype'] == 'INDIVIDUAL') {
+                        $participants[] = $attendee['email'];
+                    }
+                }
+            }
+
+            // If the event is owned by the current user update the room
+            if ($organizer && in_array($organizer, $this->get_user_emails())) {
+                require_once __DIR__ . '/lib/calendar_nextcloud_api.php';
+
+                $api = new calendar_nextcloud_api();
+
+                $api->talk_room_update($event['location'], $participants);
+            }
         }
     }
 

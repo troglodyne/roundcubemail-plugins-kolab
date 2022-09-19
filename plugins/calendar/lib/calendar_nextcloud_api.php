@@ -23,6 +23,14 @@
 class calendar_nextcloud_api
 {
 
+    const PARTICIPANT_OWNER             = 1;
+    const PARTICIPANT_MODERATOR         = 2;
+    const PARTICIPANT_USER              = 3;
+    const PARTICIPANT_GUEST             = 4;
+    const PARTICIPANT_PUBLIC            = 5;
+    const PARTICIPANT_GUEST_MODERATOR   = 6;
+
+
     /**
      * Make a request to the Nextcloud API
      *
@@ -56,14 +64,23 @@ class calendar_nextcloud_api
             ]);
 
             if (!empty($params)) {
-                $request->addPostParameter($params);
+                if ($method == 'POST') {
+                    $request->addPostParameter($params);
+                }
+                else {
+                    $request->setUrl($url . '?' . http_build_query($params));
+                }
             }
+
+            // rcube::console($method . ": " . (string) $request->getUrl());
 
             // Send the request
             $response = $request->send();
 
             $body = $response->getBody();
             $code = $response->getStatus();
+
+            // rcube::console($code, $body);
 
             if ($code < 400) {
                 return json_decode($body, true);
@@ -89,7 +106,38 @@ class calendar_nextcloud_api
     }
 
     /**
+     * Find user by email address
+     */
+    protected function findUserByEmail($email)
+    {
+        $email = strtolower($email);
+        $params = [
+            'search' => $email,
+            'itemType' => 'call',
+            'itemId' => ' ',
+            'shareTypes' => [0, 1, 7, 4],
+        ];
+
+        // FIXME: Is this the only way to find a user by his email address?
+        $response = $this->request("core/autocomplete/get", 'GET', $params);
+
+        if (!empty($response['ocs']['data'])) {
+            foreach ($response['ocs']['data'] as $user) {
+                // FIXME: This is the only field that contains email address?
+                // Note: A Nextcloud contact (the "emails" source) will have an email address in
+                // the 'id' attribute instead in 'shareWithDisplayNameUnique'.
+                // Another option might be to parse 'label' attribute
+                if (strtolower($user['shareWithDisplayNameUnique']) == $email) {
+                    return $user;
+                }
+            }
+        }
+    }
+
+    /**
      * Create a Talk room
+     *
+     * @param string $name Room name
      *
      * @return string|false Room URL
      */
@@ -105,10 +153,66 @@ class calendar_nextcloud_api
         $response = $this->request('apps/spreed/api/v4/room', 'POST', $params);
 
         if (is_array($response) && !empty($response['ocs']['data']['token'])) {
+            $token = $response['ocs']['data']['token'];
             $url = unslashify($rcmail->config->get('calendar_nextcloud_url'));
-            return $url . '/call/' . $response['ocs']['data']['token'];
+
+            return $url . '/call/' . $token;
         }
 
         return false;
+    }
+
+    /**
+     * Update a Talk room
+     *
+     * @param string $room         Room ID (or url)
+     * @param array  $participants Room participants' email addresses (extept the owner)
+     *
+     * @return bool
+     */
+    public function talk_room_update($room = '', $participants = [])
+    {
+        if (preg_match('|https?://|', $room)) {
+            $arr = explode('/', $room);
+            $room = $arr[count($arr) - 1];
+        }
+
+        // Get existing room participants
+        $response = $this->request("apps/spreed/api/v4/room/{$room}/participants", 'GET');
+
+        if ($response === false) {
+            return false;
+        }
+
+        $attendees = [];
+        foreach ($response['ocs']['data'] as $attendee) {
+            if ($attendee['participantType'] != self::PARTICIPANT_OWNER) {
+                $attendees[$attendee['actorId']] = $attendee['attendeeId'];
+            }
+        }
+
+        foreach ($participants as $email) {
+            if ($user = $this->findUserByEmail($email)) {
+                // Participant already exists, skip
+                // Note: We're dealing with 'users' source here for now, 'emails' source
+                // will have an email address in 'actorId'
+                if (isset($attendees[$user['id']])) {
+                    unset($attendees[$user['id']]);
+                    continue;
+                }
+
+                // Register the participant
+                $params = ['newParticipant' => $user['id'], 'source' => $user['source']];
+                $response = $this->request("apps/spreed/api/v4/room/{$room}/participants", 'POST', $params);
+            }
+        }
+
+        // Remove participants not in the event anymore
+        foreach ($attendees as $attendeeId) {
+            $params = ['attendeeId' => $attendeeId];
+            $response = $this->request("apps/spreed/api/v4/room/{$room}/attendees", 'DELETE', $params);
+        }
+
+        return true;
     }
 }
