@@ -79,18 +79,16 @@ class kolab_storage_dataset implements Iterator, ArrayAccess, Countable
 
     public function offsetSet($offset, $value)
     {
-        $uid = $value['_msguid'];
+        $uid = !empty($value['_msguid']) ? $value['_msguid'] : $value['uid'];
 
         if (is_null($offset)) {
             $offset = count($this->index);
-            $this->index[] = $uid;
-        }
-        else {
-            $this->index[$offset] = $uid;
         }
 
+        $this->index[$offset] = $uid;
+
         // keep full payload data in memory if possible
-        if ($this->memlimit && $this->buffer && isset($value['_mailbox'])) {
+        if ($this->memlimit && $this->buffer) {
             $this->data[$offset] = $value;
 
             // check memory usage and stop buffering
@@ -115,8 +113,9 @@ class kolab_storage_dataset implements Iterator, ArrayAccess, Countable
         if (isset($this->data[$offset])) {
             return $this->data[$offset];
         }
-        else if ($msguid = $this->index[$offset]) {
-            return $this->cache->get($msguid);
+
+        if ($uid = $this->index[$offset]) {
+            return $this->cache->get($uid);
         }
 
         return null;

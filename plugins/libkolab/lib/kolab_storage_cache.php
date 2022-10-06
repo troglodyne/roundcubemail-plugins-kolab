@@ -101,8 +101,8 @@ class kolab_storage_cache
      */
     public function select_by_id($folder_id)
     {
-        $sql_arr = $this->db->fetch_assoc($this->db->query("SELECT * FROM `{$this->folders_table}` WHERE `folder_id` = ?", $folder_id));
-        if ($sql_arr) {
+        $query = $this->db->query("SELECT * FROM `{$this->folders_table}` WHERE `folder_id` = ?", $folder_id);
+        if ($sql_arr = $this->db->fetch_assoc($query)) {
             $this->metadata = $sql_arr;
             $this->folder_id = $sql_arr['folder_id'];
             $this->folder = new StdClass;
