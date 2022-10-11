@@ -158,7 +158,7 @@ class caldav_calendar extends kolab_storage_dav_folder
 
         // directly access storage object
         if (empty($this->events[$id]) && $master_id == $id && ($record = $this->storage->get_object($id))) {
-            $this->events[$id] = $this->_to_driver_event($record, true);
+            $this->events[$id] = $record = $this->_to_driver_event($record, true);
         }
 
         // maybe a recurring instance is requested
@@ -166,10 +166,10 @@ class caldav_calendar extends kolab_storage_dav_folder
             $instance_id = substr($id, strlen($master_id) + 1);
 
             if ($record = $this->storage->get_object($master_id)) {
-                $master = $this->_to_driver_event($record);
+                $master = $record = $this->_to_driver_event($record);
             }
 
-            if ($master) {
+            if (!empty($master)) {
                 // check for match in top-level exceptions (aka loose single occurrences)
                 if (!empty($master['_formatobj']) && ($instance = $master['_formatobj']->get_instance($instance_id))) {
                     $this->events[$id] = $this->_to_driver_event($instance, false, true, $master);
@@ -695,7 +695,7 @@ class caldav_calendar extends kolab_storage_dav_folder
 
                 if ($exception) {
                     // copy data from exception
-                    colab_driver::merge_exception_data($rec_event, $exception);
+                    caldav_driver::merge_exception_data($rec_event, $exception);
                 }
 
                 $rec_event['id'] = $rec_id;
@@ -776,7 +776,7 @@ class caldav_calendar extends kolab_storage_dav_folder
         // TODO: Drop dependency on libkolabxml?
         $event_xml = new kolab_format_event();
         $event_xml->set($record);
-        $event['_formatobj'] = $event_xml;
+        $record['_formatobj'] = $event_xml;
 
         return $record;
     }

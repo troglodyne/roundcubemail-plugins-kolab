@@ -23,8 +23,9 @@
 
 class kolab_storage_dav_cache_event extends kolab_storage_dav_cache
 {
-    protected $extra_cols = array('dtstart','dtend');
-    protected $data_props = array('categories', 'status', 'attendees', 'etag');
+    protected $extra_cols = ['dtstart','dtend'];
+    protected $data_props = ['categories', 'status', 'attendees'];
+    protected $fulltext_cols = ['title', 'description', 'location', 'attendees:name', 'attendees:email', 'categories'];
 
     /**
      * Helper method to convert the given Kolab object into a dataset to be written to cache
@@ -63,6 +64,83 @@ class kolab_storage_dav_cache_event extends kolab_storage_dav_cache
             }
         }
 
+        $sql_data['tags']  = ' ' . join(' ', $this->get_tags($object)) . ' ';  // pad with spaces for strict/prefix search
+        $sql_data['words'] = ' ' . join(' ', $this->get_words($object)) . ' ';
+
         return $sql_data;
+    }
+
+    /**
+     * Callback to get words to index for fulltext search
+     *
+     * @return array List of words to save in cache
+     */
+    public function get_words($object = [])
+    {
+        $data = '';
+
+        foreach ($this->fulltext_cols as $colname) {
+            list($col, $field) = explode(':', $colname);
+
+            if ($field) {
+                $a = [];
+                foreach ((array) $object[$col] as $attr) {
+                    $a[] = $attr[$field];
+                }
+                $val = join(' ', $a);
+            }
+            else {
+                $val = is_array($object[$col]) ? join(' ', $object[$col]) : $object[$col];
+            }
+
+            if (strlen($val))
+                $data .= $val . ' ';
+        }
+
+        $words = rcube_utils::normalize_string($data, true);
+
+        // collect words from recurrence exceptions
+        if (is_array($object['exceptions'])) {
+            foreach ($object['exceptions'] as $exception) {
+                $words = array_merge($words, $this->get_words($exception));
+            }
+        }
+
+        return array_unique($words);
+    }
+
+    /**
+     * Callback to get object specific tags to cache
+     *
+     * @return array List of tags to save in cache
+     */
+    public function get_tags($object)
+    {
+        $tags = [];
+
+        if (!empty($object['valarms'])) {
+            $tags[] = 'x-has-alarms';
+        }
+
+        // create tags reflecting participant status
+        if (is_array($object['attendees'])) {
+            foreach ($object['attendees'] as $attendee) {
+                if (!empty($attendee['email']) && !empty($attendee['status']))
+                    $tags[] = 'x-partstat:' . $attendee['email'] . ':' . strtolower($attendee['status']);
+            }
+        }
+
+        // collect tags from recurrence exceptions
+        if (is_array($object['exceptions'])) {
+            foreach ($object['exceptions'] as $exception) {
+                $tags = array_merge($tags, $this->get_tags($exception));
+            }
+        }
+
+        if (!empty($object['status'])) {
+          $tags[] = 'x-status:' . strtolower($object['status']);
+        }
+
+        return array_unique($tags);
     }
 }

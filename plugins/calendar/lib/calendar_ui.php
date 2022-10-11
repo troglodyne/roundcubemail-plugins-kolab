@@ -381,15 +381,17 @@ class calendar_ui
                     );
                 }
 
-                $content .= html::tag('input', [
-                        'type'    => 'checkbox',
-                        'name'    => '_cal[]',
-                        'value'   => $id,
-                        'checked' => !empty($prop['active']),
-                        'aria-labelledby' => $label_id
-                    ])
-                    . html::span('actions', $actions)
-                    . html::span(['class' => 'handle', 'style' => "background-color: #$color"], '&nbsp;');
+                if (!isset($prop['subscriptions']) || $prop['subscriptions'] !== false) {
+                    $content .= html::tag('input', [
+                            'type'    => 'checkbox',
+                            'name'    => '_cal[]',
+                            'value'   => $id,
+                            'checked' => !empty($prop['active']),
+                            'aria-labelledby' => $label_id
+                        ])
+                        . html::span('actions', $actions)
+                        . html::span(['class' => 'handle', 'style' => "background-color: #$color"], '&nbsp;');
+                }
             }
 
             $content = html::div(join(' ', $classes), $content);

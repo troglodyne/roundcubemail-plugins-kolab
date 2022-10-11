@@ -111,6 +111,11 @@ class kolab_storage_dav_folder extends kolab_storage_folder
         return $this->attributes['name'];
     }
 
+    public function get_folder_info()
+    {
+        return []; // todo ?
+    }
+
     /**
      * Getter for parent folder path
      *
@@ -400,12 +405,15 @@ class kolab_storage_dav_folder extends kolab_storage_folder
 
         // generate and save object message
         if ($content = $this->to_dav($object)) {
-            $result = $this->dav->create($this->object_location($object['uid']), $content);
+            $method = $uid ? 'update' : 'create';
+            $result = $this->dav->{$method}($this->object_location($object['uid']), $content);
 
+            // Note: $result can be NULL if the request was successful, but ETag wasn't returned
             if ($result !== false) {
                 // insert/update object in the cache
                 $object['etag'] = $result;
                 $this->cache->save($object, $uid);
+                $result = true;
             }
         }
 
@@ -427,7 +435,7 @@ class kolab_storage_dav_folder extends kolab_storage_folder
         }
 
         $href = $this->object_location($uid);
-        $objects = $this->dav->getData($this->href, [$href]);
+        $objects = $this->dav->getData($this->href, $this->get_dav_type(), [$href]);
 
         if (!is_array($objects) || count($objects) != 1) {
             rcube::raise_error([
@@ -476,7 +484,11 @@ class kolab_storage_dav_folder extends kolab_storage_folder
 
         if ($this->type == 'event') {
             $ical = libcalendaring::get_ical();
-            // TODO: Attachments?
+
+            if (!empty($object['exceptions'])) {
+                $object['recurrence']['EXCEPTIONS'] = $object['exceptions'];
+            }
+
             $result = $ical->export([$object]);
         }
 

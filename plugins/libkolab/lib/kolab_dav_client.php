@@ -176,7 +176,7 @@ class kolab_dav_client
     }
 
     /**
-     * Create DAV object in a folder
+     * Create a DAV object in a folder
      */
     public function create($location, $content)
     {
@@ -196,7 +196,15 @@ class kolab_dav_client
     }
 
     /**
-     * Delete DAV object from a folder
+     * Update a DAV object in a folder
+     */
+    public function update($location, $content)
+    {
+        return $this->create($location, $content);
+    }
+
+    /**
+     * Delete a DAV object from a folder
      */
     public function delete($location)
     {
@@ -210,17 +218,32 @@ class kolab_dav_client
      */
     public function getIndex($location, $component = 'VEVENT')
     {
+        $queries = [
+            'VEVENT' => 'calendar-query',
+            'VTODO' => 'calendar-query',
+            'VCARD' => 'addressbook-query',
+        ];
+
+        $ns = [
+            'VEVENT' => 'caldav',
+            'VTODO' => 'caldav',
+            'VCARD' => 'carddav',
+        ];
+
+        $filter = '';
+        if ($component != 'VCARD') {
+            $filter = '<c:comp-filter name="VCALENDAR">'
+                    . '<c:comp-filter name="' . $component . '" />'
+                . '</c:comp-filter>';
+        }
+
         $body = '<?xml version="1.0" encoding="utf-8"?>'
-            .' <c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">'
+            .' <c:' . $queries[$component] . ' xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:' . $ns[$component]. '">'
                 . '<d:prop>'
                     . '<d:getetag />'
                 . '</d:prop>'
-                . '<c:filter>'
-                    . '<c:comp-filter name="VCALENDAR">'
-                        . '<c:comp-filter name="' . $component . '" />'
-                    . '</c:comp-filter>'
-                . '</c:filter>'
-            . '</c:calendar-query>';
+                . ($filter ? "<c:filter>$filter</c:filter>" : '')
+            . '</c:' . $queries[$component] . '>';
 
         $response = $this->request($location, 'REPORT', $body, ['Depth' => 1, 'Prefer' => 'return-minimal']);
 
@@ -240,7 +263,7 @@ class kolab_dav_client
     /**
      * Fetch DAV objects data from a folder
      */
-    public function getData($location, $hrefs = [])
+    public function getData($location, $component = 'VEVENT', $hrefs = [])
     {
         if (empty($hrefs)) {
             return [];
@@ -251,14 +274,32 @@ class kolab_dav_client
             $body .= '<d:href>' . $href . '</d:href>';
         }
 
+        $queries = [
+            'VEVENT' => 'calendar-multiget',
+            'VTODO' => 'calendar-multiget',
+            'VCARD' => 'addressbook-multiget',
+        ];
+
+        $ns = [
+            'VEVENT' => 'caldav',
+            'VTODO' => 'caldav',
+            'VCARD' => 'carddav',
+        ];
+
+        $types = [
+            'VEVENT' => 'calendar-data',
+            'VTODO' => 'calendar-data',
+            'VCARD' => 'address-data',
+        ];
+
         $body = '<?xml version="1.0" encoding="utf-8"?>'
-            .' <c:calendar-multiget xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">'
+            .' <c:' . $queries[$component] . ' xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:' . $ns[$component] . '">'
                 . '<d:prop>'
                     . '<d:getetag />'
-                    . '<c:calendar-data />'
+                    . '<c:' . $types[$component]. ' />'
                 . '</d:prop>'
                 . $body
-            . '</c:calendar-multiget>';
+            . '</c:' . $queries[$component] . '>';
 
         $response = $this->request($location, 'REPORT', $body, ['Depth' => 1, 'Prefer' => 'return-minimal']);
 
@@ -386,6 +427,9 @@ class kolab_dav_client
         }
 
         if ($data = $element->getElementsByTagName('calendar-data')->item(0)) {
+            $data = $data->nodeValue;
+        }
+        else if ($data = $element->getElementsByTagName('address-data')->item(0)) {
             $data = $data->nodeValue;
         }
 

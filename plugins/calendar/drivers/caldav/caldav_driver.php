@@ -184,6 +184,9 @@ class caldav_driver extends kolab_driver
                     'active'    => $cal->is_active(),
                     'owner'     => $cal->get_owner(),
                     'removable' => !$cal->default,
+                    // extras to hide some elements in the UI
+                    'subscriptions' => false,
+                    'driver' => 'caldav',
                 ];
 
                 if (!$is_user) {
@@ -274,7 +277,7 @@ class caldav_driver extends kolab_driver
     {
         $this->_read_calendars();
 
-        // create calendar object if necesary
+        // create calendar object if necessary
         if (empty($this->calendars[$id])) {
             if (in_array($id, [self::INVITATIONS_CALENDAR_PENDING, self::INVITATIONS_CALENDAR_DECLINED])) {
                 return new caldav_invitation_calendar($id, $this->cal);

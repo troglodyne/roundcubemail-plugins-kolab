@@ -233,18 +233,14 @@ class kolab_storage_dav_cache extends kolab_storage_cache
     {
         // read cache index
         $sql_result = $this->db->query(
-            "SELECT `uid`, `data` FROM `{$this->cache_table}` WHERE `folder_id` = ?",
+            "SELECT `uid`, `etag` FROM `{$this->cache_table}` WHERE `folder_id` = ?",
             $this->folder_id
         );
 
         $index = [];
 
-        // TODO: Store etag as a separate column
-
         while ($sql_arr = $this->db->fetch_assoc($sql_result)) {
-            if ($object = json_decode($sql_arr['data'], true)) {
-                $index[$sql_arr['uid']] = $object['etag'];
-            }
+            $index[$sql_arr['uid']] = $sql_arr['etag'];
         }
 
         return $index;
@@ -321,9 +317,10 @@ class kolab_storage_dav_cache extends kolab_storage_cache
             $sql_data              = $this->_serialize($object);
             $sql_data['folder_id'] = $this->folder_id;
             $sql_data['uid']       = $object['uid'];
+            $sql_data['etag']      = $object['etag'];
 
             $args = [];
-            $cols = ['folder_id', 'uid', 'changed', 'data', 'tags', 'words'];
+            $cols = ['folder_id', 'uid', 'etag', 'changed', 'data', 'tags', 'words'];
             $cols = array_merge($cols, $this->extra_cols);
 
             foreach ($cols as $idx => $col) {
@@ -510,7 +507,7 @@ class kolab_storage_dav_cache extends kolab_storage_cache
         static $buffer = '';
 
         $line = '';
-        $cols = ['folder_id', 'uid', 'created', 'changed', 'data', 'tags', 'words'];
+        $cols = ['folder_id', 'uid', 'etag', 'created', 'changed', 'data', 'tags', 'words'];
         if ($this->extra_cols) {
             $cols = array_merge($cols, $this->extra_cols);
         }
@@ -522,7 +519,7 @@ class kolab_storage_dav_cache extends kolab_storage_cache
             // In Oracle we can't put long data inline, others we don't support yet
             if (strpos($this->db->db_provider, 'mysql') !== 0) {
                 $extra_args = [];
-                $params = [$this->folder_id, $object['uid'], $sql_data['changed'],
+                $params = [$this->folder_id, $object['uid'], $object['etag'], $sql_data['changed'],
                     $sql_data['data'], $sql_data['tags'], $sql_data['words']];
 
                 foreach ($this->extra_cols as $col) {
@@ -551,6 +548,7 @@ class kolab_storage_dav_cache extends kolab_storage_cache
             $values = array(
                 $this->db->quote($this->folder_id),
                 $this->db->quote($object['uid']),
+                $this->db->quote($object['etag']),
                 $this->db->now(),
                 $this->db->quote($sql_data['changed']),
                 $this->db->quote($sql_data['data']),
@@ -590,8 +588,6 @@ class kolab_storage_dav_cache extends kolab_storage_cache
     protected function _unserialize($sql_arr)
     {
         if ($sql_arr['fast-mode'] && !empty($sql_arr['data']) && ($object = json_decode($sql_arr['data'], true))) {
-            $object['uid'] = $sql_arr['uid'];
-
             foreach ($this->data_props as $prop) {
                 if (isset($object[$prop]) && is_array($object[$prop]) && $object[$prop]['cl'] == 'DateTime') {
                     $object[$prop] = new DateTime($object[$prop]['dt'], new DateTimeZone($object[$prop]['tz']));
@@ -610,6 +606,8 @@ class kolab_storage_dav_cache extends kolab_storage_cache
             }
 
             $object['_type'] = $sql_arr['type'] ?: $this->folder->type;
+            $object['uid']   = $sql_arr['uid'];
+            $object['etag']  = $sql_arr['etag'];
         }
         // Fetch a complete object from the server
         else {

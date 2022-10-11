@@ -944,7 +944,7 @@ class kolab_storage
      * Wrapper for rcube_imap::list_folders_subscribed()
      * with support for temporarily subscribed folders
      */
-    protected static function _imap_list_subscribed($root, $mbox)
+    protected static function _imap_list_subscribed($root, $mbox, $filter = null)
     {
         $folders = self::$imap->list_folders_subscribed($root, $mbox);
 

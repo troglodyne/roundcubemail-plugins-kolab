@@ -48,12 +48,13 @@ class kolab_addressbook extends rcube_plugin
      */
     public function init()
     {
-        require_once(dirname(__FILE__) . '/lib/rcube_kolab_contacts.php');
-
         $this->rc = rcube::get_instance();
 
         // load required plugin
         $this->require_plugin('libkolab');
+
+        $driver = $this->rc->config->get('kolab_addressbook_driver') ?: 'kolab';
+        require_once(dirname(__FILE__) . '/lib/rcube_' . $driver . '_contacts.php');
 
         // register hooks
         $this->add_hook('addressbooks_list', array($this, 'address_sources'));

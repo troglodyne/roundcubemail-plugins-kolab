@@ -61,8 +61,14 @@ class kolab_storage_dav
      */
     public function get_folders($type)
     {
+        $davTypes = [
+            'event' => 'VEVENT',
+            'task'  => 'VTODO',
+            'contact' => 'VCARD',
+        ];
+
         // TODO: This should be cached
-        $folders = $this->dav->discover();
+        $folders = $this->dav->discover($davTypes[$type]);
 
         if (is_array($folders)) {
             foreach ($folders as $idx => $folder) {
@@ -88,7 +94,7 @@ class kolab_storage_dav
     /**
      * Getter for a specific storage folder
      *
-     * @param string Folder to access (UTF7-IMAP)
+     * @param string Folder to access
      * @param string Expected folder type
      *
      * @return object kolab_storage_folder The folder object
