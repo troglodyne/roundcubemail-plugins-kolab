@@ -25,6 +25,8 @@ class kolab_dav_client
 {
     public $url;
 
+    protected $user;
+    protected $password;
     protected $rc;
     protected $responseHeaders = [];
 
@@ -33,8 +35,22 @@ class kolab_dav_client
      */
     public function __construct($url)
     {
-        $this->url = $url;
         $this->rc = rcube::get_instance();
+
+        $parsedUrl = parse_url($url);
+
+        if (!empty($parsedUrl['user']) && !empty($parsedUrl['pass'])) {
+            $this->user     = rawurldecode($parsedUrl['user']);
+            $this->password = rawurldecode($parsedUrl['pass']);
+
+            $url = str_replace(rawurlencode($this->user) . ':' . rawurlencode($this->password) . '@', '', $url);
+        }
+        else {
+            $this->user     = $this->rc->user->get_username();
+            $this->password = $this->rc->decrypt($_SESSION['password']);
+        }
+
+        $this->url = $url;
     }
 
     /**
@@ -60,7 +76,7 @@ class kolab_dav_client
 
             $request = $this->initRequest($this->url . $path, $method, $request_config);
 
-            $request->setAuth($this->rc->user->get_username(), $this->rc->decrypt($_SESSION['password']));
+            $request->setAuth($this->user, $this->password);
 
             if ($body) {
                 $request->setBody($body);
@@ -144,7 +160,7 @@ class kolab_dav_client
             'VCARD' => 'addressbooks',
         ];
 
-        $principal_href = '/' . $roots[$component] . '/' . $this->rc->user->get_username();
+        $principal_href = '/' . $roots[$component] . '/' . rawurlencode($this->user);
 
         $body = '<?xml version="1.0" encoding="utf-8"?>'
             . '<d:propfind xmlns:d="DAV:" xmlns:cs="http://calendarserver.org/ns/" xmlns:c="urn:ietf:params:xml:ns:caldav" xmlns:a="http://apple.com/ns/ical/">'
@@ -470,8 +486,10 @@ class kolab_dav_client
             $http_config = array_merge($http_config, $config);
         }
 
-        // load HTTP_Request2
-        require_once 'HTTP/Request2.php';
+        // load HTTP_Request2 (support both composer-installed and system-installed package)
+        if (!class_exists('HTTP_Request2')) {
+            require_once 'HTTP/Request2.php';
+        }
 
         try {
             $request = new HTTP_Request2();

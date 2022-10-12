@@ -1,10 +1,3 @@
-/**
- * libkolab database schema
- *
- * @author Thomas Bruederli
- * @licence GNU AGPL
- */
-
 SET FOREIGN_KEY_CHECKS=0;
 
 DROP TABLE IF EXISTS `kolab_folders`;

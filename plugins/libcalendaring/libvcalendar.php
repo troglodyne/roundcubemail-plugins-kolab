@@ -1353,6 +1353,9 @@ class libvcalendar implements Iterator
                 if (!empty($ex['thisandfuture'])) {
                     $recurrence_id->add('RANGE', 'THISANDFUTURE');
                 }
+
+                $ex['uid'] = $ve->UID;
+
                 $this->_to_ical($ex, $vcal, $get_attachment, $recurrence_id);
             }
         }

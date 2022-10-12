@@ -42,8 +42,8 @@ class kolab_storage_dav_folder extends kolab_storage_folder
         $this->valid = true;
 
         list($this->type, $suffix) = explode('.', $type_annotation);
-        $this->default      = $suffix == 'default';
-        $this->subtype      = $this->default ? '' : $suffix;
+        $this->default = $suffix == 'default';
+        $this->subtype = $this->default ? '' : $suffix;
 
         // Init cache
         $this->cache = kolab_storage_dav_cache::factory($this);
@@ -139,6 +139,11 @@ class kolab_storage_dav_folder extends kolab_storage_folder
         // compose fully qualified ressource uri for this instance
         $host = preg_replace('|^https?://|', 'dav://' . urlencode($this->get_owner(true)) . '@', $this->dav->url);
         $path = $this->href[0] == '/' ? $this->href : "/{$this->href}";
+
+        $host_path = parse_url($host, PHP_URL_PATH);
+        if ($host_path && strpos($path, $host_path) === 0) {
+            $path = substr($path, strlen($host_path));
+        }
 
         $this->resource_uri = unslashify($host) . $path;
 
@@ -425,16 +430,17 @@ class kolab_storage_dav_folder extends kolab_storage_folder
      *
      * @param string The object UID to fetch
      * @param string The object type expected (use wildcard '*' to accept all types)
+     * @param string Unused (kept for compat. with the parent class)
      *
      * @return mixed Hash array representing the Kolab object, a kolab_format instance or false if not found
      */
-    public function read_object($uid, $type = null)
+    public function read_object($uid, $type = null, $folder = null)
     {
         if (!$this->valid) {
             return false;
         }
 
-        $href = $this->object_location($uid);
+        $href    = $this->object_location($uid);
         $objects = $this->dav->getData($this->href, $this->get_dav_type(), [$href]);
 
         if (!is_array($objects) || count($objects) != 1) {
@@ -484,7 +490,6 @@ class kolab_storage_dav_folder extends kolab_storage_folder
 
         if ($this->type == 'event') {
             $ical = libcalendaring::get_ical();
-
             if (!empty($object['exceptions'])) {
                 $object['recurrence']['EXCEPTIONS'] = $object['exceptions'];
             }

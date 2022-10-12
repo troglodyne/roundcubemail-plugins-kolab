@@ -1,10 +1,3 @@
-/**
- * libkolab database schema
- *
- * @author Thomas Bruederli
- * @licence GNU AGPL
- */
-
 CREATE TABLE kolab_folders (
   folder_id INTEGER NOT NULL PRIMARY KEY,
   resource VARCHAR(255) NOT NULL,

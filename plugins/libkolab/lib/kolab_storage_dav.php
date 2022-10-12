@@ -227,7 +227,7 @@ class kolab_storage_dav
      *
      * @return string Name of the folder-object
      */
-    public function object_name($folder, &$folder_ns = null)
+    public static function object_name($folder, &$folder_ns = null)
     {
         // TODO: Shared folders
         $folder_ns = 'personal';

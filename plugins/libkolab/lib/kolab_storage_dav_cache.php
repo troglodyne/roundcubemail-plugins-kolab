@@ -138,7 +138,7 @@ class kolab_storage_dav_cache extends kolab_storage_cache
         // Determine objects to fetch or delete
         $new_index    = [];
         $update_index = [];
-        $old_index    = $this->current_index(); // uid -> etag
+        $old_index    = $this->folder_index(); // uid -> etag
         $chunk_size   = 20; // max numer of objects per DAV request
 
         foreach ($dav_index as $object) {
@@ -162,7 +162,7 @@ class kolab_storage_dav_cache extends kolab_storage_cache
         // Fetch new objects and store in DB
         if (!empty($new_index)) {
             foreach (array_chunk($new_index, $chunk_size, true) as $chunk) {
-                $objects = $this->folder->dav->getData($this->folder->href, $chunk);
+                $objects = $this->folder->dav->getData($this->folder->href, $this->folder->get_dav_type(), $chunk);
 
                 if (!is_array($objects)) {
                     rcube::raise_error([
@@ -190,7 +190,7 @@ class kolab_storage_dav_cache extends kolab_storage_cache
         // Fetch updated objects and store in DB
         if (!empty($update_index)) {
             foreach (array_chunk($update_index, $chunk_size, true) as $chunk) {
-                $objects = $this->folder->dav->getData($this->folder->href, $chunk);
+                $objects = $this->folder->dav->getData($this->folder->href, $this->folder->get_dav_type(), $chunk);
 
                 if (!is_array($objects)) {
                     rcube::raise_error([
@@ -229,7 +229,7 @@ class kolab_storage_dav_cache extends kolab_storage_cache
     /**
      * Return current folder index (uid -> etag)
      */
-    protected function current_index()
+    protected function folder_index()
     {
         // read cache index
         $sql_result = $this->db->query(
@@ -251,8 +251,9 @@ class kolab_storage_dav_cache extends kolab_storage_cache
      *
      * @param string Object UID
      * @param string Object type to read
+     * @param string Unused (kept for compat. with the parent class)
      */
-    public function get($uid, $type = null)
+    public function get($uid, $type = null, $unused = null)
     {
         if ($this->ready) {
             $this->_read_folder_data();
@@ -283,8 +284,9 @@ class kolab_storage_dav_cache extends kolab_storage_cache
      *
      * @param string      Object UID
      * @param array|false Hash array with object properties to save or false to delete the cache entry
+     * @param string      Unused (kept for compat. with the parent class)
      */
-    public function set($uid, $object)
+    public function set($uid, $object, $unused = null)
     {
         // remove old entry
         if ($this->ready) {
@@ -307,8 +309,9 @@ class kolab_storage_dav_cache extends kolab_storage_cache
      *
      * @param mixed  Hash array with object properties to save or false to delete the cache entry
      * @param string Optional old message UID (for update)
+     * @param string Unused (kept for compat. with the parent class)
      */
-    public function save($object, $olduid = null)
+    public function save($object, $olduid = null, $unused = null)
     {
         // write to cache
         if ($this->ready) {
@@ -359,8 +362,10 @@ class kolab_storage_dav_cache extends kolab_storage_cache
      *
      * @param string               Entry's  UID
      * @param kolab_storage_folder Target storage folder instance
+     * @param string Unused (kept for compat. with the parent class)
+     * @param string Unused (kept for compat. with the parent class)
      */
-    public function move($uid, $target)
+    public function move($uid, $target, $unused1 = null, $unused2 = null)
     {
         // TODO
     }
