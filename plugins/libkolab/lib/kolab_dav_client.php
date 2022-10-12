@@ -120,7 +120,12 @@ class kolab_dav_client
      */
     public function discover($component = 'VEVENT')
     {
-/*
+        $roots = [
+            'VEVENT' => 'calendars',
+            'VTODO' => 'calendars',
+            'VCARD' => 'addressbooks',
+        ];
+
         $path = parse_url($this->url, PHP_URL_PATH);
 
         $body = '<?xml version="1.0" encoding="utf-8"?>'
@@ -130,7 +135,7 @@ class kolab_dav_client
                 . '</d:prop>'
             . '</d:propfind>';
 
-        $response = $this->request('/calendars', 'PROPFIND', $body);
+        $response = $this->request('/' . $roots[$component], 'PROPFIND', $body);
 
         $elements = $response->getElementsByTagName('response');
 
@@ -153,14 +158,25 @@ class kolab_dav_client
             . '</d:propfind>';
 
         $response = $this->request($principal_href, 'PROPFIND', $body);
-*/
-        $roots = [
-            'VEVENT' => 'calendars',
-            'VTODO' => 'calendars',
-            'VCARD' => 'addressbooks',
-        ];
 
-        $principal_href = '/' . $roots[$component] . '/' . rawurlencode($this->user);
+        $elements = $response->getElementsByTagName('response');
+
+        foreach ($elements as $element) {
+            foreach ($element->getElementsByTagName('prop') as $prop) {
+                $root_href = $prop->nodeValue;
+                break;
+            }
+        }
+
+        if (!empty($root_href)) {
+            if ($path && strpos($root_href, $path) === 0) {
+                $root_href = substr($root_href, strlen($path));
+            }
+        }
+        else {
+            // Kolab iRony's calendar root
+            $root_href = '/' . $roots[$component] . '/' . rawurlencode($this->user);
+        }
 
         $body = '<?xml version="1.0" encoding="utf-8"?>'
             . '<d:propfind xmlns:d="DAV:" xmlns:cs="http://calendarserver.org/ns/" xmlns:c="urn:ietf:params:xml:ns:caldav" xmlns:a="http://apple.com/ns/ical/">'
@@ -173,7 +189,7 @@ class kolab_dav_client
                 . '</d:prop>'
             . '</d:propfind>';
 
-        $response = $this->request($principal_href, 'PROPFIND', $body);
+        $response = $this->request($root_href, 'PROPFIND', $body);
 
         if (empty($response)) {
             return false;
@@ -363,11 +379,12 @@ class kolab_dav_client
         if (stripos($body, '<?xml') === 0) {
             $doc = new DOMDocument('1.0', 'UTF-8');
 
+            $doc->formatOutput = true;
+            $doc->preserveWhiteSpace = false;
+
             if (!$doc->loadXML($body)) {
                 throw new Exception("Failed to parse XML");
             }
-
-            $doc->formatOutput = true;
 
             $body = $doc->saveXML();
         }
@@ -414,12 +431,21 @@ class kolab_dav_client
             }
         }
 
+        $types = [];
+        if ($type_element = $element->getElementsByTagName('resourcetype')->item(0)) {
+            foreach ($type_element->childNodes as $node) {
+                $_type = explode(':', $node->nodeName);
+                $types[] = count($_type) > 1 ? $_type[1] : $_type[0];
+            }
+        }
+
         return [
             'href' => $href,
             'name' => $name,
             'ctag' => $ctag,
             'color' => $color,
             'type' => $component,
+            'resource_type' => $types,
         ];
     }
 

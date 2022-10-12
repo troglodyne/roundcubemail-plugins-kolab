@@ -72,6 +72,12 @@ class kolab_storage_dav
 
         if (is_array($folders)) {
             foreach ($folders as $idx => $folder) {
+                // Exclude some special folders
+                if (in_array('schedule-inbox', $folder['resource_type']) || in_array('schedule-outbox', $folder['resource_type'])) {
+                    unset($folders[$idx]);
+                    continue;
+                }
+
                 $folders[$idx] = new kolab_storage_dav_folder($this->dav, $folder, $type);
             }
         }
