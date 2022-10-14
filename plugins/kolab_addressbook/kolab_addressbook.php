@@ -31,12 +31,13 @@ class kolab_addressbook extends rcube_plugin
 {
     public $task = '?(?!logout).*';
 
+    public $driver;
+    public $bonnie_api = false;
+
     private $sources;
-    private $folders;
     private $rc;
     private $ui;
-
-    public $bonnie_api = false;
+    private $driver_class;
 
     const GLOBAL_FIRST = 0;
     const PERSONAL_FIRST = 1;
@@ -53,8 +54,11 @@ class kolab_addressbook extends rcube_plugin
         // load required plugin
         $this->require_plugin('libkolab');
 
-        $driver = $this->rc->config->get('kolab_addressbook_driver') ?: 'kolab';
-        require_once(dirname(__FILE__) . '/lib/rcube_' . $driver . '_contacts.php');
+        $this->load_config();
+
+        $this->driver       = $this->rc->config->get('kolab_addressbook_driver') ?: 'kolab';
+        $this->driver_class = 'rcube_' . $this->driver . '_contacts';
+        require_once(dirname(__FILE__) . '/lib/' . $this->driver_class . '.php');
 
         // register hooks
         $this->add_hook('addressbooks_list', array($this, 'address_sources'));
@@ -82,7 +86,6 @@ class kolab_addressbook extends rcube_plugin
 
             // Load UI elements
             if ($this->api->output->type == 'html') {
-                $this->load_config();
                 require_once($this->home . '/lib/kolab_addressbook_ui.php');
                 $this->ui = new kolab_addressbook_ui($this);
 
@@ -104,9 +107,11 @@ class kolab_addressbook extends rcube_plugin
             $this->add_hook('preferences_save', array($this, 'prefs_save'));
         }
 
-        $this->add_hook('folder_delete', array($this, 'prefs_folder_delete'));
-        $this->add_hook('folder_rename', array($this, 'prefs_folder_rename'));
-        $this->add_hook('folder_update', array($this, 'prefs_folder_update'));
+        if ($this->driver == 'kolab') {
+            $this->add_hook('folder_delete', array($this, 'prefs_folder_delete'));
+            $this->add_hook('folder_rename', array($this, 'prefs_folder_rename'));
+            $this->add_hook('folder_update', array($this, 'prefs_folder_update'));
+        }
     }
 
     /**
@@ -212,10 +217,22 @@ class kolab_addressbook extends rcube_plugin
             $out .= $this->addressbook_list_item($id, $source, $jsdata) . '</li>';
         }
 
+        $filter  = function($source) { return !empty($source['kolab']) && empty($source['hidden']); };
+        $folders = array_filter($sources, $filter);
+
         // render a hierarchical list of kolab contact folders
-        kolab_storage::folder_hierarchy($this->folders, $tree);
-        if ($tree && !empty($tree->children)) {
-            $out .= $this->folder_tree_html($tree, $sources, $jsdata);
+        // TODO: Move this to the drivers
+        if ($this->driver == 'kolab') {
+            kolab_storage::folder_hierarchy($folders, $tree);
+            if ($tree && !empty($tree->children)) {
+                $out .= $this->folder_tree_html($tree, $sources, $jsdata);
+            }
+        }
+        else {
+            foreach ($folders as $j => $source) {
+                $id = strval(strlen($source['id']) ? $source['id'] : $j);
+                $out .= $this->addressbook_list_item($id, $source, $jsdata) . '</li>';
+            }
         }
 
         $this->rc->output->set_env('contactgroups', array_filter($jsdata, function($src){ return $src['type'] == 'group'; }));
@@ -303,7 +320,7 @@ class kolab_addressbook extends rcube_plugin
                 ), $name)
         );
 
-        if (isset($source['subscribed'])) {
+        if ($this->driver == 'kolab' && isset($source['subscribed'])) {
             $inner .= html::span(array(
                 'class' => 'subscribed',
                 'title' => $this->gettext('foldersubscribe'),
@@ -396,7 +413,6 @@ class kolab_addressbook extends rcube_plugin
         return $args;
     }
 
-
     /**
      * Getter for the rcube_addressbook instance
      *
@@ -407,16 +423,8 @@ class kolab_addressbook extends rcube_plugin
     public function get_address_book($p)
     {
         if ($p['id']) {
-            $id     = kolab_storage::id_decode($p['id']);
-            $folder = kolab_storage::get_folder($id);
-
-            // try with unencoded (old-style) identifier
-            if ((!$folder || $folder->type != 'contact') && $id != $p['id']) {
-                $folder = kolab_storage::get_folder($p['id']);
-            }
-
-            if ($folder && $folder->type == 'contact') {
-                $p['instance'] = new rcube_kolab_contacts($folder->name);
+            if ($source = $this->driver_class::get_address_book($p['id'])) {
+                $p['instance'] = $source;
 
                 // flag source as writeable if 'i' right is given
                 if ($p['writeable'] && $this->rc->action == 'save' && strpos($p['instance']->rights, 'i') !== false) {
@@ -431,56 +439,32 @@ class kolab_addressbook extends rcube_plugin
         return $p;
     }
 
-
+    /**
+     * List addressbook sources list
+     */
     private function _list_sources()
     {
         // already read sources
-        if (isset($this->sources))
+        if (isset($this->sources)) {
             return $this->sources;
+        }
 
-        kolab_storage::$encode_ids = true;
-        $this->sources = array();
-        $this->folders = array();
+        $this->sources = [];
 
         $abook_prio = $this->addressbook_prio();
 
         // Personal address source(s) disabled?
-        if ($abook_prio == self::GLOBAL_ONLY) {
+        if ($abook_prio == kolab_addressbook::GLOBAL_ONLY) {
             return $this->sources;
         }
 
         // get all folders that have "contact" type
-        $folders = kolab_storage::sort_folders(kolab_storage::get_folders('contact'));
-
-        if (PEAR::isError($folders)) {
-            rcube::raise_error(array(
-              'code' => 600, 'type' => 'php',
-              'file' => __FILE__, 'line' => __LINE__,
-              'message' => "Failed to list contact folders from Kolab server:" . $folders->getMessage()),
-            true, false);
-        }
-        else {
-            // we need at least one folder to prevent from errors in Roundcube core
-            // when there's also no sql nor ldap addressbook (Bug #2086)
-            if (empty($folders)) {
-                if ($folder = kolab_storage::create_default_folder('contact')) {
-                    $folders = array(new kolab_storage_folder($folder, 'contact'));
-                }
-            }
-
-            // convert to UTF8 and sort
-            foreach ($folders as $folder) {
-                // create instance of rcube_contacts
-                $abook_id = $folder->id;
-                $abook = new rcube_kolab_contacts($folder->name);
-                $this->sources[$abook_id] = $abook;
-                $this->folders[$abook_id] = $folder;
-            }
+        foreach ($this->driver_class::list_folders() as $id => $source) {
+            $this->sources[$id] = $source;
         }
 
         return $this->sources;
     }
-
 
     /**
      * Plugin hook called before rendering the contact form or detail view
@@ -801,16 +785,16 @@ class kolab_addressbook extends rcube_plugin
      */
     private function _sort_form_fields($contents, $source)
     {
-      $block = array();
+        $block = [];
 
-      foreach (array_keys($source->coltypes) as $col) {
-          if (isset($contents[$col]))
-              $block[$col] = $contents[$col];
-      }
+        foreach (array_keys($source->coltypes) as $col) {
+            if (isset($contents[$col])) {
+                $block[$col] = $contents[$col];
+            }
+        }
 
-      return $block;
+        return $block;
     }
-
 
     /**
      * Handler for user preferences form (preferences_list hook)
@@ -959,9 +943,9 @@ class kolab_addressbook extends rcube_plugin
      */
     public function book_search()
     {
-        $results = array();
-        $query = rcube_utils::get_input_value('q', rcube_utils::INPUT_GPC);
-        $source = rcube_utils::get_input_value('source', rcube_utils::INPUT_GPC);
+        $results = [];
+        $query   = rcube_utils::get_input_value('q', rcube_utils::INPUT_GPC);
+        $source  = rcube_utils::get_input_value('source', rcube_utils::INPUT_GPC);
 
         kolab_storage::$encode_ids = true;
         $search_more_results = false;
@@ -1109,12 +1093,6 @@ class kolab_addressbook extends rcube_plugin
      */
     private function addressbook_prio()
     {
-        // Load configuration
-        if (!$this->config_loaded) {
-            $this->load_config();
-            $this->config_loaded = true;
-        }
-
         $abook_prio = (int) $this->rc->config->get('kolab_addressbook_prio');
 
         // Make sure any global addressbooks are defined

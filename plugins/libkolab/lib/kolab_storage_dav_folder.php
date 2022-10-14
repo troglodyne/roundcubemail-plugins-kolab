@@ -32,12 +32,9 @@ class kolab_storage_dav_folder extends kolab_storage_folder
     public function __construct($dav, $attributes, $type_annotation = '')
     {
         $this->attributes = $attributes;
-        $this->href = $this->attributes['href'];
 
-        // Here we assume the last element of the folder path is the folder ID
-        // if that's not the case, we should consider generating an ID
-        $href        = explode('/', unslashify($this->href));
-        $this->id    = $href[count($href) - 1];
+        $this->href  = $this->attributes['href'];
+        $this->id    = md5($this->href);
         $this->dav   = $dav;
         $this->valid = true;
 
@@ -410,8 +407,9 @@ class kolab_storage_dav_folder extends kolab_storage_folder
 
         // generate and save object message
         if ($content = $this->to_dav($object)) {
-            $method = $uid ? 'update' : 'create';
-            $result = $this->dav->{$method}($this->object_location($object['uid']), $content);
+            $method   = $uid ? 'update' : 'create';
+            $dav_type = $this->get_dav_type();
+            $result   = $this->dav->{$method}($this->object_location($object['uid']), $content, $dav_type);
 
             // Note: $result can be NULL if the request was successful, but ETag wasn't returned
             if ($result !== false) {
@@ -473,10 +471,24 @@ class kolab_storage_dav_folder extends kolab_storage_folder
 
             $result = $events[0];
         }
+        else if ($this->type == 'contact') {
+            if (stripos($object['data'], 'BEGIN:VCARD') !== 0) {
+                return false;
+            }
+
+            $vcard = new rcube_vcard($object['data'], RCUBE_CHARSET, false);
+
+            if (!empty($vcard->displayname) || !empty($vcard->surname) || !empty($vcard->firstname) || !empty($vcard->email)) {
+                $result = $vcard->get_assoc();
+            }
+            else {
+                return false;
+            }
+        }
 
         $result['etag'] = $object['etag'];
         $result['href'] = $object['href'];
-        $result['uid'] = $object['uid'] ?: $result['uid'];
+        $result['uid']  = $object['uid'] ?: $result['uid'];
 
         return $result;
     }
@@ -495,6 +507,35 @@ class kolab_storage_dav_folder extends kolab_storage_folder
             }
 
             $result = $ical->export([$object]);
+        }
+        else if ($this->type == 'contact') {
+            // copy values into vcard object
+            $vcard = new rcube_vcard('', RCUBE_CHARSET, false, ['uid' => 'UID']);
+
+            $vcard->set('groups', null);
+
+            foreach ($object as $key => $values) {
+                list($field, $section) = rcube_utils::explode(':', $key);
+
+                // avoid casting DateTime objects to array
+                if (is_object($values) && is_a($values, 'DateTime')) {
+                    $values = [$values];
+                }
+
+                foreach ((array) $values as $value) {
+                    if (isset($value)) {
+                        $vcard->set($field, $value, $section);
+                    }
+                }
+            }
+
+            $result = $vcard->export(false);
+        }
+
+        if ($result) {
+            // The content must be UTF-8, otherwise if we try to fetch the object
+            // from server XML parsing would fail.
+            $result = rcube_charset::clean($result);
         }
 
         return $result;

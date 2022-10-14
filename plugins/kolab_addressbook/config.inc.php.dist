@@ -1,5 +1,10 @@
 <?php
 
+// Backend type (kolab, carddav)
+$config['kolab_addressbook_driver'] = "kolab";
+
+// CalDAV server location (required when kolab_addressbook_driver = carddav)
+$config['kolab_addressbook_carddav_server'] = "http://localhost";
 
 // This option allows to set addressbooks priority or to disable some
 // of them. Disabled addressbooks will be not shown in the UI. Default: 0.
@@ -15,7 +20,8 @@ $config['kolab_addressbook_prio'] = 0;
 // %u - Current webmail user name
 // %n - Folder name
 // %i - Folder UUID
-// $config['kolab_addressbook_carddav_url'] = 'http://%h/iRony/addressbooks/%u/%i';
+// For example: 'http://%h/iRony/addressbooks/%u/%i'
+$config['kolab_addressbook_carddav_url'] = null;
 
 // Name of LDAP addressbook (a key in ldap_public configuration array) for which
 // the CardDAV URI will be displayed if kolab_addressbook_carddav_url is set.
@@ -31,5 +37,3 @@ $config['kolab_addressbook_prio'] = 0;
 // ignore these properties and allow modifications which then result in sync errors because the server
 // denies such updates.
 $config['kolab_addressbook_carddav_ldap'] = '';
-
-?>

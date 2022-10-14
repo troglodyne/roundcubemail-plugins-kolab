@@ -73,7 +73,6 @@ class kolab_dav_client
         }
 
         try {
-
             $request = $this->initRequest($this->url . $path, $method, $request_config);
 
             $request->setAuth($this->user, $this->password);
@@ -135,7 +134,8 @@ class kolab_dav_client
                 . '</d:prop>'
             . '</d:propfind>';
 
-        $response = $this->request('/' . $roots[$component], 'PROPFIND', $body);
+        // Note: Cyrus CardDAV service requires Depth:1 (CalDAV works without it)
+        $response = $this->request('/' . $roots[$component], 'PROPFIND', $body, ['Depth' => 1, 'Prefer' => 'return-minimal']);
 
         $elements = $response->getElementsByTagName('response');
 
@@ -150,10 +150,22 @@ class kolab_dav_client
             $principal_href = substr($principal_href, strlen($path));
         }
 
+        $homes = [
+            'VEVENT' => 'calendar-home-set',
+            'VTODO' => 'calendar-home-set',
+            'VCARD' => 'addressbook-home-set',
+        ];
+
+        $ns = [
+            'VEVENT' => 'caldav',
+            'VTODO' => 'caldav',
+            'VCARD' => 'carddav',
+        ];
+
         $body = '<?xml version="1.0" encoding="utf-8"?>'
-            . '<d:propfind xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">'
+            . '<d:propfind xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:' . $ns[$component] . '">'
                 . '<d:prop>'
-                    . '<c:calendar-home-set />'
+                    . '<c:' . $homes[$component] . ' />'
                 . '</d:prop>'
             . '</d:propfind>';
 
@@ -178,28 +190,41 @@ class kolab_dav_client
             $root_href = '/' . $roots[$component] . '/' . rawurlencode($this->user);
         }
 
+        if ($component == 'VCARD') {
+            $add_ns = '';
+            $add_props = '';
+        }
+        else {
+            $add_ns = ' xmlns:c="urn:ietf:params:xml:ns:caldav" xmlns:a="http://apple.com/ns/ical/"';
+            $add_props = '<c:supported-calendar-component-set /><a:calendar-color />';
+        }
+
         $body = '<?xml version="1.0" encoding="utf-8"?>'
-            . '<d:propfind xmlns:d="DAV:" xmlns:cs="http://calendarserver.org/ns/" xmlns:c="urn:ietf:params:xml:ns:caldav" xmlns:a="http://apple.com/ns/ical/">'
+            . '<d:propfind xmlns:d="DAV:" xmlns:cs="http://calendarserver.org/ns/"' . $add_ns . '>'
                 . '<d:prop>'
                     . '<d:resourcetype />'
                     . '<d:displayname />'
+                    // . '<d:sync-token />'
                     . '<cs:getctag />'
-                    . '<c:supported-calendar-component-set />'
-                    . '<a:calendar-color />'
+                    . $add_props
                 . '</d:prop>'
             . '</d:propfind>';
 
-        $response = $this->request($root_href, 'PROPFIND', $body);
+        // Note: Cyrus CardDAV service requires Depth:1 (CalDAV works without it)
+        $response = $this->request($root_href, 'PROPFIND', $body, ['Depth' => 1, 'Prefer' => 'return-minimal']);
 
         if (empty($response)) {
             return false;
         }
 
         $folders = [];
-
         foreach ($response->getElementsByTagName('response') as $element) {
             $folder = $this->getFolderPropertiesFromResponse($element);
-            if ($folder['type'] === $component) {
+
+            // Note: Addressbooks don't have 'type' specified
+            if (($component == 'VCARD' && in_array('addressbook', $folder['resource_type']))
+                || $folder['type'] === $component
+            ) {
                 $folders[] = $folder;
             }
         }
@@ -210,9 +235,17 @@ class kolab_dav_client
     /**
      * Create a DAV object in a folder
      */
-    public function create($location, $content)
+    public function create($location, $content, $component = 'VEVENT')
     {
-        $response = $this->request($location, 'PUT', $content, ['Content-Type' => 'text/calendar; charset=utf-8']);
+        $ctype = [
+            'VEVENT' => 'text/calendar',
+            'VTODO' => 'text/calendar',
+            'VCARD' => 'text/vcard',
+        ];
+
+        $headers = ['Content-Type' => $ctype[$component] . '; charset=utf-8'];
+
+        $response = $this->request($location, 'PUT', $content, $headers);
 
         if ($response !== false) {
             $etag = $this->responseHeaders['etag'];
@@ -230,9 +263,9 @@ class kolab_dav_client
     /**
      * Update a DAV object in a folder
      */
-    public function update($location, $content)
+    public function update($location, $content, $component = 'VEVENT')
     {
-        return $this->create($location, $content);
+        return $this->create($location, $content, $component);
     }
 
     /**

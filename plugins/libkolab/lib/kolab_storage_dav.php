@@ -100,14 +100,18 @@ class kolab_storage_dav
     /**
      * Getter for a specific storage folder
      *
-     * @param string Folder to access
-     * @param string Expected folder type
+     * @param string $id   Folder to access
+     * @param string $type Expected folder type
      *
-     * @return object kolab_storage_folder The folder object
+     * @return ?object kolab_storage_folder The folder object
      */
-    public function get_folder($folder, $type = null)
+    public function get_folder($id, $type = null)
     {
-        // TODO
+        foreach ($this->get_folders($type) as $folder) {
+            if ($folder->id == $id) {
+                return $folder;
+            }
+        }
     }
 
     /**

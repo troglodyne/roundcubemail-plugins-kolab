@@ -54,6 +54,10 @@ class kolab_addressbook_ui
             // Include stylesheet (for directorylist)
             $this->plugin->include_stylesheet($this->plugin->local_skin_path().'/kolab_addressbook.css');
 
+            if ($this->plugin->driver != 'kolab') {
+                return;
+            }
+
             // include kolab folderlist widget if available
             if (in_array('libkolab', $this->plugin->api->loaded_plugins())) {
                 $this->plugin->api->include_script('libkolab/libkolab.js');
@@ -66,20 +70,20 @@ class kolab_addressbook_ui
             $idx     = 0;
 
             if ($dav_url = $this->rc->config->get('kolab_addressbook_carddav_url')) {
-              $options[] = 'book-showurl';
-              $this->rc->output->set_env('kolab_addressbook_carddav_url', true);
+                $options[] = 'book-showurl';
+                $this->rc->output->set_env('kolab_addressbook_carddav_url', true);
 
-              // set CardDAV URI for specified ldap addressbook
-              if ($ldap_abook = $this->rc->config->get('kolab_addressbook_carddav_ldap')) {
-                $dav_ldap_url = strtr($dav_url, array(
-                    '%h' => $_SERVER['HTTP_HOST'],
-                    '%u' => urlencode($this->rc->get_user_name()),
-                    '%i' => 'ldap-directory',
-                    '%n' => '',
-                ));
-                $this->rc->output->set_env('kolab_addressbook_carddav_ldap', $ldap_abook);
-                $this->rc->output->set_env('kolab_addressbook_carddav_ldap_url', $dav_ldap_url);
-              }
+                // set CardDAV URI for specified ldap addressbook
+                if ($ldap_abook = $this->rc->config->get('kolab_addressbook_carddav_ldap')) {
+                    $dav_ldap_url = strtr($dav_url, array(
+                        '%h' => $_SERVER['HTTP_HOST'],
+                        '%u' => urlencode($this->rc->get_user_name()),
+                        '%i' => 'ldap-directory',
+                        '%n' => '',
+                    ));
+                    $this->rc->output->set_env('kolab_addressbook_carddav_ldap', $ldap_abook);
+                    $this->rc->output->set_env('kolab_addressbook_carddav_ldap_url', $dav_ldap_url);
+                }
             }
 
             foreach ($options as $command) {

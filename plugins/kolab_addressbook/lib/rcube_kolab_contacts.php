@@ -313,6 +313,64 @@ class rcube_kolab_contacts extends rcube_addressbook
     }
 
     /**
+     * List addressbook sources (folders)
+     */
+    public static function list_folders()
+    {
+        kolab_storage::$encode_ids = true;
+
+        // get all folders that have "contact" type
+        $folders = kolab_storage::sort_folders(kolab_storage::get_folders('contact'));
+
+        if (PEAR::isError($folders)) {
+            rcube::raise_error([
+                    'code' => 600, 'file' => __FILE__, 'line' => __LINE__,
+                    'message' => "Failed to list contact folders from Kolab server:" . $folders->getMessage()
+                ],
+                true, false);
+
+            return [];
+        }
+
+        // we need at least one folder to prevent from errors in Roundcube core
+        // when there's also no sql nor ldap addressbook (Bug #2086)
+        if (empty($folders)) {
+            if ($folder = kolab_storage::create_default_folder('contact')) {
+                $folders = [new kolab_storage_folder($folder, 'contact')];
+            }
+        }
+
+        $sources = [];
+        foreach ($folders as $folder) {
+            $sources[$folder->id] = new rcube_kolab_contacts($folder->name);
+        }
+
+        return $sources;
+    }
+
+    /**
+     * Getter for the rcube_addressbook instance
+     *
+     * @param string $id Addressbook (folder) ID
+     *
+     * @return ?rcube_kolab_contacts
+     */
+    public static function get_address_book($id)
+    {
+        $folderId = kolab_storage::id_decode($id);
+        $folder   = kolab_storage::get_folder($folderId);
+
+        // try with unencoded (old-style) identifier
+        if ((!$folder || $folder->type != 'contact') && $folderId != $id) {
+            $folder = kolab_storage::get_folder($id);
+        }
+
+        if ($folder && $folder->type == 'contact') {
+            return new rcube_kolab_contacts($folder->name);
+        }
+    }
+
+    /**
      * List all active contact groups of this source
      *
      * @param string Optional search string to match group name

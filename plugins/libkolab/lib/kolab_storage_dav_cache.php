@@ -319,8 +319,8 @@ class kolab_storage_dav_cache extends kolab_storage_cache
 
             $sql_data              = $this->_serialize($object);
             $sql_data['folder_id'] = $this->folder_id;
-            $sql_data['uid']       = $object['uid'];
-            $sql_data['etag']      = $object['etag'];
+            $sql_data['uid']       = rcube_charset::clean($object['uid']);
+            $sql_data['etag']      = rcube_charset::clean($object['etag']);
 
             $args = [];
             $cols = ['folder_id', 'uid', 'etag', 'changed', 'data', 'tags', 'words'];
@@ -524,8 +524,15 @@ class kolab_storage_dav_cache extends kolab_storage_cache
             // In Oracle we can't put long data inline, others we don't support yet
             if (strpos($this->db->db_provider, 'mysql') !== 0) {
                 $extra_args = [];
-                $params = [$this->folder_id, $object['uid'], $object['etag'], $sql_data['changed'],
-                    $sql_data['data'], $sql_data['tags'], $sql_data['words']];
+                $params = [
+                    $this->folder_id,
+                    rcube_charset::clean($object['uid']),
+                    rcube_charset::clean($object['etag']),
+                    $sql_data['changed'],
+                    $sql_data['data'],
+                    $sql_data['tags'],
+                    $sql_data['words']
+                ];
 
                 foreach ($this->extra_cols as $col) {
                     $params[] = $sql_data[$col];
@@ -552,8 +559,8 @@ class kolab_storage_dav_cache extends kolab_storage_cache
 
             $values = array(
                 $this->db->quote($this->folder_id),
-                $this->db->quote($object['uid']),
-                $this->db->quote($object['etag']),
+                $this->db->quote(rcube_charset::clean($object['uid'])),
+                $this->db->quote(rcube_charset::clean($object['etag'])),
                 $this->db->now(),
                 $this->db->quote($sql_data['changed']),
                 $this->db->quote($sql_data['data']),

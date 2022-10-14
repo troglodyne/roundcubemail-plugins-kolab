@@ -21,12 +21,12 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class kolab_storage_cache_contact extends kolab_storage_cache
+class kolab_storage_dav_cache_contact extends kolab_storage_dav_cache
 {
     protected $extra_cols_max = 255;
     protected $extra_cols     = ['type', 'name', 'firstname', 'surname', 'email'];
     protected $data_props     = ['type', 'name', 'firstname', 'middlename', 'prefix', 'suffix', 'surname', 'email', 'organization', 'member'];
-    protected $fulltext_cols  = ['name', 'firstname', 'surname', 'middlename', 'email:address'];
+    protected $fulltext_cols  = ['name', 'firstname', 'surname', 'middlename', 'email'];
 
     /**
      * Helper method to convert the given Kolab object into a dataset to be written to cache
@@ -36,20 +36,20 @@ class kolab_storage_cache_contact extends kolab_storage_cache
     protected function _serialize($object)
     {
         $sql_data = parent::_serialize($object);
-        $sql_data['type'] = $object['_type'];
+        $sql_data['type'] = $object['_type'] ?: 'contact';
 
         // columns for sorting
         $sql_data['name']      = rcube_charset::clean($object['name'] . $object['prefix']);
         $sql_data['firstname'] = rcube_charset::clean($object['firstname'] . $object['middlename'] . $object['surname']);
         $sql_data['surname']   = rcube_charset::clean($object['surname']   . $object['firstname']  . $object['middlename']);
-        $sql_data['email']     = rcube_charset::clean(is_array($object['email']) ? $object['email'][0] : $object['email']);
+        $sql_data['email']     = '';
 
-        if (is_array($sql_data['email'])) {
-            $sql_data['email'] = $sql_data['email']['address'];
-        }
-        // avoid value being null
-        if (empty($sql_data['email'])) {
-            $sql_data['email'] = '';
+        foreach ($object as $colname => $value) {
+            list($col, $field) = explode(':', $colname);
+            if ($col == 'email' && !empty($value)) {
+                $sql_data['email'] = is_array($value) ? $value[0] : $value;
+                break;
+            }
         }
 
         // use organization if name is empty
@@ -78,21 +78,18 @@ class kolab_storage_cache_contact extends kolab_storage_cache
     public function get_words($object)
     {
         $data = '';
-        foreach ($this->fulltext_cols as $colname) {
+
+        foreach ($object as $colname => $value) {
             list($col, $field) = explode(':', $colname);
 
-            if ($field) {
-                $a = [];
-                foreach ((array)$object[$col] as $attr)
-                    $a[] = $attr[$field];
-                $val = join(' ', $a);
-            }
-            else {
-                $val = is_array($object[$col]) ? join(' ', $object[$col]) : $object[$col];
+            $val = '';
+            if (in_array($col, $this->fulltext_cols)) {
+                $val = is_array($value) ? join(' ', $value) : $value;
             }
 
-            if (strlen($val))
+            if (strlen($val)) {
                 $data .= $val . ' ';
+            }
         }
 
         return array_unique(rcube_utils::normalize_string($data, true));
