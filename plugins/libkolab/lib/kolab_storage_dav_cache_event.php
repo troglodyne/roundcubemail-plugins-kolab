@@ -40,7 +40,13 @@ class kolab_storage_dav_cache_event extends kolab_storage_dav_cache
         $sql_data['dtend']   = $this->_convert_datetime($object['end']);
 
         // extend date range for recurring events
-        if (!empty($object['recurrence']) && !empty($object['_formatobj'])) {
+        if (!empty($object['recurrence'])) {
+            if (empty($object['_formatobj'])) {
+                $event_xml = new kolab_format_event();
+                $event_xml->set($object);
+                $object['_formatobj'] = $event_xml;
+            }
+
             $recurrence = new kolab_date_recurrence($object['_formatobj']);
             $dtend = $recurrence->end() ?: new DateTime('now +100 years');
             $sql_data['dtend'] = $this->_convert_datetime($dtend);

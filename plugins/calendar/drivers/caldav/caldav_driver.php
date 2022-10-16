@@ -269,7 +269,7 @@ class caldav_driver extends kolab_driver
     /**
      * Get the caldav_calendar instance for the given calendar ID
      *
-     * @param string Calendar identifier (encoded imap folder name)
+     * @param string Calendar identifier
      *
      * @return ?caldav_calendar Object nor null if calendar doesn't exist
      */
