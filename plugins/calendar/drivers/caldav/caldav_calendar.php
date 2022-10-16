@@ -372,8 +372,8 @@ class caldav_calendar extends kolab_storage_dav_folder
         });
 
         // Apply event-to-mail relations
-        $config = kolab_storage_config::get_instance();
-        $config->apply_links($events);
+        // $config = kolab_storage_config::get_instance();
+        // $config->apply_links($events);
 
         // avoid session race conditions that will loose temporary subscriptions
         $this->cal->rc->session->nowrite = true;
@@ -443,8 +443,8 @@ class caldav_calendar extends kolab_storage_dav_folder
         }
 
         // email links are stored separately
-        $links = !empty($event['links']) ? $event['links'] : [];
-        unset($event['links']);
+        // $links = !empty($event['links']) ? $event['links'] : [];
+        // unset($event['links']);
 
         // generate new event from RC input
         $object = $this->_from_driver_event($event);
@@ -461,9 +461,9 @@ class caldav_calendar extends kolab_storage_dav_folder
         }
 
         // save links in configuration.relation object
-        if ($this->save_links($event['uid'], $links)) {
-            $object['links'] = $links;
-        }
+        // if ($this->save_links($event['uid'], $links)) {
+        //    $object['links'] = $links;
+        // }
 
         $this->events = [$event['uid'] => $this->_to_driver_event($object, true)];
 
@@ -485,8 +485,8 @@ class caldav_calendar extends kolab_storage_dav_folder
         }
 
         // email links are stored separately
-        $links = !empty($event['links']) ? $event['links'] : [];
-        unset($event['links']);
+        // $links = !empty($event['links']) ? $event['links'] : [];
+        // unset($event['links']);
 
         $object = $this->_from_driver_event($event, $old);
         $saved  = $this->storage->save($object, 'event', $old['uid']);
@@ -501,9 +501,9 @@ class caldav_calendar extends kolab_storage_dav_folder
         }
         else {
             // save links in configuration.relation object
-            if ($this->save_links($event['uid'], $links)) {
-                $object['links'] = $links;
-            }
+            // if ($this->save_links($event['uid'], $links)) {
+            //     $object['links'] = $links;
+            // }
 
             $updated = true;
             $this->events = [$event['uid'] => $this->_to_driver_event($object, true)];
@@ -737,9 +737,9 @@ class caldav_calendar extends kolab_storage_dav_folder
         // remove (possibly outdated) cached parameters
         unset($record['_folder_id'], $record['className']);
 
-        if ($links && !array_key_exists('links', $record)) {
-            $record['links'] = $this->get_links($record['uid']);
-        }
+        // if ($links && !array_key_exists('links', $record)) {
+        //    $record['links'] = $this->get_links($record['uid']);
+        // }
 
         $ns = $this->get_namespace();
 
