@@ -3,11 +3,9 @@
 /**
  * Kolab storage cache class providing a local caching layer for Kolab groupware objects.
  *
- * @author Thomas Bruederli <bruederli@kolabsys.com>
  * @author Aleksander Machniak <machniak@apheleia-it.ch>
  *
- * Copyright (C) 2012-2013, Kolab Systems AG <contact@kolabsys.com>
- * Copyright (C) 2022, Apheleia IT AG <contact@apheleia-it.ch>
+ * Copyright (C) 2012-2022, Apheleia IT AG <contact@apheleia-it.ch>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -491,14 +489,6 @@ class kolab_storage_dav_cache extends kolab_storage_cache
         if (!empty($list) && !empty($list[0])) {
             return $list[0];
         }
-    }
-
-    /**
-     * Check DAV connection error state
-     */
-    protected function check_error()
-    {
-        // TODO ?
     }
 
     /**

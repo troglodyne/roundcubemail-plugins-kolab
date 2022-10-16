@@ -325,7 +325,7 @@ class kolab_storage_dav
     public function folder_type($folder)
     {
         // TODO: Used by kolab_folders, kolab_activesync, kolab_delegation
-        return 'event';
+        return '';
     }
 
     /**

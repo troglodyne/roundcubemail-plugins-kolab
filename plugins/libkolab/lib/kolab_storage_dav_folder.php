@@ -133,7 +133,7 @@ class kolab_storage_dav_folder extends kolab_storage_folder
             return $this->resource_uri;
         }
 
-        // compose fully qualified ressource uri for this instance
+        // compose fully qualified resource uri for this instance
         $host = preg_replace('|^https?://|', 'dav://' . urlencode($this->get_owner(true)) . '@', $this->dav->url);
         $path = $this->href[0] == '/' ? $this->href : "/{$this->href}";
 
@@ -276,8 +276,7 @@ class kolab_storage_dav_folder extends kolab_storage_folder
         }
 
         // TODO: This method is used by kolab_addressbook plugin only
-
-        $this->cache->purge();
+        // $this->cache->purge();
 
         return false;
     }

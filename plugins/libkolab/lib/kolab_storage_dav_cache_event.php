@@ -3,9 +3,9 @@
 /**
  * Kolab storage cache class for calendar event objects
  *
- * @author Thomas Bruederli <bruederli@kolabsys.com>
+ * @author Aleksander Machniak <machniak@apheleia-it.ch>
  *
- * Copyright (C) 2013, Kolab Systems AG <contact@kolabsys.com>
+ * Copyright (C) 2013-2022 Apheleia IT AG <contact@apheleia-it.ch>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
