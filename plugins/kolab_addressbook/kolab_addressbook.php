@@ -150,14 +150,16 @@ class kolab_addressbook extends rcube_plugin
             // $p['sources'] = array_merge($sources, $p['sources']);
             // Don't use array_merge(), because if you have folders name
             // that resolve to numeric identifier it will break output array keys
-            foreach ($p['sources'] as $idx => $value)
+            foreach ($p['sources'] as $idx => $value) {
                 $sources[$idx] = $value;
+            }
             $p['sources'] = $sources;
         }
         else {
             // $p['sources'] = array_merge($p['sources'], $sources);
-            foreach ($sources as $idx => $value)
+            foreach ($sources as $idx => $value) {
                 $p['sources'][$idx] = $value;
+            }
         }
 
         return $p;
@@ -205,19 +207,29 @@ class kolab_addressbook extends rcube_plugin
      */
     public function directorylist_html($args)
     {
-        $out = '';
-        $jsdata = array();
-        $sources = (array)$this->rc->get_address_sources();
+        $out     = '';
+        $spec    = '';
+        $kolab   = '';
+        $jsdata  = [];
+        $sources = (array) $this->rc->get_address_sources();
 
-        // list all non-kolab sources first (also exclude hidden sources)
-        $filter = function($source){ return empty($source['kolab']) && empty($source['hidden']); };
-        foreach (array_filter($sources, $filter)  as $j => $source) {
+        // list all non-kolab sources first (also exclude hidden sources), special folders will go last
+        foreach ($sources  as $j => $source) {
             $id = strval(strlen($source['id']) ? $source['id'] : $j);
-            $out .= $this->addressbook_list_item($id, $source, $jsdata) . '</li>';
-        }
+            if (!empty($source['kolab']) || !empty($source['hidden'])) {
+                continue;
+            }
 
-        $filter  = function($source) { return !empty($source['kolab']) && empty($source['hidden']); };
-        $folders = array_filter($sources, $filter);
+            // Roundcube >= 1.5, Collected Recipients and Trusted Senders sources will be listed at the end
+            if ((defined('rcube_addressbook::TYPE_RECIPIENT') && $source['id'] == (string) rcube_addressbook::TYPE_RECIPIENT)
+                || (defined('rcube_addressbook::TYPE_TRUSTED_SENDER') && $source['id'] == (string) rcube_addressbook::TYPE_TRUSTED_SENDER)
+            ) {
+                $spec .= $this->addressbook_list_item($id, $source, $jsdata) . '</li>';
+            }
+            else {
+                $out .= $this->addressbook_list_item($id, $source, $jsdata) . '</li>';
+            }
+        }
 
         // render a hierarchical list of kolab contact folders
         // TODO: Move this to the drivers
@@ -225,15 +237,18 @@ class kolab_addressbook extends rcube_plugin
             $folders = kolab_storage::sort_folders(kolab_storage::get_folders('contact'));
             kolab_storage::folder_hierarchy($folders, $tree);
             if ($tree && !empty($tree->children)) {
-                $out .= $this->folder_tree_html($tree, $sources, $jsdata);
+                $kolab .= $this->folder_tree_html($tree, $sources, $jsdata);
             }
         }
         else {
-            foreach ($folders as $j => $source) {
+            $filter = function($source) { return !empty($source['kolab']) && empty($source['hidden']); };
+            foreach (array_filter($sources, $filter) as $j => $source) {
                 $id = strval(strlen($source['id']) ? $source['id'] : $j);
-                $out .= $this->addressbook_list_item($id, $source, $jsdata) . '</li>';
+                $kolab .= $this->addressbook_list_item($id, $source, $jsdata) . '</li>';
             }
         }
+
+        $out .= $kolab . $spec;
 
         $this->rc->output->set_env('contactgroups', array_filter($jsdata, function($src){ return $src['type'] == 'group'; }));
         $this->rc->output->set_env('address_sources', array_filter($jsdata, function($src){ return $src['type'] != 'group'; }));
