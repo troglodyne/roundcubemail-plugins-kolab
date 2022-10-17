@@ -227,8 +227,10 @@ class kolab_storage_dav_cache extends kolab_storage_cache
     /**
      * Return current folder index (uid -> etag)
      */
-    protected function folder_index()
+    public function folder_index()
     {
+        $this->_read_folder_data();
+
         // read cache index
         $sql_result = $this->db->query(
             "SELECT `uid`, `etag` FROM `{$this->cache_table}` WHERE `folder_id` = ?",

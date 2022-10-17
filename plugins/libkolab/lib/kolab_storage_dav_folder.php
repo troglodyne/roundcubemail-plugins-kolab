@@ -257,7 +257,7 @@ class kolab_storage_dav_folder extends kolab_storage_folder
 
         $uid = is_array($object) ? $object['uid'] : $object;
 
-        $success = $this->dav->delete($this->object_location($uid), $content);
+        $success = $this->dav->delete($this->object_location($uid));
 
         if ($success) {
             $this->cache->set($uid, false);
@@ -267,7 +267,11 @@ class kolab_storage_dav_folder extends kolab_storage_folder
     }
 
     /**
+     * Delete all objects in a folder.
      *
+     * Note: This method is used by kolab_addressbook plugin only
+     *
+     * @return bool True if successful, false on error
      */
     public function delete_all()
     {
@@ -275,10 +279,18 @@ class kolab_storage_dav_folder extends kolab_storage_folder
             return false;
         }
 
-        // TODO: This method is used by kolab_addressbook plugin only
-        // $this->cache->purge();
+        // TODO: Maybe just deleting and re-creating a folder would be
+        //       better, but probably might not always work (ACL)
 
-        return false;
+        $this->cache->synchronize();
+
+        foreach (array_keys($this->cache->folder_index()) as $uid) {
+            $this->dav->delete($this->object_location($uid));
+        }
+
+        $this->cache->purge();
+
+        return true;
     }
 
     /**
