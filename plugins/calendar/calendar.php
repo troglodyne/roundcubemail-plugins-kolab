@@ -417,12 +417,12 @@ class calendar extends rcube_plugin
                 return $p;
             }
 
-            $field_id  = 'rcmfd_timeslot';
+            $field_id  = 'rcmfd_timeslots';
             $choices   = ['1', '2', '3', '4', '6'];
             $timeslots = $this->rc->config->get('calendar_timeslots', $this->defaults['calendar_timeslots']);
 
             $select = new html_select(['name' => '_timeslots', 'id' => $field_id]);
-            $select->add($choices);
+            $select->add($choices, $choices);
 
             $p['blocks']['view']['options']['timeslots'] = [
                 'title' => html::label($field_id, rcube::Q($this->gettext('timeslots'))),
