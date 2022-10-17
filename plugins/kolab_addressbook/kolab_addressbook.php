@@ -37,7 +37,6 @@ class kolab_addressbook extends rcube_plugin
     private $sources;
     private $rc;
     private $ui;
-    private $driver_class;
 
     const GLOBAL_FIRST = 0;
     const PERSONAL_FIRST = 1;
@@ -56,9 +55,9 @@ class kolab_addressbook extends rcube_plugin
 
         $this->load_config();
 
-        $this->driver       = $this->rc->config->get('kolab_addressbook_driver') ?: 'kolab';
-        $this->driver_class = 'rcube_' . $this->driver . '_contacts';
-        require_once(dirname(__FILE__) . '/lib/' . $this->driver_class . '.php');
+        $this->driver = $this->rc->config->get('kolab_addressbook_driver') ?: 'kolab';
+        $driver_class = 'rcube_' . $this->driver . '_contacts';
+        require_once(dirname(__FILE__) . '/lib/' . $driver_class . '.php');
 
         // register hooks
         $this->add_hook('addressbooks_list', array($this, 'address_sources'));
@@ -223,6 +222,7 @@ class kolab_addressbook extends rcube_plugin
         // render a hierarchical list of kolab contact folders
         // TODO: Move this to the drivers
         if ($this->driver == 'kolab') {
+            $folders = kolab_storage::sort_folders(kolab_storage::get_folders('contact'));
             kolab_storage::folder_hierarchy($folders, $tree);
             if ($tree && !empty($tree->children)) {
                 $out .= $this->folder_tree_html($tree, $sources, $jsdata);
@@ -423,7 +423,14 @@ class kolab_addressbook extends rcube_plugin
     public function get_address_book($p)
     {
         if ($p['id']) {
-            if ($source = $this->driver_class::get_address_book($p['id'])) {
+            if ($this->driver == 'carddav') {
+                $source = rcube_carddav_contacts::get_address_book($p['id']);
+            }
+            else {
+                $source = rcube_kolab_contacts::get_address_book($p['id']);
+            }
+
+            if ($source) {
                 $p['instance'] = $source;
 
                 // flag source as writeable if 'i' right is given
@@ -458,8 +465,15 @@ class kolab_addressbook extends rcube_plugin
             return $this->sources;
         }
 
+        if ($this->driver == 'carddav') {
+            $folders = rcube_carddav_contacts::list_folders();
+        }
+        else {
+            $folders = rcube_kolab_contacts::list_folders();
+        }
+
         // get all folders that have "contact" type
-        foreach ($this->driver_class::list_folders() as $id => $source) {
+        foreach ($folders as $id => $source) {
             $this->sources[$id] = $source;
         }
 
