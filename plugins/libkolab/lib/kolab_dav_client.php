@@ -116,6 +116,10 @@ class kolab_dav_client
 
     /**
      * Discover DAV folders of specified type on the server
+     *
+     * @param string $component Component to filter by (VEVENT, VTODO, VCARD)
+     *
+     * @return false|array List of folders' metadata or False on error
      */
     public function discover($component = 'VEVENT')
     {
@@ -136,6 +140,10 @@ class kolab_dav_client
 
         // Note: Cyrus CardDAV service requires Depth:1 (CalDAV works without it)
         $response = $this->request('/' . $roots[$component], 'PROPFIND', $body, ['Depth' => 1, 'Prefer' => 'return-minimal']);
+
+        if (empty($response)) {
+            return false;
+        }
 
         $elements = $response->getElementsByTagName('response');
 
@@ -170,6 +178,10 @@ class kolab_dav_client
             . '</d:propfind>';
 
         $response = $this->request($principal_href, 'PROPFIND', $body);
+
+        if (empty($response)) {
+            return false;
+        }
 
         $elements = $response->getElementsByTagName('response');
 
@@ -234,6 +246,12 @@ class kolab_dav_client
 
     /**
      * Create a DAV object in a folder
+     *
+     * @param string $location  Object location
+     * @param string $content   Object content
+     * @param string $component Content type (VEVENT, VTODO, VCARD)
+     *
+     * @return false|string|null ETag string (or NULL) on success, False on error
      */
     public function create($location, $content, $component = 'VEVENT')
     {
@@ -262,6 +280,12 @@ class kolab_dav_client
 
     /**
      * Update a DAV object in a folder
+     *
+     * @param string $location  Object location
+     * @param string $content   Object content
+     * @param string $component Content type (VEVENT, VTODO, VCARD)
+     *
+     * @return false|string|null ETag string (or NULL) on success, False on error
      */
     public function update($location, $content, $component = 'VEVENT')
     {
@@ -270,6 +294,10 @@ class kolab_dav_client
 
     /**
      * Delete a DAV object from a folder
+     *
+     * @param string $location Object location
+     *
+     * @return bool True on success, False on error
      */
     public function delete($location)
     {
@@ -280,6 +308,11 @@ class kolab_dav_client
 
     /**
      * Fetch DAV objects metadata (ETag, href) a folder
+     *
+     * @param string $location  Folder location
+     * @param string $component Object type (VEVENT, VTODO, VCARD)
+     *
+     * @return false|array Objects metadata on success, False on error
      */
     public function getIndex($location, $component = 'VEVENT')
     {
@@ -327,6 +360,12 @@ class kolab_dav_client
 
     /**
      * Fetch DAV objects data from a folder
+     *
+     * @param string $location  Folder location
+     * @param string $component Object type (VEVENT, VTODO, VCARD)
+     * @param array  $hrefs     List of objects' locations to fetch (empty for all objects)
+     *
+     * @return false|array Objects metadata on success, False on error
      */
     public function getData($location, $component = 'VEVENT', $hrefs = [])
     {
