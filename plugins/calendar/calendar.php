@@ -777,6 +777,13 @@ $("#rcmfd_new_category").keypress(function(event) {
             $checkbox = new html_checkbox(['name' => '_birthday_adressbooks[]'] + $input_attrib);
 
             foreach ($this->rc->get_address_sources(false, true) as $source) {
+                // Roundcube >= 1.5, Ignore Collected Recipients and Trusted Senders sources
+                if ((defined('rcube_addressbook::TYPE_RECIPIENT') && $source['id'] == (string) rcube_addressbook::TYPE_RECIPIENT)
+                    || (defined('rcube_addressbook::TYPE_TRUSTED_SENDER') && $source['id'] == (string) rcube_addressbook::TYPE_TRUSTED_SENDER)
+                ) {
+                    continue;
+                }
+
                 $active = in_array($source['id'], (array) $this->rc->config->get('calendar_birthday_adressbooks')) ? $source['id'] : '';
                 $sources[] = html::tag('li', null,
                     html::label(null,
