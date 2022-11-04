@@ -296,6 +296,140 @@ class caldav_driver extends kolab_driver
     }
 
     /**
+     * Create a new calendar assigned to the current user
+     *
+     * @param array Hash array with calendar properties
+     *    name: Calendar name
+     *   color: The color of the calendar
+     *
+     * @return mixed ID of the calendar on success, False on error
+     */
+    public function create_calendar($prop)
+    {
+        $prop['type']       = 'event';
+        $prop['active']     = true; // TODO
+        $prop['subscribed'] = true;
+        $prop['alarms']     = !empty($prop['showalarms']);
+
+        $id = $this->storage->folder_update($prop);
+
+        if ($id === false) {
+            return false;
+        }
+
+
+        return $id;
+    }
+
+    /**
+     * Update properties of an existing calendar
+     *
+     * @see calendar_driver::edit_calendar()
+     */
+    public function edit_calendar($prop)
+    {
+        $id = $prop['id'];
+
+        if (!in_array($id, [self::BIRTHDAY_CALENDAR_ID, self::INVITATIONS_CALENDAR_PENDING, self::INVITATIONS_CALENDAR_DECLINED])) {
+            $prop['type']   = 'event';
+            $prop['alarms'] = !empty($prop['showalarms']);
+
+            return $this->storage->folder_update($prop) !== false;
+        }
+
+        // fallback to local prefs for special calendars
+        $prefs['kolab_calendars'] = $this->rc->config->get('kolab_calendars', []);
+        unset($prefs['kolab_calendars'][$id]['showalarms']);
+
+        if (isset($prop['showalarms']) && $id == self::BIRTHDAY_CALENDAR_ID) {
+            $prefs['calendar_birthdays_alarm_type'] = $prop['showalarms'] ? $this->alarm_types[0] : '';
+        }
+        else if (isset($prop['showalarms'])) {
+            $prefs['kolab_calendars'][$id]['showalarms'] = !empty($prop['showalarms']);
+        }
+
+        if (!empty($prefs['kolab_calendars'][$id])) {
+            $this->rc->user->save_prefs($prefs);
+        }
+
+        return true;
+    }
+
+    /**
+     * Set active/subscribed state of a calendar
+     *
+     * @see calendar_driver::subscribe_calendar()
+     */
+    public function subscribe_calendar($prop)
+    {
+        if (!empty($prop['id']) && ($cal = $this->get_calendar($prop['id'])) && !empty($cal->storage)) {
+            $ret = false;
+            if (isset($prop['permanent'])) {
+                $ret |= $cal->storage->subscribe(intval($prop['permanent']));
+            }
+            if (isset($prop['active'])) {
+                $ret |= $cal->storage->activate(intval($prop['active']));
+            }
+
+            // apply to child folders, too
+            if (!empty($prop['recursive'])) {
+                foreach ((array) $this->storage->list_folders($cal->storage->name, '*', 'event') as $subfolder) {
+                    if (isset($prop['permanent'])) {
+                        if ($prop['permanent']) {
+                            $this->storage->folder_subscribe($subfolder);
+                        }
+                        else {
+                            $this->storage->folder_unsubscribe($subfolder);
+                        }
+                    }
+
+                    if (isset($prop['active'])) {
+                        if ($prop['active']) {
+                            $this->storage->folder_activate($subfolder);
+                        }
+                        else {
+                            $this->storage->folder_deactivate($subfolder);
+                        }
+                    }
+                }
+            }
+            return $ret;
+        }
+        else {
+            // save state in local prefs
+            $prefs['kolab_calendars'] = $this->rc->config->get('kolab_calendars', []);
+            $prefs['kolab_calendars'][$prop['id']]['active'] = !empty($prop['active']);
+            $this->rc->user->save_prefs($prefs);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Delete the given calendar with all its contents
+     *
+     * @see calendar_driver::delete_calendar()
+     */
+    public function delete_calendar($prop)
+    {
+        if (!empty($prop['id'])) {
+            if ($this->storage->folder_delete($prop['id'], 'event')) {
+                // remove folder from user prefs
+                $prefs['kolab_calendars'] = $this->rc->config->get('kolab_calendars', []);
+                if (isset($prefs['kolab_calendars'][$prop['id']])) {
+                    unset($prefs['kolab_calendars'][$prop['id']]);
+                    $this->rc->user->save_prefs($prefs);
+                }
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Search for shared or otherwise not listed calendars the user has access
      *
      * @param string Search string
@@ -481,50 +615,15 @@ class caldav_driver extends kolab_driver
             return kolab_utils::folder_form($form, '', 'calendar');
         }
 
-        $this->_read_calendars();
+        $form['props'] = [
+            'name'   => $this->rc->gettext('properties'),
+            'fields' => [
+                'location' => $formfields['name'],
+                'color'    => $formfields['color'],
+                'alarms'   => $formfields['showalarms'],
+            ],
+        ];
 
-        if (!empty($calendar['id']) && ($cal = $this->calendars[$calendar['id']])) {
-            $folder = $cal->get_realname(); // UTF7
-            $color  = $cal->get_color();
-        }
-        else {
-            $folder = '';
-            $color  = '';
-        }
-
-        $hidden_fields[] = ['name' => 'oldname', 'value' => $folder];
-
-        $form      = [];
-        $protected = false; // TODO
-
-        // Disable folder name input
-        if ($protected) {
-            $input_name = new html_hiddenfield(['name' => 'name', 'id' => 'calendar-name']);
-            $formfields['name']['value'] = $this->storage->object_name($folder)
-                . $input_name->show($folder);
-        }
-
-        // calendar name (default field)
-        $form['props']['fields']['location'] = $formfields['name'];
-
-        if ($protected) {
-            // prevent user from moving folder
-            $hidden_fields[] = ['name' => 'parent', 'value' => '']; // TODO
-        }
-        else {
-            $select = $this->storage->folder_selector('event', ['name' => 'parent', 'id' => 'calendar-parent'], $folder);
-
-            $form['props']['fields']['path'] = [
-                'id'    => 'calendar-parent',
-                'label' => $this->cal->gettext('parentcalendar'),
-                'value' => $select->show(strlen($folder) ? '' : ''), // TODO
-            ];
-        }
-
-        // calendar color (default field)
-        $form['props']['fields']['color']  = $formfields['color'];
-        $form['props']['fields']['alarms'] = $formfields['showalarms'];
-
-        return kolab_utils::folder_form($form, $folder, 'calendar', $hidden_fields);
+        return kolab_utils::folder_form($form, $folder, 'calendar', [], true);
     }
 }

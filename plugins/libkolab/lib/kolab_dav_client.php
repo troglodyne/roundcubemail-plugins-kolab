@@ -115,11 +115,11 @@ class kolab_dav_client
     }
 
     /**
-     * Discover DAV folders of specified type on the server
+     * Discover DAV home (root) collection of specified type.
      *
      * @param string $component Component to filter by (VEVENT, VTODO, VCARD)
      *
-     * @return false|array List of folders' metadata or False on error
+     * @return string|false Home collection location or False on error
      */
     public function discover($component = 'VEVENT')
     {
@@ -202,23 +202,43 @@ class kolab_dav_client
             $root_href = '/' . $roots[$component] . '/' . rawurlencode($this->user);
         }
 
-        if ($component == 'VCARD') {
-            $add_ns = '';
-            $add_props = '';
+        return $root_href;
+    }
+
+    /**
+     * Get list of folders of specified type.
+     *
+     * @param string $component Component to filter by (VEVENT, VTODO, VCARD)
+     *
+     * @return false|array List of folders' metadata or False on error
+     */
+    public function listFolders($component = 'VEVENT')
+    {
+        $root_href = $this->discover($component);
+
+        if ($root_href === false) {
+            return false;
         }
-        else {
-            $add_ns = ' xmlns:c="urn:ietf:params:xml:ns:caldav" xmlns:a="http://apple.com/ns/ical/"';
-            $add_props = '<c:supported-calendar-component-set /><a:calendar-color />';
+
+        $ns    = 'xmlns:d="DAV:" xmlns:cs="http://calendarserver.org/ns/"';
+        $props = '';
+
+        if ($component != 'VCARD') {
+            $ns .= ' xmlns:c="urn:ietf:params:xml:ns:caldav" xmlns:a="http://apple.com/ns/ical/" xmlns:k="Kolab:"';
+            $props = '<c:supported-calendar-component-set />'
+                . '<a:calendar-color />'
+                . '<k:alarms />'
+                . '<k:subscribed />';
         }
 
         $body = '<?xml version="1.0" encoding="utf-8"?>'
-            . '<d:propfind xmlns:d="DAV:" xmlns:cs="http://calendarserver.org/ns/"' . $add_ns . '>'
+            . '<d:propfind ' . $ns . '>'
                 . '<d:prop>'
                     . '<d:resourcetype />'
                     . '<d:displayname />'
                     // . '<d:sync-token />'
                     . '<cs:getctag />'
-                    . $add_props
+                    . $props
                 . '</d:prop>'
             . '</d:propfind>';
 
@@ -302,6 +322,143 @@ class kolab_dav_client
     public function delete($location)
     {
         $response = $this->request($location, 'DELETE', '', ['Depth' => 1, 'Prefer' => 'return-minimal']);
+
+        return $response !== false;
+    }
+
+    /**
+     * Get folder properties.
+     *
+     * @param string $location Object location
+     *
+     * @return false|array Folder metadata or False on error
+     */
+    public function folderInfo($location)
+    {
+        $body = '<?xml version="1.0" encoding="utf-8"?>'
+            . '<d:propfind xmlns:d="DAV:">'
+                . '<d:allprop/>'
+            . '</d:propfind>';
+
+        // Note: Cyrus CardDAV service requires Depth:1 (CalDAV works without it)
+        $response = $this->request($location, 'PROPFIND', $body, ['Depth' => 1, 'Prefer' => 'return-minimal']);
+
+        if (!empty($response)
+            && ($element = $response->getElementsByTagName('response'))
+            && ($folder = $this->getFolderPropertiesFromResponse($element))
+        ) {
+            return $folder;
+        }
+
+        return false;
+    }
+
+    /**
+     * Create a DAV folder
+     *
+     * @param string $location   Object location (relative to the user home)
+     * @param string $component  Content type (VEVENT, VTODO, VCARD)
+     * @param array  $properties Object content
+     *
+     * @return bool True on success, False on error
+     */
+    public function folderCreate($location, $component, $properties = [])
+    {
+        // Create the collection
+        $response = $this->request($location, 'MKCOL');
+
+        if (empty($response)) {
+            return false;
+        }
+
+        // Update collection properties
+        return $this->folderUpdate($location, $component, $properties);
+    }
+
+    /**
+     * Delete a DAV folder
+     *
+     * @param string $location Folder location
+     *
+     * @return bool True on success, False on error
+     */
+    public function folderDelete($location)
+    {
+        $response = $this->request($location, 'DELETE');
+
+        return $response !== false;
+    }
+
+    /**
+     * Update a DAV folder
+     *
+     * @param string $location   Object location
+     * @param string $component  Content type (VEVENT, VTODO, VCARD)
+     * @param array  $properties Object content
+     *
+     * @return bool True on success, False on error
+     */
+    public function folderUpdate($location, $component, $properties = [])
+    {
+        $ns    = 'xmlns:d="DAV:"';
+        $props = '';
+
+        if ($component == 'VCARD') {
+            $ns .= ' xmlns:c="urn:ietf:params:xml:ns:carddav"';
+            // Resourcetype property is protected
+            // $props = '<d:resourcetype><d:collection/><c:addressbook/></d:resourcetype>';
+        }
+        else {
+            $ns .= ' xmlns:c="urn:ietf:params:xml:ns:caldav"';
+            // Resourcetype property is protected
+            // $props = '<d:resourcetype><d:collection/><c:calendar/></d:resourcetype>';
+            /*
+                // Note: These are set by Cyrus automatically for calendars
+                . '<c:supported-calendar-component-set>'
+                    . '<c:comp name="VEVENT"/>'
+                    . '<c:comp name="VTODO"/>'
+                    . '<c:comp name="VJOURNAL"/>'
+                    . '<c:comp name="VFREEBUSY"/>'
+                    . '<c:comp name="VAVAILABILITY"/>'
+                . '</c:supported-calendar-component-set>';
+            */
+        }
+
+        foreach ($properties as $name => $value) {
+            if ($name == 'name') {
+                $props .= '<d:displayname>' . htmlspecialchars($value, ENT_XML1, 'UTF-8') . '</d:displayname>';
+            }
+            else if ($name == 'color' && strlen($value)) {
+                if ($value[0] != '#') {
+                    $value = '#' . $value;
+                }
+
+                $ns .= ' xmlns:a="http://apple.com/ns/ical/"';
+                $props .= '<a:calendar-color>' . htmlspecialchars($value, ENT_XML1, 'UTF-8') . '</a:calendar-color>';
+            }
+            else if ($name == 'subscribed' || $name == 'alarms') {
+                if (!strpos($ns, 'Kolab:')) {
+                    $ns .= ' xmlns:k="Kolab:"';
+                }
+
+                $props .= "<k:{$name}>" . ($value ? 'true' : 'false') . "</k:{$name}>";
+            }
+        }
+
+        if (empty($props)) {
+            return true;
+        }
+
+        $body = '<?xml version="1.0" encoding="utf-8"?>'
+            . '<d:propertyupdate ' . $ns . '>'
+                . '<d:set>'
+                    . '<d:prop>' . $props . '</d:prop>'
+                . '</d:set>'
+            . '</d:propertyupdate>';
+
+        $response = $this->request($location, 'PROPPATCH', $body);
+
+        // TODO: Should we make sure "200 OK" status is set for all requested properties?
 
         return $response !== false;
     }
@@ -481,8 +638,8 @@ class kolab_dav_client
         }
 
         if ($color = $element->getElementsByTagName('calendar-color')->item(0)) {
-            if (preg_match('/^#[0-9A-F]{8}$/', $color->nodeValue)) {
-                $color = substr($color->nodeValue, 1, -2);
+            if (preg_match('/^#[0-9a-fA-F]{6,8}$/', $color->nodeValue)) {
+                $color = substr($color->nodeValue, 1);
             } else {
                 $color = null;
             }
@@ -511,7 +668,7 @@ class kolab_dav_client
             }
         }
 
-        return [
+        $result = [
             'href' => $href,
             'name' => $name,
             'ctag' => $ctag,
@@ -519,6 +676,16 @@ class kolab_dav_client
             'type' => $component,
             'resource_type' => $types,
         ];
+
+        foreach (['subscribed', 'alarms'] as $tag) {
+            if ($el = $element->getElementsByTagName($tag)->item(0)) {
+                if (strlen($el->nodeValue) > 0) {
+                    $result[$tag] = strtolower($el->nodeValue) === 'true';
+                }
+            }
+        }
+
+        return $result;
     }
 
     /**

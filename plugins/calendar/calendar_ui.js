@@ -3660,8 +3660,7 @@ function rcube_calendar_ui(settings)
     // register dbl-click handler to open calendar edit dialog
     $(rcmail.gui_objects.calendarslist).on('dblclick', ':not(.virtual) > .calname', function(e) {
       var id = $(this).closest('li').attr('id').replace(/^rcmlical/, '');
-      if (me.calendars[id] && me.calendars[id].driver != 'caldav')
-        me.calendar_edit_dialog(me.calendars[id]);
+      me.calendar_edit_dialog(me.calendars[id]);
     });
 
     // Make Elastic checkboxes pretty

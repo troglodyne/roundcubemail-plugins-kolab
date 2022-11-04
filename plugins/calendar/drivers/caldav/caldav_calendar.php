@@ -68,28 +68,22 @@ class caldav_calendar extends kolab_storage_dav_folder
         $this->id         = $this->storage->id;
         $this->attributes = $this->storage->attributes;
         $this->ready      = true;
+        $this->alarms     = !isset($this->storage->attributes['alarms']) || $this->storage->attributes['alarms'];
 
         // Set writeable and alarms flags according to folder permissions
         if ($this->ready) {
             if ($this->storage->get_namespace() == 'personal') {
                 $this->editable = true;
                 $this->rights = 'lrswikxteav';
-                $this->alarms = true;
             }
             else {
                 $rights = $this->storage->get_myrights();
-                if ($rights && !PEAR::isError($rights)) {
+                if ($rights) {
                     $this->rights = $rights;
                     if (strpos($rights, 't') !== false || strpos($rights, 'd') !== false) {
                         $this->editable = strpos($rights, 'i');;
                     }
                 }
-            }
-
-            // user-specific alarms settings win
-            $prefs = $this->cal->rc->config->get('kolab_calendars', []);
-            if (isset($prefs[$this->id]['showalarms'])) {
-                $this->alarms = $prefs[$this->id]['showalarms'];
             }
         }
 
@@ -144,8 +138,7 @@ class caldav_calendar extends kolab_storage_dav_folder
      */
     public function update(&$prop)
     {
-        // TODO
-        return null;
+        return false; // NOP
     }
 
     /**

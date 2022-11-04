@@ -25,12 +25,12 @@
 
 class kolab_utils
 {
-    public static function folder_form($form, $folder, $domain, $hidden_fields = array())
+    public static function folder_form($form, $folder, $domain, $hidden_fields = array(), $no_acl = false)
     {
         $rcmail = rcmail::get_instance();
 
         // add folder ACL tab
-        if (is_string($folder) && strlen($folder)) {
+        if (!$no_acl && is_string($folder) && strlen($folder)) {
             $form['sharing'] = array(
                 'name'    => rcube::Q($rcmail->gettext('libkolab.tabsharing')),
                 'content' => self::folder_acl_form($folder),

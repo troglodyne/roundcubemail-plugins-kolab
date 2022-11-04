@@ -34,7 +34,7 @@ class kolab_storage_dav_folder extends kolab_storage_folder
         $this->attributes = $attributes;
 
         $this->href  = $this->attributes['href'];
-        $this->id    = md5($this->href);
+        $this->id    = md5($this->dav->url . '/' . $this->href);
         $this->dav   = $dav;
         $this->valid = true;
 
@@ -224,8 +224,7 @@ class kolab_storage_dav_folder extends kolab_storage_folder
      */
     public function is_subscribed()
     {
-        // TODO
-        return true;
+        return !isset($this->attributes['subscribed']) || $this->attributes['subscribed'];
     }
 
     /**
@@ -562,15 +561,8 @@ class kolab_storage_dav_folder extends kolab_storage_folder
      */
     public function get_dav_type()
     {
-        $types = [
-            'event' => 'VEVENT',
-            'task'  => 'VTODO',
-            'contact' => 'VCARD',
-        ];
-
-        return $types[$this->type];
+        return kolab_storage_dav::get_dav_type($this->type);
     }
-
 
     /**
      * Get a DAV file extension for specified Kolab type

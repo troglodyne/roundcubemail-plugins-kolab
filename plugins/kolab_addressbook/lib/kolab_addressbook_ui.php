@@ -54,10 +54,6 @@ class kolab_addressbook_ui
             // Include stylesheet (for directorylist)
             $this->plugin->include_stylesheet($this->plugin->local_skin_path().'/kolab_addressbook.css');
 
-            if ($this->plugin->driver != 'kolab') {
-                return;
-            }
-
             // include kolab folderlist widget if available
             if (in_array('libkolab', $this->plugin->api->loaded_plugins())) {
                 $this->plugin->api->include_script('libkolab/libkolab.js');
@@ -66,10 +62,12 @@ class kolab_addressbook_ui
             $this->rc->output->add_footer($this->rc->output->parse('kolab_addressbook.search_addon', false, false));
 
             // Add actions on address books
-            $options = array('book-create', 'book-edit', 'book-delete', 'book-remove');
-            $idx     = 0;
+            $options = ['book-create', 'book-edit', 'book-delete'];
+            if ($this->plugin->driver instanceof kolab_contacts_driver) {
+                $options[] = 'book-remove';
+            }
 
-            if ($dav_url = $this->rc->config->get('kolab_addressbook_carddav_url')) {
+            if ($this->plugin->driver instanceof kolab_contacts_driver && ($dav_url = $this->rc->config->get('kolab_addressbook_carddav_url'))) {
                 $options[] = 'book-showurl';
                 $this->rc->output->set_env('kolab_addressbook_carddav_url', true);
 
@@ -86,6 +84,7 @@ class kolab_addressbook_ui
                 }
             }
 
+            $idx = 0;
             foreach ($options as $command) {
                 $content = html::tag('li', $idx ? null : array('class' => 'separator_above'),
                     $this->plugin->api->output->button(array(
@@ -101,16 +100,19 @@ class kolab_addressbook_ui
             }
 
             // Link to Settings/Folders
-            $content = html::tag('li', array('class' => 'separator_above'),
-                $this->plugin->api->output->button(array(
-                    'label'    => 'managefolders',
-                    'type'     => 'link',
-                    'class'    => 'folders disabled',
-                    'classact' => 'folders active',
-                    'command'  => 'folders',
-                    'task'     => 'settings',
-            )));
-            $this->plugin->api->add_content($content, 'groupoptions');
+            if ($this->plugin->driver instanceof kolab_contacts_driver) {
+                $content = html::tag('li', ['class' => 'separator_above'],
+                    $this->plugin->api->output->button([
+                            'label'    => 'managefolders',
+                            'type'     => 'link',
+                            'class'    => 'folders disabled',
+                            'classact' => 'folders active',
+                            'command'  => 'folders',
+                            'task'     => 'settings',
+                    ]));
+
+                $this->plugin->api->add_content($content, 'groupoptions');
+            }
 
             $this->rc->output->add_label(
                 'kolab_addressbook.bookdeleteconfirm',
@@ -162,7 +164,7 @@ class kolab_addressbook_ui
     public function book_edit()
     {
         $this->rc->output->set_env('pagetitle', $this->plugin->gettext('bookproperties'));
-        $this->rc->output->add_handler('folderform', array($this, 'book_form'));
+        $this->rc->output->add_handler('folderform', [$this, 'book_form']);
         $this->rc->output->send('libkolab.folderform');
     }
 
@@ -178,70 +180,11 @@ class kolab_addressbook_ui
         $action = trim(rcube_utils::get_input_value('_act', rcube_utils::INPUT_GPC));
         $folder = trim(rcube_utils::get_input_value('_source', rcube_utils::INPUT_GPC, true)); // UTF8
 
-        $hidden_fields[] = array('name' => '_source', 'value' => $folder);
+        $form_html = $this->plugin->driver->folder_form($action, $folder);
 
-        $folder  = rcube_charset::convert($folder, RCUBE_CHARSET, 'UTF7-IMAP');
-        $storage = $this->rc->get_storage();
-        $delim   = $storage->get_hierarchy_delimiter();
+        $attrib += ['action' => 'plugin.book-save', 'method' => 'post', 'id' => 'bookpropform'];
 
-        if ($action == 'edit') {
-            $path_imap = explode($delim, $folder);
-            $name      = rcube_charset::convert(array_pop($path_imap), 'UTF7-IMAP');
-            $path_imap = implode($delim, $path_imap);
-        }
-        else { // create
-            $path_imap = $folder;
-            $name      = '';
-            $folder    = '';
-        }
-
-        // Store old name, get folder options
-        if (strlen($folder)) {
-            $hidden_fields[] = array('name' => '_oldname', 'value' => $folder);
-
-            $options = $storage->folder_info($folder);
-        }
-
-        $form = array();
-
-        // General tab
-        $form['properties'] = array(
-            'name'   => $this->rc->gettext('properties'),
-            'fields' => array(),
-        );
-
-        if (!empty($options) && ($options['norename'] || $options['protected'])) {
-            $foldername = rcube::Q(str_replace($delim, ' &raquo; ', kolab_storage::object_name($folder)));
-        }
-        else {
-            $foldername = new html_inputfield(array('name' => '_name', 'id' => '_name', 'size' => 30));
-            $foldername = $foldername->show($name);
-        }
-
-        $form['properties']['fields']['name'] = array(
-            'label' => $this->plugin->gettext('bookname'),
-            'value' => $foldername,
-            'id'    => '_name',
-        );
-
-        if (!empty($options) && ($options['norename'] || $options['protected'])) {
-            // prevent user from moving folder
-            $hidden_fields[] = array('name' => '_parent', 'value' => $path_imap);
-        }
-        else {
-            $prop   = array('name' => '_parent', 'id' => '_parent');
-            $select = kolab_storage::folder_selector('contact', $prop, $folder);
-
-            $form['properties']['fields']['parent'] = array(
-                'label' => $this->plugin->gettext('parentbook'),
-                'value' => $select->show(strlen($folder) ? $path_imap : ''),
-                'id'    => '_parent',
-            );
-        }
-
-        $form_html = kolab_utils::folder_form($form, $folder, 'calendar', $hidden_fields);
-
-        return html::tag('form', $attrib + array('action' => 'plugin.book-save', 'method' => 'post', 'id' => 'bookpropform'), $form_html);
+        return html::tag('form', $attrib, $form_html);
     }
 
     /**

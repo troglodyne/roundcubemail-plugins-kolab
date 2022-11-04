@@ -61,14 +61,8 @@ class kolab_storage_dav
      */
     public function get_folders($type)
     {
-        $davTypes = [
-            'event' => 'VEVENT',
-            'task'  => 'VTODO',
-            'contact' => 'VCARD',
-        ];
-
         // TODO: This should be cached
-        $folders = $this->dav->discover($davTypes[$type]);
+        $folders = $this->dav->listFolders($this->get_dav_type($type));
 
         if (is_array($folders)) {
             foreach ($folders as $idx => $folder) {
@@ -105,7 +99,7 @@ class kolab_storage_dav
      *
      * @return ?object kolab_storage_folder The folder object
      */
-    public function get_folder($id, $type = null)
+    public function get_folder($id, $type)
     {
         foreach ($this->get_folders($type) as $folder) {
             if ($folder->id == $id) {
@@ -172,13 +166,18 @@ class kolab_storage_dav
     /**
      * Deletes a folder
      *
-     * @param string $name Folder name
+     * @param string $id   Folder ID
+     * @param string $type Folder type (contact,event,task,journal,file,note,configuration)
      *
      * @return bool True on success, false on failure
      */
-    public function folder_delete($name)
+    public function folder_delete($id, $type)
     {
-        // TODO
+        if ($folder = $this->get_folder($id, $type)) {
+            return $this->dav->folderDelete($folder->href);
+        }
+
+        return false;
     }
 
     /**
@@ -206,11 +205,11 @@ class kolab_storage_dav
      */
     public function folder_rename($oldname, $newname)
     {
-        // TODO
+        // TODO ??
     }
 
     /**
-     * Rename or Create a new folder.
+     * Update or Create a new folder.
      *
      * Does additional checks for permissions and folder name restrictions
      *
@@ -222,11 +221,49 @@ class kolab_storage_dav
      *  - subscribed: Subscribed flag (IMAP subscription)
      *  - active:     Activation flag (client-side subscription)
      *
-     * @return string|false New folder name or False on failure
+     * @return string|false New folder ID or False on failure
      */
     public function folder_update(&$prop)
     {
-        // TODO
+        // TODO: Folder hierarchies, active and subscribed state
+
+        // sanity checks
+        if (!isset($prop['name']) || !is_string($prop['name']) || !strlen($prop['name'])) {
+            self::$last_error = 'cannotbeempty';
+            return false;
+        }
+        else if (strlen($prop['name']) > 256) {
+            self::$last_error = 'nametoolong';
+            return false;
+        }
+
+        if (!empty($prop['id'])) {
+            if ($folder = $this->get_folder($prop['id'], $prop['type'])) {
+                $result = $this->dav->folderUpdate($folder->href, $folder->get_dav_type(), $prop);
+            }
+            else {
+                $result = false;
+            }
+        }
+        else {
+            $rcube = rcube::get_instance();
+            $uid   = rtrim(chunk_split(md5($prop['name'] . $rcube->get_user_name() . uniqid('-', true)), 12, '-'), '-');
+            $type  = $this->get_dav_type($prop['type']);
+            $home  = $this->dav->discover($type);
+
+            if ($home === false) {
+                return false;
+            }
+
+            $location = unslashify($home) . '/' . $uid;
+            $result   = $this->dav->folderCreate($location, $type, $prop);
+
+            if ($result !== false) {
+                $result = md5($this->dav->url . '/' . $location);
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -488,5 +525,19 @@ class kolab_storage_dav
     {
         // TODO ?
         return [];
+    }
+
+    /**
+     * Get a folder DAV content type
+     */
+    public static function get_dav_type($type)
+    {
+        $types = [
+            'event' => 'VEVENT',
+            'task'  => 'VTODO',
+            'contact' => 'VCARD',
+        ];
+
+        return $types[$type];
     }
 }

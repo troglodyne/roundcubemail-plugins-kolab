@@ -8,11 +8,9 @@
 	<div class="header">
 		<a class="button icon back-content-button" href="#back" data-hidden="big"><span class="inner"><roundcube:label name="back" /></span></a>
 		<span id="aria-label-calendars" class="header-title"><roundcube:label name="calendar.calendars" /></span>
-		<roundcube:if condition="env:calendar_driver != 'caldav'" />
 		<roundcube:button name="calendaractionsmenu" id="calendaroptionsmenulink" type="link"
 			title="calendar.calendaractions" class="button icon sidebar-menu" data-popup="calendaractions-menu"
 			innerClass="inner" label="actions" />
-		<roundcube:endif />
 	</div>
 	<roundcube:object name="libkolab.folder_search_form" id="calendarlistsearch" wrapper="searchbar menu"
 		ariatag="h2" label="calsearchform" label-domain="calendar" buttontitle="findcalendars" />
@@ -149,7 +147,9 @@
 		<roundcube:if condition="env:calendar_driver == 'kolab'" />
 			<roundcube:button type="link-menuitem" command="calendar-remove" label="calendar.removelist" class="remove disabled" classAct="remove active" />
 		<roundcube:endif />
-		<roundcube:button type="link-menuitem" command="calendar-showurl" label="calendar.showurl" class="showurl disabled" classAct="showurl active" />
+		<roundcube:if condition="env:calendar_driver != 'caldav'" />
+			<roundcube:button type="link-menuitem" command="calendar-showurl" label="calendar.showurl" class="showurl disabled" classAct="showurl active" />
+		<roundcube:endif />
 		<roundcube:if condition="!empty(env:calendar_settings['freebusy_url'])" />
 			<roundcube:button type="link-menuitem" command="calendar-showfburl" label="calendar.showfburl" class="showurl disabled" classAct="showurl active" />
 		<roundcube:endif />

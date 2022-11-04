@@ -144,7 +144,7 @@ rcube_webmail.prototype.book_edit = function()
 rcube_webmail.prototype.book_dialog = function(action)
 {
     var title = rcmail.gettext('kolab_addressbook.book' + action),
-        params = {_act: action, _source: this.book_realname(), _framed: 1},
+        params = {_act: action, _framed: 1, _source: action == 'edit' ? this.env.source : ''},
         dialog = $('<iframe>').attr('src', rcmail.url('plugin.book', params)),
         save_func = function() {
             var data,
@@ -188,9 +188,10 @@ rcube_webmail.prototype.book_remove = function(id)
 rcube_webmail.prototype.book_delete = function()
 {
     if (this.env.source != '') {
+        var source = urlencode(this.env.source);
         this.confirm_dialog(this.get_label('kolab_addressbook.bookdeleteconfirm'), 'delete', function() {
             var lock = rcmail.set_busy(true, 'kolab_addressbook.bookdeleting');
-            rcmail.http_request('plugin.book', '_act=delete&_source='+urlencode(rcmail.book_realname()), lock);
+            rcmail.http_request('plugin.book', '_act=delete&_source=' + source, lock);
         });
     }
 };
@@ -257,14 +258,17 @@ rcube_webmail.prototype.book_update = function(data, old)
                 id: 'kabt:' + data.id,
                 rel: data.id,
                 onclick: "return rcmail.command('list', '" + data.id + "', this)"
-            }),
-            $('<span>').attr({
-                'class': 'subscribed',
-                role: 'checkbox',
-                'aria-checked': true,
-                title: this.gettext('kolab_addressbook.foldersubscribe')
             })
         );
+
+    if (!data.carddav) {
+        content.append($('<span>').attr({
+            'class': 'subscribed',
+            role: 'checkbox',
+            'aria-checked': true,
+            title: this.gettext('kolab_addressbook.foldersubscribe')
+        }));
+    }
 
     // set row attributes
     if (data.readonly)
@@ -295,13 +299,6 @@ rcube_webmail.prototype.book_update = function(data, old)
 
     // update contextmenu
     kolab_addressbook_contextmenu();
-};
-
-// returns real IMAP folder name
-rcube_webmail.prototype.book_realname = function()
-{
-    var source = this.env.source, sources = this.env.address_sources;
-    return source != '' && sources[source] && sources[source].realname ? sources[source].realname : '';
 };
 
 // open dialog to show the current contact's changelog
