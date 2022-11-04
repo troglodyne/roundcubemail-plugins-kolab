@@ -74,6 +74,11 @@ class kolab_storage_dav
 
                 $folders[$idx] = new kolab_storage_dav_folder($this->dav, $folder, $type);
             }
+
+
+            usort($folders, function ($a, $b) {
+                return strcoll($a->get_foldername(), $b->get_foldername());
+            });
         }
 
         return $folders ?: [];
