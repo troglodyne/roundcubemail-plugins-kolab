@@ -61,7 +61,7 @@ class caldav_calendar extends kolab_storage_dav_folder
             $this->storage = $folder_or_id;
         }
         else {
-        //    $this->storage = kolab_storage_dav::get_folder($folder_or_id);
+            // $this->storage = kolab_storage_dav::get_folder($folder_or_id, 'event');
         }
 
         $this->cal        = $calendar;
@@ -368,8 +368,8 @@ class caldav_calendar extends kolab_storage_dav_folder
         // $config = kolab_storage_config::get_instance();
         // $config->apply_links($events);
 
-        // avoid session race conditions that will loose temporary subscriptions
-        $this->cal->rc->session->nowrite = true;
+        // Avoid session race conditions that will loose temporary subscriptions
+        // $this->cal->rc->session->nowrite = true;
 
         return $events;
     }

@@ -352,7 +352,7 @@ class calendar_ui
                 $color   = !empty($prop['color']) ? $prop['color'] : 'f00';
                 $actions = '';
 
-                if (!EMPTY($prop['removable'])) {
+                if (!empty($prop['removable'])) {
                     $actions .= html::a([
                             'href'  => '#',
                             'class' => 'remove',
@@ -370,28 +370,28 @@ class calendar_ui
                     ], ''
                 );
 
-                if (!empty($prop['subscribed'])) {
-                    $actions .= html::a([
-                            'href'  => '#',
-                            'class' => 'subscribed',
-                            'title' => $this->cal->gettext('calendarsubscribe'),
-                            'role'  => 'checkbox',
-                            'aria-checked' => !empty($prop['subscribed']) ? 'true' : 'false'
-                        ], ' '
-                    );
+                if (!isset($prop['subscriptions']) || $prop['subscriptions'] !== false) {
+                    if (!empty($prop['subscribed'])) {
+                        $actions .= html::a([
+                                'href'  => '#',
+                                'class' => 'subscribed',
+                                'title' => $this->cal->gettext('calendarsubscribe'),
+                                'role'  => 'checkbox',
+                                'aria-checked' => !empty($prop['subscribed']) ? 'true' : 'false'
+                            ], ' '
+                        );
+                    }
                 }
 
-                if (!isset($prop['subscriptions']) || $prop['subscriptions'] !== false) {
-                    $content .= html::tag('input', [
-                            'type'    => 'checkbox',
-                            'name'    => '_cal[]',
-                            'value'   => $id,
-                            'checked' => !empty($prop['active']),
-                            'aria-labelledby' => $label_id
-                        ])
-                        . html::span('actions', $actions)
-                        . html::span(['class' => 'handle', 'style' => "background-color: #$color"], '&nbsp;');
-                }
+                $content .= html::tag('input', [
+                        'type'    => 'checkbox',
+                        'name'    => '_cal[]',
+                        'value'   => $id,
+                        'checked' => !empty($prop['active']),
+                        'aria-labelledby' => $label_id
+                    ])
+                    . html::span('actions', $actions)
+                    . html::span(['class' => 'handle', 'style' => "background-color: #$color"], '&nbsp;');
             }
 
             $content = html::div(join(' ', $classes), $content);

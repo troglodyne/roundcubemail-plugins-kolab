@@ -227,8 +227,7 @@ class kolab_dav_client
             $ns .= ' xmlns:c="urn:ietf:params:xml:ns:caldav" xmlns:a="http://apple.com/ns/ical/" xmlns:k="Kolab:"';
             $props = '<c:supported-calendar-component-set />'
                 . '<a:calendar-color />'
-                . '<k:alarms />'
-                . '<k:subscribed />';
+                . '<k:alarms />';
         }
 
         $body = '<?xml version="1.0" encoding="utf-8"?>'
@@ -436,7 +435,7 @@ class kolab_dav_client
                 $ns .= ' xmlns:a="http://apple.com/ns/ical/"';
                 $props .= '<a:calendar-color>' . htmlspecialchars($value, ENT_XML1, 'UTF-8') . '</a:calendar-color>';
             }
-            else if ($name == 'subscribed' || $name == 'alarms') {
+            else if ($name == 'alarms') {
                 if (!strpos($ns, 'Kolab:')) {
                     $ns .= ' xmlns:k="Kolab:"';
                 }
@@ -677,7 +676,7 @@ class kolab_dav_client
             'resource_type' => $types,
         ];
 
-        foreach (['subscribed', 'alarms'] as $tag) {
+        foreach (['alarms'] as $tag) {
             if ($el = $element->getElementsByTagName($tag)->item(0)) {
                 if (strlen($el->nodeValue) > 0) {
                     $result[$tag] = strtolower($el->nodeValue) === 'true';

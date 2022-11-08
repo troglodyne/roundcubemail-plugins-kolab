@@ -435,8 +435,7 @@ class kolab_storage_dav
      */
     public function folder_is_active($folder)
     {
-        // TODO
-        return true;
+        return true; // TODO
     }
 
     /**
@@ -448,7 +447,7 @@ class kolab_storage_dav
      */
     public function folder_activate($folder)
     {
-        return true;
+        return true; // TODO
     }
 
     /**
@@ -460,7 +459,7 @@ class kolab_storage_dav
      */
     public function folder_deactivate($folder)
     {
-        return false;
+        return false; // TODO
     }
 
     /**

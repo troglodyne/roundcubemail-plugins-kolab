@@ -125,6 +125,7 @@ class caldav_driver extends kolab_driver
 
         $folders   = $this->filter_calendars($filter);
         $calendars = [];
+        $prefs     = $this->rc->config->get('kolab_calendars', []);
 
         // include virtual folders for a full folder tree
 /*
@@ -181,11 +182,11 @@ class caldav_driver extends kolab_driver
                     'color'     => $cal->get_color(),
                     'editable'  => $cal->editable,
                     'group'     => $is_user ? 'other user' : $cal->get_namespace(),
-                    'active'    => $cal->is_active(),
+                    'active'    => !isset($prefs[$cal->id]['active']) || !empty($prefs[$cal->id]['active']),
                     'owner'     => $cal->get_owner(),
                     'removable' => !$cal->default,
                     // extras to hide some elements in the UI
-                    'subscriptions' => false,
+                    'subscriptions' => $cal->subscriptions,
                     'driver' => 'caldav',
                 ];
 
@@ -306,10 +307,8 @@ class caldav_driver extends kolab_driver
      */
     public function create_calendar($prop)
     {
-        $prop['type']       = 'event';
-        $prop['active']     = true; // TODO
-        $prop['subscribed'] = true;
-        $prop['alarms']     = !empty($prop['showalarms']);
+        $prop['type']   = 'event';
+        $prop['alarms'] = !empty($prop['showalarms']);
 
         $id = $this->storage->folder_update($prop);
 
@@ -317,6 +316,10 @@ class caldav_driver extends kolab_driver
             return false;
         }
 
+        $prefs['kolab_calendars'] = $this->rc->config->get('kolab_calendars', []);
+        $prefs['kolab_calendars'][$id]['active'] = true;
+
+        $this->rc->user->save_prefs($prefs);
 
         return $id;
     }
@@ -362,48 +365,19 @@ class caldav_driver extends kolab_driver
      */
     public function subscribe_calendar($prop)
     {
-        if (!empty($prop['id']) && ($cal = $this->get_calendar($prop['id'])) && !empty($cal->storage)) {
-            $ret = false;
-            if (isset($prop['permanent'])) {
-                $ret |= $cal->storage->subscribe(intval($prop['permanent']));
-            }
-            if (isset($prop['active'])) {
-                $ret |= $cal->storage->activate(intval($prop['active']));
-            }
-
-            // apply to child folders, too
-            if (!empty($prop['recursive'])) {
-                foreach ((array) $this->storage->list_folders($cal->storage->name, '*', 'event') as $subfolder) {
-                    if (isset($prop['permanent'])) {
-                        if ($prop['permanent']) {
-                            $this->storage->folder_subscribe($subfolder);
-                        }
-                        else {
-                            $this->storage->folder_unsubscribe($subfolder);
-                        }
-                    }
-
-                    if (isset($prop['active'])) {
-                        if ($prop['active']) {
-                            $this->storage->folder_activate($subfolder);
-                        }
-                        else {
-                            $this->storage->folder_deactivate($subfolder);
-                        }
-                    }
-                }
-            }
-            return $ret;
+        if (empty($prop['id'])) {
+            return false;
         }
-        else {
-            // save state in local prefs
+
+        // save state in local prefs
+        if (isset($prop['active'])) {
             $prefs['kolab_calendars'] = $this->rc->config->get('kolab_calendars', []);
             $prefs['kolab_calendars'][$prop['id']]['active'] = !empty($prop['active']);
+
             $this->rc->user->save_prefs($prefs);
-            return true;
         }
 
-        return false;
+        return true;
     }
 
     /**

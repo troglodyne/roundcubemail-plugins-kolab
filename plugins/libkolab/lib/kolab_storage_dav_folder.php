@@ -200,8 +200,7 @@ class kolab_storage_dav_folder extends kolab_storage_folder
      */
     public function is_active()
     {
-        // TODO
-        return true;
+        return true; // Unused
     }
 
     /**
@@ -213,8 +212,7 @@ class kolab_storage_dav_folder extends kolab_storage_folder
      */
     public function activate($active)
     {
-        // TODO
-        return true;
+        return true; // Unused
     }
 
     /**
@@ -224,7 +222,7 @@ class kolab_storage_dav_folder extends kolab_storage_folder
      */
     public function is_subscribed()
     {
-        return !isset($this->attributes['subscribed']) || $this->attributes['subscribed'];
+        return true; // TODO
     }
 
     /**
@@ -236,8 +234,7 @@ class kolab_storage_dav_folder extends kolab_storage_folder
      */
     public function subscribe($subscribed)
     {
-        // TODO
-        return true;
+        return true; // TODO
     }
 
     /**
