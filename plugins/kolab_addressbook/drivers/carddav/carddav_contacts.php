@@ -32,7 +32,7 @@ class carddav_contacts extends rcube_addressbook
     public $rights   = 'lrs';
     public $readonly = true;
     public $undelete = false;
-    public $groups = false; // TODO
+    public $groups   = true;
 
     public $coltypes = [
         'name'         => ['limit' => 1],
@@ -108,7 +108,7 @@ class carddav_contacts extends rcube_addressbook
         'manager',
         'assistant',
         'spouse',
-        'children',
+//        'children',
         'notes',
     ];
 
@@ -810,30 +810,34 @@ class carddav_contacts extends rcube_addressbook
     function create_group($name)
     {
         $this->_fetch_groups();
-        $result = false;
+
+        $rcube = rcube::get_instance();
 
         $list = [
-            'name' => $name,
+            'uid'    => strtoupper(md5(time() . uniqid(rand())) . '-' . substr(md5($rcube->user->get_username()), 0, 16)),
+            'name'   => $name,
+            'kind'   => 'group',
             'member' => [],
         ];
-        $saved = $this->storage->save($list, 'distribution-list');
+
+        $saved = $this->storage->save($list, 'contact');
 
         if (!$saved) {
             rcube::raise_error([
                     'code' => 600, 'file' => __FILE__, 'line' => __LINE__,
-                    'message' => "Error saving distribution-list object to CardDAV server"
+                    'message' => "Error saving a contact group to CardDAV server"
                 ],
                 true, false
             );
+
             return false;
         }
-        else {
-            $id = $this->uid2id($list['uid']);
-            $this->distlists[$id] = $list;
-            $result = ['id' => $id, 'name' => $name];
-        }
 
-        return $result;
+        $id = $this->uid2id($list['uid']);
+
+        $this->distlists[$id] = $list;
+
+        return ['id' => $id, 'name' => $name];
     }
 
     /**
@@ -846,25 +850,25 @@ class carddav_contacts extends rcube_addressbook
     function delete_group($gid)
     {
         $this->_fetch_groups();
-        $result = false;
 
-        if ($list = $this->distlists[$gid]) {
-            $deleted = $this->storage->delete($list['uid']);
+        $list = $this->distlists[$gid];
+
+        if (!$list) {
+            return false;
         }
+
+        $deleted = $this->storage->delete($list['uid']);
 
         if (!$deleted) {
             rcube::raise_error([
                     'code' => 600, 'file' => __FILE__, 'line' => __LINE__,
-                    'message' => "Error deleting distribution-list object from the CardDAV server"
+                    'message' => "Error deleting a contact group from the CardDAV server"
                 ],
                 true, false
             );
         }
-        else {
-            $result = true;
-        }
 
-        return $result;
+        return $deleted;
     }
 
     /**
@@ -874,25 +878,33 @@ class carddav_contacts extends rcube_addressbook
      * @param string New name to set for this group
      * @param string New group identifier (if changed, otherwise don't set)
      *
-     * @return bool New name on success, false if no data was changed
+     * @return string|false New name on success, false if no data was changed
      */
     function rename_group($gid, $newname, &$newid)
     {
         $this->_fetch_groups();
+
         $list = $this->distlists[$gid];
 
-        if ($newname != $list['name']) {
-            $list['name'] = $newname;
-            $saved = $this->storage->save($list, 'distribution-list', $list['uid']);
+        if (!$list) {
+            return false;
         }
+
+        if ($newname === $list['name']) {
+            return $newname;
+        }
+
+        $list['name'] = $newname;
+        $saved = $this->storage->save($list, 'contact', $list['uid']);
 
         if (!$saved) {
             rcube::raise_error([
                     'code' => 600, 'file' => __FILE__, 'line' => __LINE__,
-                    'message' => "Error saving distribution-list object to CardDAV server"
+                    'message' => "Error saving a contact group to CardDAV server"
                 ],
                 true, false
             );
+
             return false;
         }
 
@@ -904,7 +916,8 @@ class carddav_contacts extends rcube_addressbook
      *
      * @param string Group identifier
      * @param array  List of contact identifiers to be added
-     * @return int   Number of contacts added
+     *
+     * @return int Number of contacts added
      */
     function add_to_group($gid, $ids)
     {
@@ -914,12 +927,17 @@ class carddav_contacts extends rcube_addressbook
 
         $this->_fetch_groups(true);
 
-        $list   = $this->distlists[$gid];
+        $list = $this->distlists[$gid];
+
+        if (!$list) {
+            return 0;
+        }
+
         $added  = 0;
         $uids   = [];
         $exists = [];
 
-        foreach ((array)$list['member'] as $member) {
+        foreach ((array) $list['member'] as $member) {
             $exists[] = $member['ID'];
         }
 
@@ -952,7 +970,7 @@ class carddav_contacts extends rcube_addressbook
         }
 
         if ($added) {
-            $saved = $this->storage->save($list, 'distribution-list', $list['uid']);
+            $saved = $this->storage->save($list, 'contact', $list['uid']);
         }
         else {
             $saved = true;
@@ -961,7 +979,7 @@ class carddav_contacts extends rcube_addressbook
         if (!$saved) {
             rcube::raise_error([
                     'code' => 600, 'file' => __FILE__, 'line' => __LINE__,
-                    'message' => "Error saving distribution-list to CardDAV server"
+                    'message' => "Error saving a contact-group to CardDAV server"
                 ],
                 true, false
             );
@@ -986,13 +1004,16 @@ class carddav_contacts extends rcube_addressbook
      */
     function remove_from_group($gid, $ids)
     {
-        if (!is_array($ids)) {
-            $ids = explode(',', $ids);
+        $this->_fetch_groups();
+
+        $list = $this->distlists[$gid];
+
+        if (!$list) {
+            return false;
         }
 
-        $this->_fetch_groups();
-        if (!($list = $this->distlists[$gid])) {
-            return false;
+        if (!is_array($ids)) {
+            $ids = explode(',', $ids);
         }
 
         $new_member = [];
@@ -1004,12 +1025,12 @@ class carddav_contacts extends rcube_addressbook
 
         // write distribution list back to server
         $list['member'] = $new_member;
-        $saved = $this->storage->save($list, 'distribution-list', $list['uid']);
+        $saved = $this->storage->save($list, 'contact', $list['uid']);
 
         if (!$saved) {
             rcube::raise_error([
                     'code' => 600, 'file' => __FILE__, 'line' => __LINE__,
-                    'message' => "Error saving distribution-list object to CardDAV server"
+                    'message' => "Error saving a contact group to CardDAV server"
                 ],
                 true, false
             );
@@ -1020,7 +1041,9 @@ class carddav_contacts extends rcube_addressbook
                 $j = array_search($gid, $this->groupmembers[$id]);
                 unset($this->groupmembers[$id][$j]);
             }
+
             $this->distlists[$gid] = $list;
+
             return true;
         }
 
@@ -1130,15 +1153,17 @@ class carddav_contacts extends rcube_addressbook
     }
 
     /**
-     * Read distribution-lists AKA groups from server
+     * Read contact groups from server
      */
     private function _fetch_groups($with_contacts = false)
     {
-        return; // TODO
-
         if (!isset($this->distlists)) {
             $this->distlists = $this->groupmembers = [];
-            foreach ($this->storage->select('distribution-list', true) as $record) {
+
+            // Set order (and LIMIT to skip the count(*) select)
+            $this->storage->set_order_and_limit(['name'], 200, 0);
+
+            foreach ($this->storage->select('group', true) as $record) {
                 $record['ID'] = $this->uid2id($record['uid']);
                 foreach ((array)$record['member'] as $i => $member) {
                     $mid = $this->uid2id($member['uid'] ? $member['uid'] : 'mailto:' . $member['email']);
@@ -1150,8 +1175,11 @@ class carddav_contacts extends rcube_addressbook
                         $this->contacts[$mid] = $record['member'][$i];
                     }
                 }
+
                 $this->distlists[$record['ID']] = $record;
             }
+
+            $this->storage->set_order_and_limit($this->_sort_columns(), null, 0);
         }
     }
 

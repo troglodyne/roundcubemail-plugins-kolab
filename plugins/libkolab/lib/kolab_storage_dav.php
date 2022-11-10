@@ -55,7 +55,7 @@ class kolab_storage_dav
     /**
      * Get a list of storage folders for the given data type
      *
-     * @param string Data type to list folders for (contact,distribution-list,event,task,note)
+     * @param string Data type to list folders for (contact,event,task,note)
      *
      * @return array List of kolab_storage_dav_folder objects
      */
@@ -87,7 +87,7 @@ class kolab_storage_dav
     /**
      * Getter for the storage folder for the given type
      *
-     * @param string Data type to list folders for (contact,distribution-list,event,task,note)
+     * @param string Data type to list folders for (contact,event,task,note)
      *
      * @return object kolab_storage_dav_folder The folder object
      */

@@ -38,6 +38,10 @@ class kolab_storage_dav_cache_contact extends kolab_storage_dav_cache
         $sql_data = parent::_serialize($object);
         $sql_data['type'] = $object['_type'] ?: 'contact';
 
+        if ($sql_data['type'] == 'group' || (!empty($object['kind']) && $object['kind'] == 'group')) {
+            $sql_data['type'] = 'group';
+        }
+
         // columns for sorting
         $sql_data['name']      = rcube_charset::clean($object['name'] . $object['prefix']);
         $sql_data['firstname'] = rcube_charset::clean($object['firstname'] . $object['middlename'] . $object['surname']);

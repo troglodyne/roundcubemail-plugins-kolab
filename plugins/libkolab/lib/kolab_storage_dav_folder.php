@@ -483,10 +483,52 @@ class kolab_storage_dav_folder extends kolab_storage_folder
                 return false;
             }
 
-            $vcard = new rcube_vcard($object['data'], RCUBE_CHARSET, false);
+            // vCard properties not supported by rcube_vcard
+            $map = [
+                'uid'      => 'UID',
+                'kind'     => 'KIND',
+                'member'   => 'MEMBER',
+                'x-kind'   => 'X-ADDRESSBOOKSERVER-KIND',
+                'x-member' => 'X-ADDRESSBOOKSERVER-MEMBER',
+            ];
+
+            // TODO: We should probably use Sabre/Vobject to parse the vCard
+
+            $vcard = new rcube_vcard($object['data'], RCUBE_CHARSET, false, $map);
 
             if (!empty($vcard->displayname) || !empty($vcard->surname) || !empty($vcard->firstname) || !empty($vcard->email)) {
                 $result = $vcard->get_assoc();
+
+                // Contact groups
+                if (!empty($result['x-kind']) && implode($result['x-kind']) == 'group') {
+                    $result['_type'] = 'group';
+                    $members = isset($result['x-member']) ? $result['x-member'] : [];
+                    unset($result['x-kind'], $result['x-member']);
+                }
+                else if (!empty($result['kind']) && implode($result['kind']) == 'group') {
+                    $result['_type'] = 'group';
+                    $members = isset($result['member']) ? $result['member'] : [];
+                    unset($result['kind'], $result['member']);
+                }
+
+                if (isset($members)) {
+                    $result['member'] = [];
+                    foreach ($members as $member) {
+                        if (strpos($member, 'urn:uuid:') === 0) {
+                            $result['member'][] = ['uid' => substr($member, 9)];
+                        }
+                        else if (strpos($member, 'mailto:') === 0) {
+                            $member = reset(rcube_mime::decode_address_list(urldecode(substr($member, 7))));
+                            if (!empty($member['mailto'])) {
+                                $result['member'][] = ['email' => $member['mailto'], 'name' => $member['name']];
+                            }
+                        }
+                    }
+                }
+
+                if (!empty($result['uid'])) {
+                    $result['uid'] = preg_replace('/^urn:uuid:/', '', implode($result['uid']));
+                }
             }
             else {
                 return false;
@@ -517,9 +559,17 @@ class kolab_storage_dav_folder extends kolab_storage_folder
         }
         else if ($this->type == 'contact') {
             // copy values into vcard object
-            $vcard = new rcube_vcard('', RCUBE_CHARSET, false, ['uid' => 'UID']);
+            // TODO: We should probably use Sabre/Vobject to create the vCard
 
-            $vcard->set('groups', null);
+            // vCard properties not supported by rcube_vcard
+            $map   = ['uid' => 'UID', 'kind' => 'KIND'];
+            $vcard = new rcube_vcard('', RCUBE_CHARSET, false, $map);
+
+            if ((!empty($object['_type']) && $object['_type'] == 'group')
+                || (!empty($object['type']) && $object['type'] == 'group')
+            ) {
+                $object['kind'] = 'group';
+            }
 
             foreach ($object as $key => $values) {
                 list($field, $section) = rcube_utils::explode(':', $key);
@@ -537,6 +587,41 @@ class kolab_storage_dav_folder extends kolab_storage_folder
             }
 
             $result = $vcard->export(false);
+
+            if (!empty($object['kind']) && $object['kind'] == 'group') {
+                $members = '';
+                foreach ((array) $object['member'] as $member) {
+                    $value = null;
+                    if (!empty($member['uid'])) {
+                        $value = 'urn:uuid:' . $member['uid'];
+                    }
+                    else if (!empty($member['email']) && !empty($member['name'])) {
+                        $value = 'mailto:' . urlencode(sprintf('"%s" <%s>', addcslashes($member['name'], '"'), $member['email']));
+                    }
+                    else if (!empty($member['email'])) {
+                        $value = 'mailto:' . $member['email'];
+                    }
+
+                    if ($value) {
+                        $members .= "MEMBER:{$value}\r\n";
+                    }
+                }
+
+                if ($members) {
+                    $result = preg_replace('/\r\nEND:VCARD/', "\r\n{$members}END:VCARD", $result);
+                }
+
+                /**
+                    Version 4.0 of the vCard format requires Cyrus >= 3.6.0, we'll use Version 3.0 for now
+
+                $result = preg_replace('/\r\nVERSION:3\.0\r\n/', "\r\nVERSION:4.0\r\n", $result);
+                $result = preg_replace('/\r\nN:[^\r]+/', '', $result);
+                $result = preg_replace('/\r\nUID:([^\r]+)/', "\r\nUID:urn:uuid:\\1", $result);
+                */
+
+                $result = preg_replace('/\r\nMEMBER:([^\r]+)/', "\r\nX-ADDRESSBOOKSERVER-MEMBER:\\1", $result);
+                $result = preg_replace('/\r\nKIND:([^\r]+)/', "\r\nX-ADDRESSBOOKSERVER-KIND:\\1", $result);
+            }
         }
 
         if ($result) {
@@ -578,7 +663,7 @@ class kolab_storage_dav_folder extends kolab_storage_folder
     /**
      * Return folder name as string representation of this object
      *
-     * @return string Full IMAP folder name
+     * @return string Folder display name
      */
     public function __toString()
     {
