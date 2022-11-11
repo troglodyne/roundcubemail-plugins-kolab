@@ -227,25 +227,34 @@ rcube_webmail.prototype.book_delete_done = function(id, recur)
 
     this.treelist.remove(id);
 
-    for (n in groups)
+    for (n in groups) {
         if (groups[n].source == id) {
             delete this.env.contactgroups[n];
             delete this.env.contactfolders[n];
         }
+    }
 
     delete this.env.address_sources[id];
     delete this.env.contactfolders[id];
 
-    if (recur)
+    if (this.env.last_source == id ) {
+        this.env.last_source = Object.keys(this.env.address_sources)[0];
+        this.env.last_group = '';
+    }
+
+    if (recur) {
         return;
+    }
 
     this.enable_command('group-create', 'book-edit', 'book-delete', false);
 
     // remove subfolders
     olddata.realname += this.env.delimiter;
-    for (n in sources)
-        if (sources[n].realname && sources[n].realname.indexOf(olddata.realname) == 0)
+    for (n in sources) {
+        if (sources[n].realname && sources[n].realname.indexOf(olddata.realname) == 0) {
             this.book_delete_done(n, true);
+        }
+    }
 };
 
 // action executed after book create/update
