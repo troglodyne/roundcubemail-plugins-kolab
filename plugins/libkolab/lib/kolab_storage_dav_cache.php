@@ -252,6 +252,8 @@ class kolab_storage_dav_cache extends kolab_storage_cache
      * @param string Object UID
      * @param string Object type to read
      * @param string Unused (kept for compat. with the parent class)
+     *
+     * @return null|array An array of objects, NULL if not found
      */
     public function get($uid, $type = null, $unused = null)
     {
@@ -277,6 +279,18 @@ class kolab_storage_dav_cache extends kolab_storage_cache
         }
 
         return $object ?: null;
+    }
+
+    /**
+     * Read multiple entries from the server directly
+     *
+     * @param array Object UIDs
+     *
+     * @return false|array An array of objects, False on error
+     */
+    public function multiget($uids)
+    {
+        return $this->folder->read_objects($uids);
     }
 
     /**
@@ -427,14 +441,18 @@ class kolab_storage_dav_cache extends kolab_storage_cache
             if ($fast) {
                 $sql_arr['fast-mode'] = true;
             }
+
             if ($uids) {
                 $result[] = $sql_arr['uid'];
             }
-            else if ($fetchall && ($object = $this->_unserialize($sql_arr))) {
-                $result[] = $object;
-            }
             else if (!$fetchall) {
                 $result[] = $sql_arr;
+            }
+            else if (($object = $this->_unserialize($sql_arr, true))) {
+                $result[] = $object;
+            }
+            else {
+                $result[] = $sql_arr['uid'];
             }
         }
 
@@ -589,7 +607,7 @@ class kolab_storage_dav_cache extends kolab_storage_cache
     /**
      * Helper method to turn stored cache data into a valid storage object
      */
-    protected function _unserialize($sql_arr)
+    protected function _unserialize($sql_arr, $noread = false)
     {
         if ($sql_arr['fast-mode'] && !empty($sql_arr['data']) && ($object = json_decode($sql_arr['data'], true))) {
             foreach ($this->data_props as $prop) {
@@ -613,9 +631,11 @@ class kolab_storage_dav_cache extends kolab_storage_cache
             $object['uid']   = $sql_arr['uid'];
             $object['etag']  = $sql_arr['etag'];
         }
-        // Fetch a complete object from the server
+        else if ($noread) {
+            return null;
+        }
         else {
-            // TODO: Fetching objects one-by-one from DAV server is slow
+            // Fetch a complete object from the server
             $object = $this->folder->read_object($sql_arr['uid'], '*');
         }
 

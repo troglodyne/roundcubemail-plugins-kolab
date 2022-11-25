@@ -460,6 +460,54 @@ class kolab_storage_dav_folder extends kolab_storage_folder
     }
 
     /**
+     * Fetch multiple objects from the DAV server and convert to internal format
+     *
+     * @param array The object UIDs to fetch
+     *
+     * @return mixed Hash array representing the Kolab objects
+     */
+    public function read_objects($uids)
+    {
+        if (!$this->valid) {
+            return false;
+        }
+
+        if (empty($uids)) {
+            return [];
+        }
+
+        foreach ($uids as $uid) {
+            $hrefs[] = $this->object_location($uid);
+        }
+
+        $objects = $this->dav->getData($this->href, $this->get_dav_type(), $hrefs);
+
+        if (!is_array($objects)) {
+            rcube::raise_error([
+                    'code' => 900,
+                    'message' => "Failed to fetch {$href}"
+                ], true);
+            return false;
+        }
+
+        $objects = array_map([$this, 'from_dav'], $objects);
+
+        foreach ($uids as $idx => $uid) {
+            foreach ($objects as $oidx => $object) {
+                if ($object && $object['uid'] == $uid) {
+                    $uids[$idx] = $object;
+                    unset($objects[$oidx]);
+                    continue 2;
+                }
+            }
+
+            $uids[$idx] = false;
+        }
+
+        return $uids;
+    }
+
+    /**
      * Convert DAV object into PHP array
      *
      * @param array Object data in kolab_dav_client::fetchData() format

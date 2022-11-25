@@ -26,13 +26,16 @@
 
 class kolab_storage_dataset implements Iterator, ArrayAccess, Countable
 {
+    const CHUNK_SIZE = 25;
+
     private $cache;  // kolab_storage_cache instance to use for fetching data
     private $memlimit = 0;
     private $buffer = false;
-    private $index = array();
-    private $data = array();
+    private $index = [];
+    private $data = [];
     private $iteratorkey = 0;
     private $error = null;
+    private $chunk = [];
 
     /**
      * Default constructor
@@ -79,7 +82,12 @@ class kolab_storage_dataset implements Iterator, ArrayAccess, Countable
 
     public function offsetSet($offset, $value)
     {
-        $uid = !empty($value['_msguid']) ? $value['_msguid'] : $value['uid'];
+        if (is_string($value)) {
+            $uid = $value;
+        }
+        else {
+            $uid = !empty($value['_msguid']) ? $value['_msguid'] : $value['uid'];
+        }
 
         if (is_null($offset)) {
             $offset = count($this->index);
@@ -110,6 +118,32 @@ class kolab_storage_dataset implements Iterator, ArrayAccess, Countable
 
     public function offsetGet($offset)
     {
+        if (isset($this->chunk[$offset])) {
+            return $this->chunk[$offset] ?: null;
+        }
+
+        // The item is a string (object's UID), use multiget method to pre-fetch
+        // multiple objects from the server in one request
+        if (isset($this->data[$offset]) && is_string($this->data[$offset]) && method_exists($this->cache, 'multiget')) {
+            $idx  = $offset;
+            $uids = [];
+
+            while (isset($this->index[$idx]) && count($uids) < self::CHUNK_SIZE) {
+                $uids[$idx] = $this->index[$idx];
+                $idx++;
+            }
+
+            if (!empty($uids)) {
+                $this->chunk = $this->cache->multiget($uids);
+            }
+
+            if (isset($this->chunk[$offset])) {
+                return $this->chunk[$offset] ?: null;
+            }
+
+            return null;
+        }
+
         if (isset($this->data[$offset])) {
             return $this->data[$offset];
         }
