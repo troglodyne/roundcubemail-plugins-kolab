@@ -123,6 +123,14 @@ class kolab_dav_client
      */
     public function discover($component = 'VEVENT')
     {
+        if ($cache = $this->get_cache()) {
+            $cache_key = "discover.{$component}." . md5($this->url);
+
+            if ($response = $cache->get($cache_key)) {
+                return $response;
+            }
+        }
+
         $roots = [
             'VEVENT' => 'calendars',
             'VTODO' => 'calendars',
@@ -200,6 +208,10 @@ class kolab_dav_client
         else {
             // Kolab iRony's calendar root
             $root_href = '/' . $roots[$component] . '/' . rawurlencode($this->user);
+        }
+
+        if ($cache) {
+            $cache->set($cache_key, $root_href);
         }
 
         return $root_href;
@@ -771,6 +783,20 @@ class kolab_dav_client
         }
         catch (Exception $e) {
             rcube::raise_error($e, true, true);
+        }
+    }
+
+    /**
+     * Return caching object if enabled
+     */
+    protected function get_cache()
+    {
+        $rcube = rcube::get_instance();
+        if ($cache_type = $rcube->config->get('dav_cache', 'db')) {
+            $cache_ttl  = $rcube->config->get('dav_cache_ttl', '10m');
+            $cache_name = 'DAV';
+
+            return $rcube->get_cache($cache_name, $cache_type, $cache_ttl);
         }
     }
 }

@@ -27,6 +27,7 @@ class carddav_contacts_driver
 {
     protected $plugin;
     protected $rc;
+    protected $sources;
 
     public function __construct($plugin)
     {
@@ -37,17 +38,21 @@ class carddav_contacts_driver
     /**
      * List addressbook sources (folders)
      */
-    public static function list_folders()
+    public function list_folders()
     {
+        if (isset($this->sources)) {
+            return $this->sources;
+        }
+
         $storage = self::get_storage();
-        $sources = [];
+        $this->sources = [];
 
         // get all folders that have "contact" type
         foreach ($storage->get_folders('contact') as $folder) {
-            $sources[$folder->id] = new carddav_contacts($folder);
+            $this->sources[$folder->id] = new carddav_contacts($folder);
         }
 
-        return $sources;
+        return $this->sources;
     }
 
     /**
@@ -57,8 +62,12 @@ class carddav_contacts_driver
      *
      * @return ?carddav_contacts
      */
-    public static function get_address_book($id)
+    public function get_address_book($id)
     {
+        if (isset($this->sources[$id])) {
+            return $this->sources[$id];
+        }
+
         $storage = self::get_storage();
         $folder = $storage->get_folder($id, 'contact');
 
@@ -88,6 +97,8 @@ class carddav_contacts_driver
     public function folder_delete($folder)
     {
         $storage = self::get_storage();
+
+        $this->sources = null;
 
         return $storage->folder_delete($folder, 'contact');
     }
@@ -146,10 +157,11 @@ class carddav_contacts_driver
 
         $type = !empty($prop['id']) ? 'update' : 'create';
 
-        if (
-            ($result = $storage->folder_update($prop))
-            && ($abook = $this->get_address_book($prop['id'] ?: $result))
-        ) {
+        $this->sources = null;
+
+        $result = $storage->folder_update($prop);
+
+        if ($result && ($abook = $this->get_address_book($prop['id'] ?: $result))) {
             $abook->id = $prop['id'] ?: $result;
             $props = $this->abook_prop($abook->id, $abook);
 
