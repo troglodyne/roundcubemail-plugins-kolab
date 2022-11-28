@@ -422,8 +422,10 @@ class kolab_storage_dav_folder extends kolab_storage_folder
             if ($result !== false) {
                 // insert/update object in the cache
                 $object['etag'] = $result;
+                $object['_raw'] = $content;
                 $this->cache->save($object, $uid);
                 $result = true;
+                unset($object['_raw']);
             }
         }
 
@@ -584,8 +586,8 @@ class kolab_storage_dav_folder extends kolab_storage_folder
         }
 
         $result['etag'] = $object['etag'];
-        $result['href'] = $object['href'];
-        $result['uid']  = $object['uid'] ?: $result['uid'];
+        $result['href'] = !empty($object['href']) ? $object['href'] : null;
+        $result['uid']  = !empty($object['uid']) ? $object['uid'] : $result['uid'];
 
         return $result;
     }

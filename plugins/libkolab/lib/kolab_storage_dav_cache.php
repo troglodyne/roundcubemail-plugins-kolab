@@ -170,9 +170,11 @@ class kolab_storage_dav_cache extends kolab_storage_cache
                     return false;
                 }
 
-                foreach ($objects as $object) {
-                    if ($object = $this->folder->from_dav($object)) {
+                foreach ($objects as $dav_object) {
+                    if ($object = $this->folder->from_dav($dav_object)) {
+                        $object['_raw'] = $dav_object['data'];
                         $this->_extended_insert(false, $object);
+                        unset($object['_raw']);
                     }
                 }
 
@@ -198,9 +200,11 @@ class kolab_storage_dav_cache extends kolab_storage_cache
                     return false;
                 }
 
-                foreach ($objects as $object) {
-                    if ($object = $this->folder->from_dav($object)) {
+                foreach ($objects as $dav_object) {
+                    if ($object = $this->folder->from_dav($dav_object)) {
+                        $object['_raw'] = $dav_object['data'];
                         $this->save($object, $object['uid']);
+                        unset($object['_raw']);
                     }
                 }
 
@@ -438,17 +442,13 @@ class kolab_storage_dav_cache extends kolab_storage_cache
         }
 
         while ($sql_arr = $this->db->fetch_assoc($sql_result)) {
-            if ($fast) {
-                $sql_arr['fast-mode'] = true;
-            }
-
             if ($uids) {
                 $result[] = $sql_arr['uid'];
             }
             else if (!$fetchall) {
                 $result[] = $sql_arr;
             }
-            else if (($object = $this->_unserialize($sql_arr, true))) {
+            else if (($object = $this->_unserialize($sql_arr, true, $fast))) {
                 $result[] = $object;
             }
             else {
@@ -605,11 +605,61 @@ class kolab_storage_dav_cache extends kolab_storage_cache
     }
 
     /**
+     * Helper method to convert the given Kolab object into a dataset to be written to cache
+     */
+    protected function _serialize($object)
+    {
+        static $threshold;
+
+        if ($threshold === null) {
+            $rcube     = rcube::get_instance();
+            $threshold = parse_bytes(rcube::get_instance()->config->get('dav_cache_threshold', 0));
+        }
+
+        $data     = [];
+        $sql_data = ['changed' => null, 'tags' => '', 'words' => ''];
+
+        if (!empty($object['changed'])) {
+            $sql_data['changed'] = date(self::DB_DATE_FORMAT, is_object($object['changed']) ? $object['changed']->format('U') : $object['changed']);
+        }
+
+        // Store only minimal set of object properties
+        foreach ($this->data_props as $prop) {
+            if (isset($object[$prop])) {
+                $data[$prop] = $object[$prop];
+                if ($data[$prop] instanceof DateTime) {
+                    $data[$prop] = array(
+                        'cl' => 'DateTime',
+                        'dt' => $data[$prop]->format('Y-m-d H:i:s'),
+                        'tz' => $data[$prop]->getTimezone()->getName(),
+                    );
+                }
+            }
+        }
+
+        if (!empty($object['_raw']) && $threshold > 0 && strlen($object['_raw']) <= $threshold) {
+            $data['_raw'] = $object['_raw'];
+        }
+
+        $sql_data['data'] = json_encode(rcube_charset::clean($data));
+
+        return $sql_data;
+    }
+
+    /**
      * Helper method to turn stored cache data into a valid storage object
      */
-    protected function _unserialize($sql_arr, $noread = false)
+    protected function _unserialize($sql_arr, $noread = false, $fast_mode = false)
     {
-        if ($sql_arr['fast-mode'] && !empty($sql_arr['data']) && ($object = json_decode($sql_arr['data'], true))) {
+        if (!empty($sql_arr['data'])) {
+            if ($object = json_decode($sql_arr['data'], true)) {
+                $object['_type'] = $sql_arr['type'] ?: $this->folder->type;
+                $object['uid']   = $sql_arr['uid'];
+                $object['etag']  = $sql_arr['etag'];
+            }
+        }
+
+        if (!empty($fast_mode) && !empty($object)) {
             foreach ($this->data_props as $prop) {
                 if (isset($object[$prop]) && is_array($object[$prop]) && $object[$prop]['cl'] == 'DateTime') {
                     $object[$prop] = new DateTime($object[$prop]['dt'], new DateTimeZone($object[$prop]['tz']));
@@ -627,11 +677,17 @@ class kolab_storage_dav_cache extends kolab_storage_cache
                 $object['changed'] = new DateTime($sql_arr['changed']);
             }
 
-            $object['_type'] = $sql_arr['type'] ?: $this->folder->type;
-            $object['uid']   = $sql_arr['uid'];
-            $object['etag']  = $sql_arr['etag'];
+            unset($object['_raw']);
         }
         else if ($noread) {
+            // We have the raw content already, parse it
+            if (!empty($object['_raw'])) {
+                $object['data'] = $object['_raw'];
+                if ($object = $this->folder->from_dav($object)) {
+                    return $object;
+                }
+            }
+
             return null;
         }
         else {

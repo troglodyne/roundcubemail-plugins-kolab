@@ -156,7 +156,7 @@ class kolab_dav_client
         $elements = $response->getElementsByTagName('response');
 
         foreach ($elements as $element) {
-            foreach ($element->getElementsByTagName('prop') as $prop) {
+            foreach ($element->getElementsByTagName('current-user-principal') as $prop) {
                 $principal_href = $prop->nodeValue;
                 break;
             }
@@ -194,7 +194,7 @@ class kolab_dav_client
         $elements = $response->getElementsByTagName('response');
 
         foreach ($elements as $element) {
-            foreach ($element->getElementsByTagName('prop') as $prop) {
+            foreach ($element->getElementsByTagName($homes[$component]) as $prop) {
                 $root_href = $prop->nodeValue;
                 break;
             }
@@ -297,9 +297,10 @@ class kolab_dav_client
         $response = $this->request($location, 'PUT', $content, $headers);
 
         if ($response !== false) {
-            $etag = $this->responseHeaders['etag'];
+            // Note: ETag is not always returned, e.g. https://github.com/cyrusimap/cyrus-imapd/issues/2456
+            $etag = isset($this->responseHeaders['etag']) ? $this->responseHeaders['etag'] : null;
 
-            if (preg_match('|^".*"$|', $etag)) {
+            if (is_string($etag) && preg_match('|^".*"$|', $etag)) {
                 $etag = substr($etag, 1, -1);
             }
 
