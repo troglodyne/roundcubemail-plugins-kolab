@@ -21,9 +21,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class libcalendaring_test extends PHPUnit\Framework\TestCase
+class LibcalendaringTest extends PHPUnit\Framework\TestCase
 {
-    function setUp()
+    function setUp(): void
     {
         require_once __DIR__ . '/../libcalendaring.php';
     }
@@ -176,9 +176,9 @@ class libcalendaring_test extends PHPUnit\Framework\TestCase
 
         $s = libcalendaring::to_rrule($rrule);
 
-        $this->assertRegExp('/FREQ='.$rrule['FREQ'].'/',          $s, "Recurrence Frequence");
-        $this->assertRegExp('/INTERVAL='.$rrule['INTERVAL'].'/',  $s, "Recurrence Interval");
-        $this->assertRegExp('/BYDAY='.$rrule['BYDAY'].'/',        $s, "Recurrence BYDAY");
-        $this->assertRegExp('/UNTIL=20250501T160000Z/',           $s, "Recurrence End date (in UTC)");
+        $this->assertMatchesRegularExpression('/FREQ='.$rrule['FREQ'].'/',          $s, "Recurrence Frequence");
+        $this->assertMatchesRegularExpression('/INTERVAL='.$rrule['INTERVAL'].'/',  $s, "Recurrence Interval");
+        $this->assertMatchesRegularExpression('/BYDAY='.$rrule['BYDAY'].'/',        $s, "Recurrence BYDAY");
+        $this->assertMatchesRegularExpression('/UNTIL=20250501T160000Z/',           $s, "Recurrence End date (in UTC)");
     }
 }

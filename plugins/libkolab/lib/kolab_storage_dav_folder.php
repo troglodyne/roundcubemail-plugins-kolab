@@ -29,16 +29,16 @@ class kolab_storage_dav_folder extends kolab_storage_folder
     /**
      * Object constructor
      */
-    public function __construct($dav, $attributes, $type_annotation = '')
+    public function __construct($dav, $attributes, $type = '')
     {
         $this->attributes = $attributes;
 
         $this->href  = $this->attributes['href'];
-        $this->id    = md5($this->dav->url . '/' . $this->href);
+        $this->id    = md5($dav->url . '/' . $this->href);
         $this->dav   = $dav;
         $this->valid = true;
 
-        list($this->type, $suffix) = explode('.', $type_annotation);
+        list($this->type, $suffix) = strpos($type, '.') ? explode('.', $type) : [$type, ''];
         $this->default = $suffix == 'default';
         $this->subtype = $this->default ? '' : $suffix;
 

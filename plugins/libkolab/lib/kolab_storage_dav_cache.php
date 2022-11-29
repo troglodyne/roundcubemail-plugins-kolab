@@ -627,7 +627,7 @@ class kolab_storage_dav_cache extends kolab_storage_cache
         foreach ($this->data_props as $prop) {
             if (isset($object[$prop])) {
                 $data[$prop] = $object[$prop];
-                if ($data[$prop] instanceof DateTime) {
+                if ($data[$prop] instanceof DateTimeInterface) {
                     $data[$prop] = array(
                         'cl' => 'DateTime',
                         'dt' => $data[$prop]->format('Y-m-d H:i:s'),
@@ -651,17 +651,11 @@ class kolab_storage_dav_cache extends kolab_storage_cache
      */
     protected function _unserialize($sql_arr, $noread = false, $fast_mode = false)
     {
-        if (!empty($sql_arr['data'])) {
-            if ($object = json_decode($sql_arr['data'], true)) {
-                $object['_type'] = $sql_arr['type'] ?: $this->folder->type;
-                $object['uid']   = $sql_arr['uid'];
-                $object['etag']  = $sql_arr['etag'];
-            }
-        }
-
-        if (!empty($fast_mode) && !empty($object)) {
+        if (!empty($sql_arr['data']) && ($object = json_decode($sql_arr['data'], true))) {
             foreach ($this->data_props as $prop) {
-                if (isset($object[$prop]) && is_array($object[$prop]) && $object[$prop]['cl'] == 'DateTime') {
+                if (isset($object[$prop]) && is_array($object[$prop])
+                    && isset($object[$prop]['cl']) && $object[$prop]['cl'] == 'DateTime'
+                ) {
                     $object[$prop] = new DateTime($object[$prop]['dt'], new DateTimeZone($object[$prop]['tz']));
                 }
                 else if (!isset($object[$prop]) && isset($sql_arr[$prop])) {
@@ -677,6 +671,12 @@ class kolab_storage_dav_cache extends kolab_storage_cache
                 $object['changed'] = new DateTime($sql_arr['changed']);
             }
 
+            $object['_type'] = !empty($sql_arr['type']) ? $sql_arr['type'] : $this->folder->type;
+            $object['uid']   = $sql_arr['uid'];
+            $object['etag']  = $sql_arr['etag'];
+        }
+
+        if (!empty($fast_mode) && !empty($object)) {
             unset($object['_raw']);
         }
         else if ($noread) {

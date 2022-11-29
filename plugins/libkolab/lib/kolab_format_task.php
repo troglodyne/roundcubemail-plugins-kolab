@@ -123,7 +123,7 @@ class kolab_format_task extends kolab_format_xcal
      */
     public function get_reference_date()
     {
-        if ($this->data['due'] && $this->data['due'] instanceof DateTime) {
+        if ($this->data['due'] && $this->data['due'] instanceof DateTimeInterface) {
             return $this->data['due'];
         }
 

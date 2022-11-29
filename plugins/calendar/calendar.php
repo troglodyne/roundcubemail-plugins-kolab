@@ -1312,7 +1312,7 @@ $("#rcmfd_new_category").keypress(function(event) {
                     if (!empty($change['date'])) {
                         $dt = $lib->adjust_timezone($change['date']);
 
-                        if ($dt instanceof DateTime) {
+                        if ($dt instanceof DateTimeInterface) {
                             $change['date'] = $this->rc->format_date($dt, $dtformat, false);
                         }
                     }

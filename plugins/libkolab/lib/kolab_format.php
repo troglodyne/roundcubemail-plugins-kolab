@@ -25,6 +25,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+require_once __DIR__ . '/../../libcalendaring/lib/libcalendaring_datetime.php';
+
 abstract class kolab_format
 {
     public static $timezone;
@@ -211,7 +213,7 @@ abstract class kolab_format
     {
         // use timezone information from datetime or global setting
         if (!$tz && $tz !== false) {
-            if ($datetime instanceof DateTime)
+            if ($datetime instanceof DateTimeInterface)
                 $tz = $datetime->getTimezone();
             if (!$tz)
                 $tz = self::$timezone;
@@ -222,19 +224,19 @@ abstract class kolab_format
         try {
             // got a unix timestamp (in UTC)
             if (is_numeric($datetime)) {
-                $datetime = new DateTime('@'.$datetime, new DateTimeZone('UTC'));
+                $datetime = new libcalendaring_datetime('@'.$datetime, new DateTimeZone('UTC'));
                 if ($tz) $datetime->setTimezone($tz);
             }
             else if (is_string($datetime) && strlen($datetime)) {
-                $datetime = $tz ? new DateTime($datetime, $tz) : new DateTime($datetime);
+                $datetime = $tz ? new libcalendaring_datetime($datetime, $tz) : new libcalendaring_datetime($datetime);
             }
-            else if ($datetime instanceof DateTime) {
+            else if ($datetime instanceof DateTimeInterface) {
                 $datetime = clone $datetime;
             }
         }
         catch (Exception $e) {}
 
-        if ($datetime instanceof DateTime) {
+        if ($datetime instanceof DateTimeInterface) {
             if ($dest_tz instanceof DateTimeZone && $dest_tz !== $datetime->getTimezone()) {
                 $datetime->setTimezone($dest_tz);
                 $tz = $dest_tz;
@@ -272,7 +274,7 @@ abstract class kolab_format
      * @param cDateTime    The libkolabxml datetime object
      * @param DateTimeZone The timezone to convert the date to
      *
-     * @return DateTime PHP datetime instance
+     * @return libcalendaring_datetime PHP datetime instance
      */
     public static function php_datetime($cdt, $dest_tz = null)
     {
@@ -280,19 +282,23 @@ abstract class kolab_format
             return null;
         }
 
-        $d = new DateTime;
-        $d->setTimezone($dest_tz ?: self::$timezone);
+        $d = new libcalendaring_datetime(null, self::$timezone);
 
-        try {
-            if ($tzs = $cdt->timezone()) {
-                $tz = new DateTimeZone($tzs);
-                $d->setTimezone($tz);
-            }
-            else if ($cdt->isUTC()) {
-                $d->setTimezone(new DateTimeZone('UTC'));
-            }
+        if ($dest_tz) {
+            $d->setTimezone($dest_tz);
         }
-        catch (Exception $e) { }
+        else {
+            try {
+                if ($tzs = $cdt->timezone()) {
+                    $tz = new DateTimeZone($tzs);
+                    $d->setTimezone($tz);
+                }
+                else if ($cdt->isUTC()) {
+                    $d->setTimezone(new DateTimeZone('UTC'));
+                }
+            }
+            catch (Exception $e) { }
+        }
 
         $d->setDate($cdt->year(), $cdt->month(), $cdt->day());
 

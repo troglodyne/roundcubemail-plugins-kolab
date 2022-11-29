@@ -21,9 +21,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class kolab_storage_folder_test extends PHPUnit\Framework\TestCase
+class KolabStorageFolderTest extends PHPUnit\Framework\TestCase
 {
-    public static function setUpBeforeClass()
+    public static function setUpBeforeClass(): void
     {
         // load libkolab plugin
         $rcmail = rcmail::get_instance();
@@ -33,11 +33,14 @@ class kolab_storage_folder_test extends PHPUnit\Framework\TestCase
             return;
         }
 
+        // Unset mock'ed storage from the Roundcube core tests
+        $rcmail->storage = null;
+
         if ($rcmail->config->get('tests_username')) {
             $authenticated = $rcmail->login(
                 $rcmail->config->get('tests_username'),
                 $rcmail->config->get('tests_password'),
-                $rcmail->config->get('default_host'),
+                $rcmail->config->get('imap_host', $rcmail->config->get('default_host')),
                 false
             );
 

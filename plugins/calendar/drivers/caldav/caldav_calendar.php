@@ -745,12 +745,14 @@ class caldav_calendar extends kolab_storage_dav_folder
 
             // Modify invitation status class name, when invitation calendars are disabled
             // we'll use opacity only for declined/needs-action events
-            $record['className'] = str_replace('-invitation', '', $record['className']);
+            $record['className'] = !empty($record['className']) ? str_replace('-invitation', '', $record['className']) : '';
         }
 
         // add instance identifier to first occurrence (master event)
         $recurrence_id_format = libcalendaring::recurrence_id_format($master_event ? $master_event : $record);
-        if (!$noinst && !empty($record['recurrence']) && empty($record['recurrence_id']) && empty($record['_instance'])) {
+        if (!$noinst && !empty($record['recurrence']) && !empty($record['start'])
+            && empty($record['recurrence_id']) && empty($record['_instance'])
+        ) {
             $record['_instance'] = $record['start']->format($recurrence_id_format);
         }
         else if (isset($record['recurrence_date']) && is_a($record['recurrence_date'], 'DateTime')) {

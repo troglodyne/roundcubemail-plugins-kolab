@@ -136,6 +136,7 @@ class caldav_driver extends kolab_driver
         $parents = array_keys($this->calendars);
 
         foreach ($folders as $id => $cal) {
+            $parent_id = null;
 /*
             $path = explode('/', $cal->name);
 

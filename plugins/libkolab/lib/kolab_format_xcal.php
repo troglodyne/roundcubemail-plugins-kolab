@@ -166,7 +166,7 @@ abstract class kolab_format_xcal extends kolab_format
             }
         }
 
-        if ($object['start'] instanceof DateTime) {
+        if ($object['start'] instanceof DateTimeInterface) {
             $start_tz = $object['start']->getTimezone();
         }
 
@@ -183,7 +183,7 @@ abstract class kolab_format_xcal extends kolab_format
             }
             else if ($until = self::php_datetime($rr->end(), $start_tz)) {
                 $refdate = $this->get_reference_date();
-                if ($refdate && $refdate instanceof DateTime && !$refdate->_dateonly) {
+                if ($refdate && $refdate instanceof DateTimeInterface && empty($refdate->_dateonly)) {
                     $until->setTime($refdate->format('G'), $refdate->format('i'), 0);
                 }
                 $object['recurrence']['UNTIL'] = $until;
@@ -412,7 +412,7 @@ abstract class kolab_format_xcal extends kolab_format
             $this->obj->setOrganizer($organizer);
         }
 
-        if ($object['start'] instanceof DateTime) {
+        if ($object['start'] instanceof DateTimeInterface) {
             $start_tz = $object['start']->getTimezone();
         }
 
@@ -536,7 +536,7 @@ abstract class kolab_format_xcal extends kolab_format
                     $alarm = new Alarm(strval($valarm['summary'] ?: $object['title']));
                 }
 
-                if (is_object($valarm['trigger']) && $valarm['trigger'] instanceof DateTime) {
+                if (is_object($valarm['trigger']) && $valarm['trigger'] instanceof DateTimeInterface) {
                     $alarm->setStart(self::get_datetime($valarm['trigger'], new DateTimeZone('UTC')));
                 }
                 else if (preg_match('/^@([0-9]+)$/', $valarm['trigger'], $m)) {
@@ -618,7 +618,7 @@ abstract class kolab_format_xcal extends kolab_format
      */
     public function get_reference_date()
     {
-        if ($this->data['start'] && $this->data['start'] instanceof DateTime) {
+        if ($this->data['start'] && $this->data['start'] instanceof DateTimeInterface) {
             return $this->data['start'];
         }
 
@@ -719,7 +719,12 @@ abstract class kolab_format_xcal extends kolab_format
         foreach ($this->_scheduling_properties ?: self::$scheduling_properties as $prop) {
             $a = $old[$prop];
             $b = $object[$prop];
-            if ($object['allday'] && ($prop == 'start' || $prop == 'end') && $a instanceof DateTime && $b instanceof DateTime) {
+
+            if ($object['allday']
+                && ($prop == 'start' || $prop == 'end')
+                && $a instanceof DateTimeInterface
+                && $b instanceof DateTimeInterface
+            ) {
                 $a = $a->format('Y-m-d');
                 $b = $b->format('Y-m-d');
             }

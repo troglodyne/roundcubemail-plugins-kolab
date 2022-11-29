@@ -790,8 +790,8 @@ abstract class calendar_driver
 
         try {
             $bday = $contact['birthday'];
-            if (!$bday instanceof DateTime) {
-                $bday = new DateTime($bday, new DateTimezone('UTC'));
+            if (!$bday instanceof DateTimeInterface) {
+                $bday = new DateTime($bday, new DateTimeZone('UTC'));
             }
             $bday->_dateonly = true;
         }

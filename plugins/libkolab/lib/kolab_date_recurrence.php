@@ -4,7 +4,7 @@
  * Recurrence computation class for xcal-based Kolab format objects
  *
  * Utility class to compute instances of recurring events.
- * It requires the libcalendaring PHP module to be installed and loaded.
+ * It requires the libcalendaring PHP extension to be installed and loaded.
  *
  * @version @package_version@
  * @author Thomas Bruederli <bruederli@kolabsys.com>
@@ -24,6 +24,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 class kolab_date_recurrence
 {
     private /* EventCal */ $engine;
@@ -63,9 +64,9 @@ class kolab_date_recurrence
     /**
      * Get date/time of the next occurence of this event
      *
-     * @param boolean Return a Unix timestamp instead of a DateTime object
+     * @param bool Return a Unix timestamp instead of a DateTime object
      *
-     * @return mixed  DateTime object/unix timestamp or False if recurrence ended
+     * @return DateTime|int|false Object/unix timestamp or False if recurrence ended
      */
     public function next_start($timestamp = false)
     {
@@ -127,7 +128,7 @@ class kolab_date_recurrence
         $event = $this->object->to_array();
 
         // recurrence end date is given
-        if ($event['recurrence']['UNTIL'] instanceof DateTime) {
+        if ($event['recurrence']['UNTIL'] instanceof DateTimeInterface) {
             return $event['recurrence']['UNTIL'];
         }
 
@@ -139,7 +140,7 @@ class kolab_date_recurrence
         }
 
         // determine a reasonable end date if none given
-        if (!$event['recurrence']['COUNT'] && $event['end'] instanceof DateTime) {
+        if (!$event['recurrence']['COUNT'] && $event['end'] instanceof DateTimeInterface) {
             $end_dt = clone $event['end'];
             $end_dt->add(new DateInterval('P100Y'));
 

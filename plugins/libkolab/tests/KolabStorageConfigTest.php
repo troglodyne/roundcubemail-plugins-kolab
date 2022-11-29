@@ -1,6 +1,6 @@
 <?php
 
-class kolab_storage_config_test extends PHPUnit\Framework\TestCase
+class KolabStorageConfigTest extends PHPUnit\Framework\TestCase
 {
     private $params_personal = array(
         'folder'     => 'Archive',
@@ -29,7 +29,7 @@ class kolab_storage_config_test extends PHPUnit\Framework\TestCase
     );
     private $url_other = 'imap:///user/lucy.white%40example.org/Mailings/378?message-id=%3C22448899%40example.org%3E&date=Tue%2C+14+Apr+2015+14%3A14%3A30+%2B0200&subject=Happy+Holidays';
 
-    public static function setUpBeforeClass()
+    public static function setUpBeforeClass(): void
     {
         $rcube = rcmail::get_instance();
         $rcube->plugins->load_plugin('libkolab', true, true);
@@ -38,11 +38,14 @@ class kolab_storage_config_test extends PHPUnit\Framework\TestCase
             return;
         }
 
+        // Unset mock'ed storage from the Roundcube core tests
+        $rcmail->storage = null;
+
         if ($rcube->config->get('tests_username')) {
             $authenticated = $rcube->login(
                 $rcube->config->get('tests_username'),
                 $rcube->config->get('tests_password'),
-                $rcube->config->get('default_host'),
+                $rcube->config->get('imap_host', $rcube->config->get('default_host')),
                 false
             );
 

@@ -72,7 +72,7 @@ class kolab_storage_dataset implements Iterator, ArrayAccess, Countable
 
     /*** Implement PHP Countable interface ***/
 
-    public function count()
+    public function count(): int
     {
         return count($this->index);
     }
@@ -80,7 +80,7 @@ class kolab_storage_dataset implements Iterator, ArrayAccess, Countable
 
     /*** Implement PHP ArrayAccess interface ***/
 
-    public function offsetSet($offset, $value)
+    public function offsetSet($offset, $value): void
     {
         if (is_string($value)) {
             $uid = $value;
@@ -106,16 +106,17 @@ class kolab_storage_dataset implements Iterator, ArrayAccess, Countable
         }
     }
 
-    public function offsetExists($offset)
+    public function offsetExists($offset): bool
     {
         return isset($this->index[$offset]);
     }
 
-    public function offsetUnset($offset)
+    public function offsetUnset($offset): void
     {
         unset($this->index[$offset]);
     }
 
+    #[ReturnTypeWillChange]
     public function offsetGet($offset)
     {
         if (isset($this->chunk[$offset])) {
@@ -163,28 +164,28 @@ class kolab_storage_dataset implements Iterator, ArrayAccess, Countable
 
     /*** Implement PHP Iterator interface ***/
 
+    #[ReturnTypeWillChange]
     public function current()
     {
         return $this->offsetGet($this->iteratorkey);
     }
 
-    public function key()
+    public function key(): int
     {
         return $this->iteratorkey;
     }
 
-    public function next()
+    public function next(): void
     {
         $this->iteratorkey++;
-        return $this->valid();
     }
 
-    public function rewind()
+    public function rewind(): void
     {
         $this->iteratorkey = 0;
     }
 
-    public function valid()
+    public function valid(): bool
     {
         return !empty($this->index[$this->iteratorkey]);
     }

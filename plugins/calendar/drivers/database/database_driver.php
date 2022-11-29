@@ -587,7 +587,8 @@ class database_driver extends calendar_driver
             $b = isset($event[$prop]) ? $event[$prop] : null;
 
             if (!empty($event['allday']) && ($prop == 'start' || $prop == 'end')
-                && $a instanceof DateTime && $b instanceof DateTime
+                && $a instanceof DateTimeInterface
+                && $b instanceof DateTimeInterface
             ) {
                 $a = $a->format('Y-m-d');
                 $b = $b->format('Y-m-d');
@@ -1464,7 +1465,7 @@ class database_driver extends calendar_driver
     private function serialize_alarms($valarms)
     {
         foreach ((array)$valarms as $i => $alarm) {
-            if ($alarm['trigger'] instanceof DateTime) {
+            if ($alarm['trigger'] instanceof DateTimeInterface) {
                 $valarms[$i]['trigger'] = '@' . $alarm['trigger']->format('c');
             }
         }

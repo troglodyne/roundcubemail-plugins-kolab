@@ -1051,7 +1051,7 @@ class kolab_storage_cache
         foreach ($this->data_props as $prop) {
             if (isset($object[$prop])) {
                 $data[$prop] = $object[$prop];
-                if ($data[$prop] instanceof DateTime) {
+                if ($data[$prop] instanceof DateTimeInterface) {
                     $data[$prop] = array(
                         'cl' => 'DateTime',
                         'dt' => $data[$prop]->format('Y-m-d H:i:s'),

@@ -184,7 +184,7 @@ class libkolab extends rcube_plugin
                 array_walk($result['changes'], function(&$change) use ($dtformat, $rcmail) {
                   if ($change['date']) {
                       $dt = rcube_utils::anytodatetime($change['date']);
-                      if ($dt instanceof DateTime) {
+                      if ($dt instanceof DateTimeInterface) {
                           $change['date'] = $rcmail->format_date($dt, $dtformat);
                       }
                   }

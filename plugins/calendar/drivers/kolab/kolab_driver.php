@@ -1339,7 +1339,7 @@ class kolab_driver extends calendar_driver
                             $recurrence_id = rcube_utils::anytodatetime($exception['_instance'], $old['start']->getTimezone());
                         }
 
-                        if ($recurrence_id instanceof DateTime) {
+                        if ($recurrence_id instanceof DateTimeInterface) {
                             $recurrence_id->add($date_shift);
                             $event['recurrence']['EXCEPTIONS'][$i]['recurrence_date'] = $recurrence_id;
                             $event['recurrence']['EXCEPTIONS'][$i]['_instance'] = $recurrence_id->format($recurrence_id_format);
@@ -1604,13 +1604,13 @@ class kolab_driver extends calendar_driver
     public static function merge_exception_dates(&$event, $overlay)
     {
         // compute date offset from the exception
-        if ($overlay['start'] instanceof DateTime && $overlay['recurrence_date'] instanceof DateTime) {
+        if ($overlay['start'] instanceof DateTimeInterface && $overlay['recurrence_date'] instanceof DateTimeInterface) {
             $date_offset = $overlay['recurrence_date']->diff($overlay['start']);
         }
 
         foreach (['start', 'end'] as $prop) {
             $value = $overlay[$prop];
-            if (isset($event[$prop]) && $event[$prop] instanceof DateTime) {
+            if (isset($event[$prop]) && $event[$prop] instanceof DateTimeInterface) {
                 // set date value if overlay is an exception of the current instance
                 if (substr($overlay['_instance'], 0, 8) == substr($event['_instance'], 0, 8)) {
                     $event[$prop]->setDate(intval($value->format('Y')), intval($value->format('n')), intval($value->format('j')));

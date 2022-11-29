@@ -194,7 +194,7 @@ class libcalendaring extends rcube_plugin
             $dt = rcube_utils::anytodatetime($dt);
         }
 
-        if ($dt instanceof DateTime && empty($dt->_dateonly) && !$dateonly) {
+        if ($dt instanceof DateTimeInterface && empty($dt->_dateonly) && !$dateonly) {
             $dt->setTimezone($this->timezone);
         }
 
@@ -517,8 +517,8 @@ class libcalendaring extends rcube_plugin
      */
     public static function to_client_alarms($valarms)
     {
-        return array_map(function($alarm){
-            if ($alarm['trigger'] instanceof DateTime) {
+        return array_map(function($alarm) {
+            if ($alarm['trigger'] instanceof DateTimeInterface) {
                 $alarm['trigger'] = '@' . $alarm['trigger']->format('U');
             }
             else if ($trigger = libcalendaring::parse_alarm_value($alarm['trigger'])) {
@@ -601,7 +601,7 @@ class libcalendaring extends rcube_plugin
             break;
         }
 
-        if ($trigger instanceof DateTime) {
+        if ($trigger instanceof DateTimeInterface) {
             $text .= ' ' . $rcube->gettext(array(
                 'name' => 'libcalendaring.alarmat',
                 'vars' => array('datetime' => $rcube->format_date($trigger))
@@ -681,7 +681,7 @@ class libcalendaring extends rcube_plugin
         foreach ($rec['valarms'] as $alarm) {
             $notify_time = null;
 
-            if ($alarm['trigger'] instanceof DateTime) {
+            if ($alarm['trigger'] instanceof DateTimeInterface) {
                 $notify_time = $alarm['trigger'];
             }
             else if (is_string($alarm['trigger'])) {
@@ -1335,7 +1335,7 @@ class libcalendaring extends rcube_plugin
     {
         $instance_date = !empty($event['recurrence_date']) ? $event['recurrence_date'] : $event['start'];
 
-        if ($instance_date instanceof DateTime) {
+        if ($instance_date instanceof DateTimeInterface) {
             // According to RFC5545 (3.8.4.4) RECURRENCE-ID format should
             // be date/date-time depending on the main event type, not the exception
             if ($allday === null) {

@@ -112,7 +112,7 @@ class kolab_format_event extends kolab_format_xcal
             }
         }
 
-        if ($object['recurrence_date'] && $object['recurrence_date'] instanceof DateTime) {
+        if ($object['recurrence_date'] && $object['recurrence_date'] instanceof DateTimeInterface) {
             if ($object['recurrence']) {
                 // unset recurrence_date for master events with rrule
                 $object['recurrence_date'] = null;
@@ -236,9 +236,9 @@ class kolab_format_event extends kolab_format_xcal
         $object = $this->to_array();
 
         $recurrence_id_format = libkolab::recurrence_id_format($object);
-        $instance_id = $recurrence_id instanceof DateTime ? $recurrence_id->format($recurrence_id_format) : strval($recurrence_id);
+        $instance_id = $recurrence_id instanceof DateTimeInterface ? $recurrence_id->format($recurrence_id_format) : strval($recurrence_id);
 
-        if ($object['recurrence_date'] instanceof DateTime) {
+        if ($object['recurrence_date'] instanceof DateTimeInterface) {
             if ($object['recurrence_date']->format($recurrence_id_format) == $instance_id) {
                 $result = $object;
             }

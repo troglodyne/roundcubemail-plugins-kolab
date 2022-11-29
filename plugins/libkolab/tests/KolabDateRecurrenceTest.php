@@ -21,9 +21,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class kolab_date_recurrence_test extends PHPUnit\Framework\TestCase
+class KolabDateRecurrenceTest extends PHPUnit\Framework\TestCase
 {
-    function setUp()
+    function setUp(): void
     {
         $rcube = rcmail::get_instance();
         $rcube->plugins->load_plugin('libkolab', true, true);
@@ -251,11 +251,11 @@ class kolab_date_recurrence_test extends PHPUnit\Framework\TestCase
         date_default_timezone_set('America/New_York');
 
         $start = new DateTime('2017-08-31 11:00:00', new DateTimeZone('Europe/Berlin'));
-        $event = array(
+        $event = [
             'start'      => $start,
-            'recurrence' => array('FREQ' => 'WEEKLY', 'INTERVAL' => '1'),
+            'recurrence' => ['FREQ' => 'WEEKLY', 'INTERVAL' => '1'],
             'allday'     => true,
-        );
+        ];
 
         $object = kolab_format::factory('event', 3.0);
         $object->set($event);
@@ -265,6 +265,6 @@ class kolab_date_recurrence_test extends PHPUnit\Framework\TestCase
 
         $this->assertEquals($start->format('2017-09-07 H:i:s'), $next['start']->format('Y-m-d H:i:s'), 'Same time');
         $this->assertEquals($start->getTimezone()->getName(), $next['start']->getTimezone()->getName(), 'Same timezone');
-        $this->assertSame($next['start']->_dateonly, true, '_dateonly flag');
+        $this->assertSame(true, $next['start']->_dateonly, '_dateonly flag');
     }
 }
