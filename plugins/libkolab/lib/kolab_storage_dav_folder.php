@@ -34,7 +34,7 @@ class kolab_storage_dav_folder extends kolab_storage_folder
         $this->attributes = $attributes;
 
         $this->href  = $this->attributes['href'];
-        $this->id    = md5($dav->url . '/' . $this->href);
+        $this->id    = kolab_storage_dav::folder_id($dav->url, $this->href);
         $this->dav   = $dav;
         $this->valid = true;
 

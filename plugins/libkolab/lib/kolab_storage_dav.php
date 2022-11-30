@@ -169,6 +169,23 @@ class kolab_storage_dav
     }
 
     /**
+     * Creates folder ID from a DAV folder location and server URI.
+     *
+     * @param string $uri  DAV server location
+     * @param string $href Folder location
+     *
+     * @return string Folder ID string
+     */
+    public static function folder_id($uri, $href)
+    {
+        if (($rootPath = parse_url($uri, PHP_URL_PATH)) && strpos($href, $rootPath) === 0) {
+            $href = substr($href, strlen($rootPath));
+        }
+
+        return md5(rtrim($uri, '/') . '/' . trim($href, '/'));
+    }
+
+    /**
      * Deletes a folder
      *
      * @param string $id   Folder ID
@@ -264,7 +281,7 @@ class kolab_storage_dav
             $result   = $this->dav->folderCreate($location, $type, $prop);
 
             if ($result !== false) {
-                $result = md5($this->dav->url . '/' . $location);
+                $result = self::folder_id($this->dav->url, $location);
             }
         }
 
