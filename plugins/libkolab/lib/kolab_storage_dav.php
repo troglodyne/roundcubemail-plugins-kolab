@@ -182,7 +182,8 @@ class kolab_storage_dav
             $href = substr($href, strlen($rootPath));
         }
 
-        return md5(rtrim($uri, '/') . '/' . trim($href, '/'));
+        // Start with a letter to prevent from all kind of issues if it starts with a digit
+        return 'f' . md5(rtrim($uri, '/') . '/' . trim($href, '/'));
     }
 
     /**
