@@ -1280,23 +1280,25 @@ class tasklist_kolab_driver extends tasklist_driver
         }
 
         // convert from DateTime to internal date format
-        if (is_a($record['due'], 'DateTime')) {
+        if ($record['due'] instanceof DateTimeInterface) {
             $due = $this->plugin->lib->adjust_timezone($record['due']);
             $task['date'] = $due->format('Y-m-d');
-            if (!$record['due']->_dateonly)
+            if (empty($record['due']->_dateonly)) {
                 $task['time'] = $due->format('H:i');
+            }
         }
         // convert from DateTime to internal date format
-        if (is_a($record['start'], 'DateTime')) {
+        if ($record['start'] instanceof DateTimeInterface) {
             $start = $this->plugin->lib->adjust_timezone($record['start']);
             $task['startdate'] = $start->format('Y-m-d');
-            if (!$record['start']->_dateonly)
+            if (empty($record['start']->_dateonly)) {
                 $task['starttime'] = $start->format('H:i');
+            }
         }
-        if (is_a($record['changed'], 'DateTime')) {
+        if ($record['changed'] instanceof DateTimeInterface) {
             $task['changed'] = $record['changed'];
         }
-        if (is_a($record['created'], 'DateTime')) {
+        if ($record['created'] instanceof DateTimeInterface) {
             $task['created'] = $record['created'];
         }
 
@@ -1309,10 +1311,10 @@ class tasklist_kolab_driver extends tasklist_driver
 
         if (!empty($task['attendees'])) {
             foreach ((array)$task['attendees'] as $i => $attendee) {
-                if (is_array($attendee['delegated-from'])) {
+                if (isset($attendee['delegated-from']) && is_array($attendee['delegated-from'])) {
                     $task['attendees'][$i]['delegated-from'] = join(', ', $attendee['delegated-from']);
                 }
-                if (is_array($attendee['delegated-to'])) {
+                if (isset($attendee['delegated-to']) && is_array($attendee['delegated-to'])) {
                     $task['attendees'][$i]['delegated-to'] = join(', ', $attendee['delegated-to']);
                 }
             }
@@ -1321,8 +1323,9 @@ class tasklist_kolab_driver extends tasklist_driver
         if (!empty($record['_attachments'])) {
             foreach ($record['_attachments'] as $key => $attachment) {
                 if ($attachment !== false) {
-                    if (!$attachment['name'])
+                    if (empty($attachment['name'])) {
                         $attachment['name'] = $key;
+                    }
                     $attachments[] = $attachment;
                 }
             }
@@ -1337,22 +1340,33 @@ class tasklist_kolab_driver extends tasklist_driver
      * Convert the given task record into a data structure that can be passed to kolab_storage backend for saving
      * (opposite of self::_to_rcube_event())
      */
-    private function _from_rcube_task($task, $old = array())
+    private function _from_rcube_task($task, $old = [])
     {
         $object    = $task;
         $id_prefix = $task['list'] . ':';
 
+        $toDT = function($date) {
+            // Convert DateTime into libcalendaring_datetime
+            return libcalendaring_datetime::createFromFormat(
+                'Y-m-d\\TH:i:s',
+                $date->format('Y-m-d\\TH:i:s'),
+                $date->getTimezone()
+            );
+        };
+
         if (!empty($task['date'])) {
-            $object['due'] = rcube_utils::anytodatetime($task['date'].' '.$task['time'], $this->plugin->timezone);
-            if (empty($task['time']))
+            $object['due'] = $toDT(rcube_utils::anytodatetime($task['date'].' '.$task['time'], $this->plugin->timezone));
+            if (empty($task['time'])) {
                 $object['due']->_dateonly = true;
+            }
             unset($object['date']);
         }
 
         if (!empty($task['startdate'])) {
-            $object['start'] = rcube_utils::anytodatetime($task['startdate'].' '.$task['starttime'], $this->plugin->timezone);
-            if (empty($task['starttime']))
+            $object['start'] = $toDT(rcube_utils::anytodatetime($task['startdate'].' '.$task['starttime'], $this->plugin->timezone));
+            if (empty($task['starttime'])) {
                 $object['start']->_dateonly = true;
+            }
             unset($object['startdate']);
         }
 

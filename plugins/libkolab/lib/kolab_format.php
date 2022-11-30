@@ -25,8 +25,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once __DIR__ . '/../../libcalendaring/lib/libcalendaring_datetime.php';
-
 abstract class kolab_format
 {
     public static $timezone;

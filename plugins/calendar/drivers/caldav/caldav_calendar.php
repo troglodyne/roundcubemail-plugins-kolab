@@ -755,7 +755,7 @@ class caldav_calendar extends kolab_storage_dav_folder
         ) {
             $record['_instance'] = $record['start']->format($recurrence_id_format);
         }
-        else if (isset($record['recurrence_date']) && is_a($record['recurrence_date'], 'DateTime')) {
+        else if (isset($record['recurrence_date']) && $record['recurrence_date'] instanceof DateTimeInterface) {
             $record['_instance'] = $record['recurrence_date']->format($recurrence_id_format);
         }
 

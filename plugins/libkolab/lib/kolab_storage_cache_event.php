@@ -48,13 +48,13 @@ class kolab_storage_cache_event extends kolab_storage_cache
         // extend start/end dates to spawn all exceptions
         if (is_array($object['exceptions'])) {
             foreach ($object['exceptions'] as $exception) {
-                if (is_a($exception['start'], 'DateTime')) {
+                if ($exception['start'] instanceof DateTimeInterface) {
                     $exstart = $this->_convert_datetime($exception['start']);
                     if ($exstart < $sql_data['dtstart']) {
                         $sql_data['dtstart'] = $exstart;
                     }
                 }
-                if (is_a($exception['end'], 'DateTime')) {
+                if ($exception['end'] instanceof DateTimeInterface) {
                     $exend = $this->_convert_datetime($exception['end']);
                     if ($exend > $sql_data['dtend']) {
                         $sql_data['dtend'] = $exend;

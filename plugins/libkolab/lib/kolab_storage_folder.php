@@ -353,10 +353,12 @@ class kolab_storage_folder extends kolab_storage_folder_api
                 unset($query[$i]);
             }
             else if (($param[0] == 'dtstart' || $param[0] == 'dtend' || $param[0] == 'changed')) {
-                if (is_object($param[2]) && is_a($param[2], 'DateTime'))
+                if (is_object($param[2]) && $param[2] instanceof DateTimeInterface) {
                     $param[2] = $param[2]->format('U');
-                if (is_numeric($param[2]))
+                }
+                if (is_numeric($param[2])) {
                     $query[$i][2] = date('Y-m-d H:i:s', $param[2]);
+                }
             }
         }
 
@@ -734,14 +736,14 @@ class kolab_storage_folder extends kolab_storage_folder_api
     private function save_recurrence_exceptions(&$object, $type = null)
     {
         if ($object['recurrence']['EXCEPTIONS']) {
-            $exdates = array();
-            foreach ((array)$object['recurrence']['EXDATE'] as $exdate) {
-                $key = is_a($exdate, 'DateTime') ? $exdate->format('Y-m-d') : strval($exdate);
+            $exdates = [];
+            foreach ((array) $object['recurrence']['EXDATE'] as $exdate) {
+                $key = $exdate instanceof DateTimeInterface ? $exdate->format('Y-m-d') : strval($exdate);
                 $exdates[$key] = 1;
             }
 
             // save every exception as individual object
-            foreach((array)$object['recurrence']['EXCEPTIONS'] as $exception) {
+            foreach ((array) $object['recurrence']['EXCEPTIONS'] as $exception) {
                 $exception['uid'] = self::recurrence_exception_uid($object['uid'], $exception['start']->format('Ymd'));
                 $exception['sequence'] = $object['sequence'] + 1;
 
@@ -1114,8 +1116,9 @@ class kolab_storage_folder extends kolab_storage_folder_api
         }
 
         if ($result && is_object($result) && is_a($result, 'PEAR_Error')) {
-            return PEAR::raiseError(sprintf("Failed triggering folder %s. Error was: %s",
-                                            $this->name, $result->getMessage()));
+            return PEAR::raiseError(
+                sprintf("Failed triggering folder %s. Error was: %s", $this->name, $result->getMessage())
+            );
         }
 
         return $result;

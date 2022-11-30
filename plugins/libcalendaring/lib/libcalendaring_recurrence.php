@@ -63,14 +63,14 @@ class libcalendaring_recurrence
 
         if (!empty($recurrence['EXDATE'])) {
             foreach ((array) $recurrence['EXDATE'] as $exdate) {
-                if (is_a($exdate, 'DateTime')) {
+                if ($exdate instanceof DateTimeInterface) {
                     $this->engine->addException($exdate->format('Y'), $exdate->format('n'), $exdate->format('j'));
                 }
             }
         }
         if (!empty($recurrence['RDATE'])) {
             foreach ((array) $recurrence['RDATE'] as $rdate) {
-                if (is_a($rdate, 'DateTime')) {
+                if ($rdate instanceof DateTimeInterface) {
                     $this->engine->addRDate($rdate->format('Y'), $rdate->format('n'), $rdate->format('j'));
                 }
             }

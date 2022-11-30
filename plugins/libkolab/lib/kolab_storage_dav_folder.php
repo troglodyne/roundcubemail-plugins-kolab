@@ -625,7 +625,7 @@ class kolab_storage_dav_folder extends kolab_storage_folder
                 list($field, $section) = rcube_utils::explode(':', $key);
 
                 // avoid casting DateTime objects to array
-                if (is_object($values) && is_a($values, 'DateTime')) {
+                if (is_object($values) && $values instanceof DateTimeInterface) {
                     $values = [$values];
                 }
 

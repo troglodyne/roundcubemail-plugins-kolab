@@ -105,6 +105,10 @@ class libcalendaring extends rcube_plugin
      */
     public function init()
     {
+        // extend include path to load bundled lib classes
+        $include_path = $this->home . '/lib' . PATH_SEPARATOR . ini_get('include_path');
+        set_include_path($include_path);
+
         self::$instance = $this;
 
         $this->rc = rcube::get_instance();
@@ -155,8 +159,7 @@ class libcalendaring extends rcube_plugin
     public static function get_ical()
     {
         $self = self::get_instance();
-        require_once __DIR__ . '/libvcalendar.php';
-        return new libvcalendar();
+        return new libcalendaring_vcalendar();
     }
 
     /**
@@ -165,7 +168,6 @@ class libcalendaring extends rcube_plugin
     public static function get_itip($domain = 'libcalendaring')
     {
         $self = self::get_instance();
-        require_once __DIR__ . '/lib/libcalendaring_itip.php';
         return new libcalendaring_itip($self, $domain);
     }
 
@@ -175,7 +177,6 @@ class libcalendaring extends rcube_plugin
     public static function get_recurrence()
     {
         $self = self::get_instance();
-        require_once __DIR__ . '/lib/libcalendaring_recurrence.php';
         return new libcalendaring_recurrence($self);
     }
 
@@ -1161,7 +1162,7 @@ class libcalendaring extends rcube_plugin
     /**
      * Getter for the parsed iCal objects attached to the current email message
      *
-     * @return object libvcalendar parser instance with the parsed objects
+     * @return object libcalendaring_vcalendar parser instance with the parsed objects
      */
     public function get_mail_ical_objects()
     {

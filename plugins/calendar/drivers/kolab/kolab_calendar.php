@@ -821,7 +821,7 @@ class kolab_calendar extends kolab_storage_folder_api
         if (!$noinst && !empty($record['recurrence']) && empty($record['recurrence_id']) && empty($record['_instance'])) {
             $record['_instance'] = $record['start']->format($recurrence_id_format);
         }
-        else if (isset($record['recurrence_date']) && is_a($record['recurrence_date'], 'DateTime')) {
+        else if (isset($record['recurrence_date']) && $record['recurrence_date'] instanceof DateTimeInterface) {
             $record['_instance'] = $record['recurrence_date']->format($recurrence_id_format);
         }
 

@@ -1332,7 +1332,7 @@ class kolab_driver extends calendar_driver
                     $recurrence_id_format = libcalendaring::recurrence_id_format($event);
 
                     foreach ($event['recurrence']['EXCEPTIONS'] as $i => $exception) {
-                        if (isset($exception['recurrence_date']) && is_a($exception['recurrence_date'], 'DateTime')) {
+                        if (isset($exception['recurrence_date']) && $exception['recurrence_date'] instanceof DateTimeInterface) {
                             $recurrence_id = $exception['recurrence_date'];
                         }
                         else {
@@ -1530,7 +1530,7 @@ class kolab_driver extends calendar_driver
             $event['recurrence_date'] = $event['start'];
         }
 
-        if (empty($event['_instance']) && is_a($event['recurrence_date'], 'DateTime')) {
+        if (empty($event['_instance']) && $event['recurrence_date'] instanceof DateTimeInterface) {
             $event['_instance'] = libcalendaring::recurrence_instance_identifier($event, !empty($master['allday']));
         }
 
@@ -2141,7 +2141,7 @@ class kolab_driver extends calendar_driver
         }
 
         // all-day events go from 12:00 - 13:00
-        if (is_a($record['start'], 'DateTime') && $record['end'] <= $record['start'] && !empty($record['allday'])) {
+        if ($record['start'] instanceof DateTimeInterface && $record['end'] <= $record['start'] && !empty($record['allday'])) {
             $record['end'] = clone $record['start'];
             $record['end']->add(new DateInterval('PT1H'));
         }

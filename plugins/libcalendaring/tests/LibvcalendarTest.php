@@ -27,8 +27,9 @@ class LibvcalendarTest extends PHPUnit\Framework\TestCase
 
     function setUp(): void
     {
-        require_once __DIR__ . '/../libvcalendar.php';
         require_once __DIR__ . '/../libcalendaring.php';
+        require_once __DIR__ . '/../lib/libcalendaring_vcalendar.php';
+        require_once __DIR__ . '/../lib/libcalendaring_datetime.php';
     }
 
     /**
@@ -36,7 +37,7 @@ class LibvcalendarTest extends PHPUnit\Framework\TestCase
      */
     function test_import()
     {
-        $ical = new libvcalendar();
+        $ical = new libcalendaring_vcalendar();
         $ics = file_get_contents(__DIR__ . '/resources/snd.ics');
         $events = $ical->import($ics, 'UTF-8');
 
@@ -67,7 +68,7 @@ class LibvcalendarTest extends PHPUnit\Framework\TestCase
      */
     function test_import_from_file()
     {
-        $ical = new libvcalendar();
+        $ical = new libcalendaring_vcalendar();
 
         $events = $ical->import_from_file(__DIR__ . '/resources/multiple.ics', 'UTF-8');
         $this->assertEquals(2, count($events));
@@ -81,7 +82,7 @@ class LibvcalendarTest extends PHPUnit\Framework\TestCase
      */
     function test_import_from_file_multiple()
     {
-        $ical = new libvcalendar();
+        $ical = new libcalendaring_vcalendar();
         $ical->fopen(__DIR__ . '/resources/multiple-rdate.ics', 'UTF-8');
         $events = [];
         foreach ($ical as $event) {
@@ -95,7 +96,7 @@ class LibvcalendarTest extends PHPUnit\Framework\TestCase
 
     function test_invalid_dates()
     {
-        $ical = new libvcalendar();
+        $ical = new libcalendaring_vcalendar();
         $events = $ical->import_from_file(__DIR__ . '/resources/invalid-dates.ics', 'UTF-8');
         $event = $events[0];
 
@@ -109,7 +110,7 @@ class LibvcalendarTest extends PHPUnit\Framework\TestCase
      */
     function test_extended()
     {
-        $ical = new libvcalendar();
+        $ical = new libcalendaring_vcalendar();
 
         $events = $ical->import_from_file(__DIR__ . '/resources/itip.ics', 'UTF-8');
         $event = $events[0];
@@ -184,7 +185,7 @@ class LibvcalendarTest extends PHPUnit\Framework\TestCase
      */
     function test_alarms()
     {
-        $ical = new libvcalendar();
+        $ical = new libcalendaring_vcalendar();
 
         $events = $ical->import_from_file(__DIR__ . '/resources/recurring.ics', 'UTF-8');
         $event = $events[0];
@@ -237,7 +238,7 @@ class LibvcalendarTest extends PHPUnit\Framework\TestCase
      */
     function test_attachment()
     {
-        $ical = new libvcalendar();
+        $ical = new libcalendaring_vcalendar();
 
         $events = $ical->import_from_file(__DIR__ . '/resources/attachment.ics', 'UTF-8');
         $event = $events[0];
@@ -253,7 +254,7 @@ class LibvcalendarTest extends PHPUnit\Framework\TestCase
      */
     function test_apple_alarms()
     {
-        $ical = new libvcalendar();
+        $ical = new libcalendaring_vcalendar();
         $events = $ical->import_from_file(__DIR__ . '/resources/apple-alarms.ics', 'UTF-8');
         $event = $events[0];
 
@@ -274,7 +275,7 @@ class LibvcalendarTest extends PHPUnit\Framework\TestCase
      */
     function test_escaped_values()
     {
-        $ical = new libvcalendar();
+        $ical = new libcalendaring_vcalendar();
         $events = $ical->import_from_file(__DIR__ . '/resources/escaped.ics', 'UTF-8');
         $event = $events[0];
 
@@ -291,7 +292,7 @@ class LibvcalendarTest extends PHPUnit\Framework\TestCase
      */
     function test_rdate()
     {
-        $ical = new libvcalendar();
+        $ical = new libcalendaring_vcalendar();
         $events = $ical->import_from_file(__DIR__ . '/resources/multiple-rdate.ics', 'UTF-8');
         $event = $events[0];
 
@@ -305,7 +306,7 @@ class LibvcalendarTest extends PHPUnit\Framework\TestCase
      */
     function test_freebusy()
     {
-        $ical = new libvcalendar();
+        $ical = new libcalendaring_vcalendar();
         $ical->import_from_file(__DIR__ . '/resources/freebusy.ifb', 'UTF-8');
         $freebusy = $ical->freebusy;
 
@@ -322,7 +323,7 @@ class LibvcalendarTest extends PHPUnit\Framework\TestCase
      */
     function test_freebusy_dummy()
     {
-        $ical = new libvcalendar();
+        $ical = new libcalendaring_vcalendar();
         $ical->import_from_file(__DIR__ . '/resources/dummy.ifb', 'UTF-8');
         $freebusy = $ical->freebusy;
 
@@ -332,7 +333,7 @@ class LibvcalendarTest extends PHPUnit\Framework\TestCase
 
     function test_vtodo()
     {
-        $ical = new libvcalendar();
+        $ical = new libcalendaring_vcalendar();
         $tasks = $ical->import_from_file(__DIR__ . '/resources/vtodo.ics', 'UTF-8', true);
         $task = $tasks[0];
 
@@ -357,7 +358,7 @@ class LibvcalendarTest extends PHPUnit\Framework\TestCase
      */
     function test_export()
     {
-        $ical = new libvcalendar();
+        $ical = new libcalendaring_vcalendar();
 
         $events = $ical->import_from_file(__DIR__ . '/resources/itip.ics', 'UTF-8');
         $event = $events[0];
@@ -367,7 +368,7 @@ class LibvcalendarTest extends PHPUnit\Framework\TestCase
         $this->attachment_data = $event['attachments'][0]['data'];
         unset($event['attachments'][0]['data']);
         $event['attachments'][0]['id'] = '1';
-        $event['description'] = '*Exported by libvcalendar*';
+        $event['description'] = '*Exported by libcalendaring_vcalendar*';
 
         $event['start']->setTimezone(new DateTimezone('America/Montreal'));
         $event['end']->setTimezone(new DateTimezone('Europe/Berlin'));
@@ -420,7 +421,7 @@ class LibvcalendarTest extends PHPUnit\Framework\TestCase
      */
     function test_export_multiple()
     {
-        $ical = new libvcalendar();
+        $ical = new libcalendaring_vcalendar();
         $events = array_merge(
             $ical->import_from_file(__DIR__ . '/resources/snd.ics', 'UTF-8'),
             $ical->import_from_file(__DIR__ . '/resources/multiple.ics', 'UTF-8')
@@ -440,7 +441,7 @@ class LibvcalendarTest extends PHPUnit\Framework\TestCase
      */
     function test_export_recurrence_exceptions()
     {
-        $ical = new libvcalendar();
+        $ical = new libcalendaring_vcalendar();
         $events = $ical->import_from_file(__DIR__ . '/resources/recurring.ics', 'UTF-8');
 
         // add exceptions
@@ -488,7 +489,7 @@ class LibvcalendarTest extends PHPUnit\Framework\TestCase
                 'RDATE' => [],
             ],
         ];
-        $ical = new libvcalendar();
+        $ical = new libcalendaring_vcalendar();
         $ics = $ical->export([$event], null, false, null, false);
 
         $this->assertStringNotContainsString('EXDATE=', $ics);
@@ -500,7 +501,7 @@ class LibvcalendarTest extends PHPUnit\Framework\TestCase
      */
     function test_export_rdate()
     {
-        $ical = new libvcalendar();
+        $ical = new libcalendaring_vcalendar();
         $events = $ical->import_from_file(__DIR__ . '/resources/multiple-rdate.ics', 'UTF-8');
         $ics = $ical->export($events, null, false);
 
@@ -512,7 +513,7 @@ class LibvcalendarTest extends PHPUnit\Framework\TestCase
      */
     function test_export_direct()
     {
-        $ical = new libvcalendar();
+        $ical = new libcalendaring_vcalendar();
         $events = $ical->import_from_file(__DIR__ . '/resources/multiple.ics', 'UTF-8');
         $num = count($events);
 
@@ -530,7 +531,7 @@ class LibvcalendarTest extends PHPUnit\Framework\TestCase
 
     function test_datetime()
     {
-        $ical = new libvcalendar();
+        $ical = new libcalendaring_vcalendar();
         $cal  = new \Sabre\VObject\Component\VCalendar();
         $localtime = $ical->datetime_prop($cal, 'DTSTART', new DateTime('2013-09-01 12:00:00', new DateTimeZone('Europe/Berlin')));
         $localdate = $ical->datetime_prop($cal, 'DTSTART', new DateTime('2013-09-01', new DateTimeZone('Europe/Berlin')), false, true);
@@ -545,7 +546,7 @@ class LibvcalendarTest extends PHPUnit\Framework\TestCase
 
     function test_get_vtimezone()
     {
-        $vtz = libvcalendar::get_vtimezone('Europe/Berlin', strtotime('2014-08-22T15:00:00+02:00'));
+        $vtz = libcalendaring_vcalendar::get_vtimezone('Europe/Berlin', strtotime('2014-08-22T15:00:00+02:00'));
         $this->assertInstanceOf('\Sabre\VObject\Component', $vtz, "VTIMEZONE is a Component object");
         $this->assertEquals('Europe/Berlin', $vtz->TZID);
         $this->assertEquals('4', $vtz->{'X-MICROSOFT-CDO-TZID'});
@@ -568,22 +569,22 @@ class LibvcalendarTest extends PHPUnit\Framework\TestCase
         $this->assertEquals('CET', $std->TZNAME);
 
         // unknown timezone
-        $vtz = libvcalendar::get_vtimezone('America/Foo Bar');
+        $vtz = libcalendaring_vcalendar::get_vtimezone('America/Foo Bar');
         $this->assertEquals(false, $vtz);
 
         // invalid input data
-        $vtz = libvcalendar::get_vtimezone(new DateTime());
+        $vtz = libcalendaring_vcalendar::get_vtimezone(new DateTime());
         $this->assertEquals(false, $vtz);
 
         // DateTimezone as input data
-        $vtz = libvcalendar::get_vtimezone(new DateTimezone('Pacific/Chatham'));
+        $vtz = libcalendaring_vcalendar::get_vtimezone(new DateTimezone('Pacific/Chatham'));
         $this->assertInstanceOf('\Sabre\VObject\Component', $vtz);
         $this->assertStringContainsString('TZOFFSETFROM:+1245', $vtz->serialize());
         $this->assertStringContainsString('TZOFFSETTO:+1345', $vtz->serialize());
 
         // Making sure VTIMEZOONE contains at least one STANDARD/DAYLIGHT component
         // when there's only one transition in specified time period (T5626)
-        $vtz = libvcalendar::get_vtimezone('Europe/Istanbul', strtotime('2019-10-04T15:00:00'));
+        $vtz = libcalendaring_vcalendar::get_vtimezone('Europe/Istanbul', strtotime('2019-10-04T15:00:00'));
 
         $this->assertInstanceOf('\Sabre\VObject\Component', $vtz);
 

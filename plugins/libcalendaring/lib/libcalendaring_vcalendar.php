@@ -24,15 +24,13 @@
 use \Sabre\VObject;
 use \Sabre\VObject\DateTimeParser;
 
-require_once __DIR__ . '/lib/libcalendaring_datetime.php';
-
 /**
  * Class to parse and build vCalendar (iCalendar) files
  *
  * Uses the Sabre VObject library, version 3.x.
  *
  */
-class libvcalendar implements Iterator
+class libcalendaring_vcalendar implements Iterator
 {
     private $timezone;
     private $attach_uri = null;
@@ -1525,7 +1523,7 @@ class vobject_location_property extends VObject\Property\Text
      *
      * @var array
      */
-    protected $structuredValues = array(
+    protected $structuredValues = [
         // vCard
         'N',
         'ADR',
@@ -1534,5 +1532,5 @@ class vobject_location_property extends VObject\Property\Text
         'LOCATION',
         // iCalendar
         'REQUEST-STATUS',
-    );
+    ];
 }

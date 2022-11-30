@@ -87,7 +87,7 @@ class kolab_format_event extends kolab_format_xcal
 
                 // get value for recurrence-id
                 $recurrence_id = null;
-                if (!empty($exception['recurrence_date']) && is_a($exception['recurrence_date'], 'DateTime')) {
+                if (!empty($exception['recurrence_date']) && $exception['recurrence_date'] instanceof DateTimeInterface) {
                     $recurrence_id = $exception['recurrence_date'];
                     $compacted['_instance'] = $recurrence_id->format($recurrence_id_format);
                 }
