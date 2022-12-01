@@ -1163,8 +1163,11 @@ class Horde_Date_Recurrence
         $rdata = array();
         $parts = explode(';', $rrule);
         foreach ($parts as $part) {
-            list($key, $value) = explode('=', $part, 2);
-            $rdata[strtoupper($key)] = $value;
+            $value = null;
+            if (strpos($part, '=')) {
+                list($part, $value) = explode('=', $part, 2);
+            }
+            $rdata[strtoupper($part)] = $value;
         }
 
         if (isset($rdata['FREQ'])) {

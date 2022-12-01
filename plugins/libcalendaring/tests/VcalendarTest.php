@@ -21,7 +21,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-class LibvcalendarTest extends PHPUnit\Framework\TestCase
+class VcalendarTest extends PHPUnit\Framework\TestCase
 {
     private $attachment_data;
 

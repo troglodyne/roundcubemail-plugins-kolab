@@ -39,11 +39,11 @@ class libcalendaring_recurrence
      */
     function __construct($lib)
     {
-      // use Horde classes to compute recurring instances
-      // TODO: replace with something that has less than 6'000 lines of code
-      require_once(__DIR__ . '/Horde_Date_Recurrence.php');
+        // use Horde classes to compute recurring instances
+        // TODO: replace with something that has less than 6'000 lines of code
+        require_once(__DIR__ . '/Horde_Date_Recurrence.php');
 
-      $this->lib = $lib;
+        $this->lib = $lib;
     }
 
     /**
@@ -85,7 +85,7 @@ class libcalendaring_recurrence
     public function set_start($start)
     {
         $this->start = $start;
-        $this->dateonly = $start->_dateonly;
+        $this->dateonly = !empty($start->_dateonly);
         $this->next = new Horde_Date($start, $this->lib->timezone->getName());
         $this->hour = $this->next->hour;
         $this->engine->setRecurStart($this->next);
@@ -94,26 +94,29 @@ class libcalendaring_recurrence
     /**
      * Get date/time of the next occurence of this event
      *
-     * @return DateTime|int|false object or False if recurrence ended
+     * @return DateTime|false object or False if recurrence ended
      */
     public function next()
     {
         $time = false;
         $after = clone $this->next;
         $after->mday = $after->mday + 1;
+
         if ($this->next && ($next = $this->engine->nextActiveRecurrence($after))) {
             // avoid endless loops if recurrence computation fails
             if (!$next->after($this->next)) {
                 return false;
             }
+
             // fix time for all-day events
             if ($this->dateonly) {
                 $next->hour = $this->hour;
                 $next->min = 0;
             }
 
-            $time = $next->toDateTime();
             $this->next = $next;
+
+            $time = $this->toDateTime($next);
         }
 
         return $time;
@@ -224,12 +227,27 @@ class libcalendaring_recurrence
             return null;
         }
 
-        if ($start Instanceof Horde_Date) {
-            $start = $start->toDateTime();
-        }
-
-        $start->_dateonly = $this->dateonly;
+        $start = $this->toDateTime($start);
 
         return $start;
+    }
+
+    private function toDateTime($date)
+    {
+        if ($date Instanceof Horde_Date) {
+            $date = $date->toDateTime();
+        }
+
+        if ($date instanceof DateTimeInterface) {
+            $date = libcalendaring_datetime::createFromFormat(
+                'Y-m-d\\TH:i:s',
+                $date->format('Y-m-d\\TH:i:s'),
+                $date->getTimezone()
+            );
+        }
+
+        $date->_dateonly = $this->dateonly;
+
+        return $date;
     }
 }
