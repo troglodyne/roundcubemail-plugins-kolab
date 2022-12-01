@@ -15,7 +15,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Language: it_IT\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Plural-Forms: nplurals=3; plural=n == 1 ? 0 : n != 0 && n % 1000000 == 0 ? 1 : 2;\n"
 
 #: ../../en_US/_plugins/calendar/manage.rst:7
 msgid "Manage Your Schedule"
@@ -193,8 +193,8 @@ msgstr ""
 msgid ""
 "An important part of managing your schedule is to invite others to events "
 "and track their RSVP. In this part of the edit dialog you can manage the "
-"participants of an event. Read more about this further down in the :ref"
-":`calendar-event-participants` section."
+"participants of an event. Read more about this further down in the "
+":ref:`calendar-event-participants` section."
 msgstr ""
 
 #: ../../en_US/_plugins/calendar/manage.rst:79
@@ -337,6 +337,6 @@ msgstr ""
 
 #: ../../en_US/_plugins/calendar/manage.rst:172
 msgid ""
-"How to process incoming event invitations is described in chapter :ref"
-":`calendar-invitations`."
+"How to process incoming event invitations is described in chapter "
+":ref:`calendar-invitations`."
 msgstr ""

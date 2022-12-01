@@ -207,10 +207,6 @@ $labels['itipmailbodycancel'] = "\$sender has rejected your participation in the
 $labels['itipmailbodydelegated'] = "\$sender has delegated the participation in the following event:\n\n*\$title*\n\nWhen: \$date";
 $labels['itipmailbodydelegatedto'] = "\$sender has delegated the participation in the following event to you:\n\n*\$title*\n\nWhen: \$date";
 
-$labels['itipmailbodyresourceaccepted'] = "\$sender has accepted the following resource booking:\n\n*\$title*\n\nWhen: \$date\n\nInvitees: \$attendees";
-$labels['itipmailbodyresourcetentative'] = "\$sender has tentatively accepted the following resource booking:\n\n*\$title*\n\nWhen: \$date\n\nInvitees: \$attendees";
-$labels['itipmailbodyresourcedeclined'] = "\$sender has declined the the following resource booking:\n\n*\$title*\n\nWhen: \$date\n\nInvitees: \$attendees";
-
 $labels['itipdeclineevent'] = 'Do you want to decline your invitation to this event?';
 $labels['declinedeleteconfirm'] = 'Do you also want to delete this declined event from your calendar?';
 $labels['itipcomment'] = 'Invitation/notification comment';
@@ -321,8 +317,4 @@ $labels['arialabelresourcesearchform'] = 'Resources search form';
 $labels['arialabelresourceselection'] = 'Available resources';
 $labels['arialabeleventform'] = 'Event editing form';
 
-// Nextcloud Talk integration
-$labels['createtalkroom'] = 'Create Talk room';
-$labels['talkroomcreating'] = 'Creating a Talk room for the event...';
-$labels['talkroomcreateerror'] = 'Failed to create a Talk room.';
-$labels['talkroomname'] = 'Room for an event';
+?>
