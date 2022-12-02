@@ -66,6 +66,10 @@ class kolab_driver extends calendar_driver
 
         $this->freebusy_trigger = $this->rc->config->get('calendar_freebusy_trigger', false);
 
+        if (!$this->rc->config->get('kolab_freebusy_server', false)) {
+            $this->freebusy = false;
+        }
+
         if (kolab_storage::$version == '2.0') {
             $this->alarm_types    = ['DISPLAY'];
             $this->alarm_absolute = false;

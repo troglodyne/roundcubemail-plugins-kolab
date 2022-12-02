@@ -783,6 +783,8 @@ function rcube_calendar_ui(settings)
         $('#edit-identities-list').val(identity_id);
         $('#edit-attendees-form')[(allow_invitations?'show':'hide')]();
         $('#edit-attendee-schedule')[(calendar.freebusy?'show':'hide')]();
+        $('#event-panel-attendees #edit-attendees-legend')[(calendar.freebusy?'show':'hide')]();
+        $('#edit-attendees-table th.availability')[(calendar.freebusy?'show':'hide')]();
       };
 
       // attachments
@@ -1955,7 +1957,7 @@ function rcube_calendar_ui(settings)
       var avail_tag = elastic ? ('<span class="' + avail + '"') : ('<img alt="" src="' + img_src + '" class="availabilityicon '  + avail + '"');
       var html = '<td class="role">' + select + '</td>' +
         '<td class="name"><span class="attendee-name">' + dispname + '</span></td>' +
-        '<td class="availability">' + avail_tag + ' data-email="' + data.email + '" /></td>' +
+        (calendar.freebusy ? '<td class="availability">' + avail_tag + ' data-email="' + data.email + '" /></td>' : '') +
         '<td class="confirmstate"><span class="attendee ' + (status || 'organizer') + '" title="' + Q(tooltip) + '">' + Q(status && !elastic ? status_label : '') + '</span></td>' +
         (data.cutype != 'RESOURCE' ? '<td class="invite">' + (organizer || readonly || !invbox ? '' : invbox) + '</td>' : '') +
         '<td class="options">' + (organizer || readonly ? '' : dellink) + '</td>';

@@ -58,6 +58,10 @@ class caldav_driver extends kolab_driver
 
         // $this->freebusy_trigger = $this->rc->config->get('calendar_freebusy_trigger', false);
 
+        if (!$this->rc->config->get('kolab_freebusy_server', false)) {
+            $this->freebusy = false;
+        }
+
         // TODO: get configuration for the Bonnie API
         // $this->bonnie_api = libkolab::get_bonnie_api();
     }
