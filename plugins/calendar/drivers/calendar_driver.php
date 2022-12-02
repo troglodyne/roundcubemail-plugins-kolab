@@ -486,11 +486,8 @@ abstract class calendar_driver
         $events = [];
 
         if (!empty($event['recurrence'])) {
-            // include library class
-            require_once(dirname(__FILE__) . '/../lib/calendar_recurrence.php');
-
-            $rcmail = rcmail::get_instance();
-            $recurrence = new calendar_recurrence($rcmail->plugins->get_plugin('calendar'), $event);
+            $rcmail     = rcmail::get_instance();
+            $recurrence = new libcalendaring_recurrence($rcmail->plugins->get_plugin('calendar')->lib, $event);
             $recurrence_id_format = libcalendaring::recurrence_id_format($event);
 
             // determine a reasonable end date if none given

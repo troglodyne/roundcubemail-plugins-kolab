@@ -250,23 +250,24 @@ class RecurrenceTest extends PHPUnit\Framework\TestCase
     }
 
     /**
-     * Test for libcalendaring_recurrence::next()
+     * Test for libcalendaring_recurrence::next_instance()
      */
     function test_next_instance()
     {
         date_default_timezone_set('America/New_York');
 
         $start = new libcalendaring_datetime('2017-08-31 11:00:00', new DateTimeZone('Europe/Berlin'));
-        $start->_dateonly = true;
+        $event = [
+            'start'      => $start,
+            'recurrence' => ['FREQ' => 'WEEKLY', 'INTERVAL' => '1'],
+            'allday'     => true,
+        ];
 
-        $recurrence = $this->plugin->get_recurrence();
+        $recurrence = new libcalendaring_recurrence($this->plugin, $event);
+        $next       = $recurrence->next_instance();
 
-        $recurrence->init(['FREQ' => 'WEEKLY', 'INTERVAL' => '1'], $start);
-
-        $next = $recurrence->next();
-
-        $this->assertEquals($start->format('2017-09-07 H:i:s'), $next->format('Y-m-d H:i:s'), 'Same time');
-        $this->assertEquals($start->getTimezone()->getName(), $next->getTimezone()->getName(), 'Same timezone');
-        $this->assertTrue($next->_dateonly, '_dateonly flag');
+        $this->assertEquals($start->format('2017-09-07 H:i:s'), $next['start']->format('Y-m-d H:i:s'), 'Same time');
+        $this->assertEquals($start->getTimezone()->getName(), $next['start']->getTimezone()->getName(), 'Same timezone');
+        $this->assertTrue($next['start']->_dateonly, '_dateonly flag');
     }
 }

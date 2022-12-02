@@ -808,10 +808,7 @@ class database_driver extends calendar_driver
 
         // create new fake entries
         if (!empty($event['recurrence'])) {
-            // include library class
-            require_once($this->cal->home . '/lib/calendar_recurrence.php');
-
-            $recurrence = new calendar_recurrence($this->cal, $event);
+            $recurrence = new libcalendaring_recurrence($this->cal->lib, $event);
             $count = 0;
             $event['allday'] = $event['all_day'];
             $duration = $event['start']->diff($event['end']);

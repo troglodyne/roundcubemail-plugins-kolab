@@ -701,7 +701,7 @@ class tasklist extends rcube_plugin
                 $rec['recurrence'] = $this->lib->from_client_recurrence($rec['recurrence'], $refdate);
 
                 // translate count into an absolute end date.
-                // why? because when shifting completed tasks to the next recurrence,
+                // why? because when shifting completed tasks to the next occurrence,
                 // the initial start date to count from gets lost.
                 if (!empty($rec['recurrence']['COUNT'])) {
                     $engine = libcalendaring::get_recurrence();
@@ -831,7 +831,7 @@ class tasklist extends rcube_plugin
 
                 $date = new DateTime($rec[$date_key] . ' ' . $rec[$time_key], $this->timezone);
                 $engine->init($rrule, $date);
-                if ($next = $engine->next()) {
+                if ($next = $engine->next_start()) {
                     $updates[$date_key] = $next->format('Y-m-d');
                     if (!empty($rec[$time_key]))
                         $updates[$time_key] = $next->format('H:i');
@@ -846,7 +846,7 @@ class tasklist extends rcube_plugin
                 foreach ($rec['valarms'] as $i => $alarm) {
                     if ($alarm['trigger'] instanceof DateTime) {
                         $engine->init($rrule, $alarm['trigger']);
-                        if ($next = $engine->next()) {
+                        if ($next = $engine->next_start()) {
                             $alarm['trigger'] = $next;
                         }
                     }
@@ -1382,7 +1382,7 @@ class tasklist extends rcube_plugin
 
             // check task occurrences (stop next week)
             // FIXME: is there a faster way of doing this?
-            while ($date = $engine->next()) {
+            while ($date = $engine->next_start()) {
                 $date = $date->format('Y-m-d');
 
                 // break iteration asap

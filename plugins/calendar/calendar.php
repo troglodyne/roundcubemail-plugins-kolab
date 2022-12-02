@@ -3994,7 +3994,6 @@ $("#rcmfd_new_category").keypress(function(event) {
         $this->load_driver();
 
         // Use libkolab to compute recurring events (and libkolab plugin)
-        // Horde-based fallback has many bugs
         if (class_exists('kolabformat') && class_exists('kolabcalendaring') && class_exists('kolab_date_recurrence')) {
             $object = kolab_format::factory('event', 3.0);
             $object->set($event);
@@ -4002,9 +4001,8 @@ $("#rcmfd_new_category").keypress(function(event) {
             $recurrence = new kolab_date_recurrence($object);
         }
         else {
-            // fallback to libcalendaring (Horde-based) recurrence implementation
-            require_once(__DIR__ . '/lib/calendar_recurrence.php');
-            $recurrence = new calendar_recurrence($this, $event);
+            // fallback to libcalendaring recurrence implementation
+            $recurrence = new libcalendaring_recurrence($this->lib, $event);
         }
 
         return $recurrence->first_occurrence();

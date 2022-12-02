@@ -119,7 +119,7 @@ class kolab_date_recurrence
     }
 
     /**
-     * Get the end date of the occurence of this recurrence cycle
+     * Get the end date of the last occurence of this recurrence cycle
      *
      * @return DateTime|bool End datetime of the last event or False if recurrence exceeds limit
      */
@@ -152,6 +152,8 @@ class kolab_date_recurrence
 
     /**
      * Find date/time of the first occurrence
+     *
+     * @return DateTime|null First occurrence
      */
     public function first_occurrence()
     {

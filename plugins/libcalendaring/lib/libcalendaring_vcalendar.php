@@ -1044,6 +1044,23 @@ class libcalendaring_vcalendar implements Iterator
     }
 
     /**
+     * Converts internal event representation to Sabre component
+     *
+     * @param  array    Event
+     * @param  callable Callback function to fetch attachment contents, false if no attachment export
+     *
+     * @return Sabre\VObject\Component\VEvent Sabre component
+     */
+    public function toSabreComponent($object, $get_attachment = false)
+    {
+        $vcal = new VObject\Component\VCalendar();
+
+        $this->_to_ical($object, $vcal, $get_attachment);
+
+        return $vcal->getBaseComponent();
+    }
+
+    /**
      * Build a valid iCal format block from the given event
      *
      * @param  array    Hash array with event/task properties from libkolab
@@ -1097,11 +1114,14 @@ class libcalendaring_vcalendar implements Iterator
             $ve->add($recurrence_id);
         }
 
-        $ve->add('SUMMARY', $event['title']);
+        if (!empty($event['title'])) {
+            $ve->add('SUMMARY', $event['title']);
+        }
 
         if (!empty($event['location'])) {
             $ve->add($this->is_apple() ? new vobject_location_property($cal, 'LOCATION', $event['location']) : $cal->create('LOCATION', $event['location']));
         }
+
         if (!empty($event['description'])) {
             $ve->add('DESCRIPTION', strtr($event['description'], array("\r\n" => "\n", "\r" => "\n"))); // normalize line endings
         }
