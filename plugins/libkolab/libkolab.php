@@ -37,6 +37,7 @@ class libkolab extends rcube_plugin
     {
         // load local config
         $this->load_config();
+        $this->require_plugin('libcalendaring');
 
         // extend include path to load bundled lib classes
         $include_path = $this->home . '/lib' . PATH_SEPARATOR . ini_get('include_path');

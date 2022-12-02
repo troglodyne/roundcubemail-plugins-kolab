@@ -143,24 +143,24 @@ class libcalendaring_recurrence
             return $this->recurrence['UNTIL'];
         }
 
-        if (!$this->engine->isInfinite()) {
-            // run through all items till we reach the end
-            try {
-                foreach ($this->engine as $end) {
-                    // do nothing
-                }
-            }
-            catch (Exception $e) {
+        // Run through all items till we reach the end, or limit of iterations
+        // Note: Sabre has a limits of iteration in VObject\Settings, so it is not an infinite loop
+        try {
+            foreach ($this->engine as $end) {
                 // do nothing
             }
         }
-        else if (isset($this->event['end']) && $this->event['end'] instanceof DateTimeInterface) {
+        catch (Exception $e) {
+            // do nothing
+        }
+/*
+        if (empty($end) && isset($this->event['start']) && $this->event['start'] instanceof DateTimeInterface) {
             // determine a reasonable end date if none given
-            $end = clone $this->event['end'];
+            $end = clone $this->event['start'];
             $end->add(new DateInterval('P100Y'));
         }
-
-        return isset($end) ? $this->toDateTime($end, false) : false;
+*/
+        return isset($end) ? $this->toDateTime($end) : false;
     }
 
     /**

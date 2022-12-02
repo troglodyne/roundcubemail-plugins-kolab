@@ -34,25 +34,55 @@ class RecurrenceTest extends PHPUnit\Framework\TestCase
     }
 
     /**
-     * Test for libcalendaring_recurrence::first_occurrence()
-     *
-     * @dataProvider data_first_occurrence
+     * Data for test_end()
      */
-    function test_first_occurrence($recurrence_data, $start, $expected)
+    function data_end()
     {
-        $start = new DateTime($start);
-        if (!empty($recurrence_data['UNTIL'])) {
-            $recurrence_data['UNTIL'] = new DateTime($recurrence_data['UNTIL']);
-        }
+        return [
+            // non-recurring
+            [
+                [
+                    'recurrence' => [],
+                    'start' => new DateTime('2017-08-31 11:00:00')
+                ],
+                '2017-08-31 11:00:00', // expected result
+            ],
+            // daily
+            [
+                [
+                    'recurrence' => ['FREQ' => 'DAILY', 'INTERVAL' => '1', 'COUNT' => 2],
+                    'start' => new DateTime('2017-08-31 11:00:00')
+                ],
+                '2017-09-01 11:00:00',
+            ],
+            // weekly
+            [
+                [
+                    'recurrence' => ['FREQ' => 'WEEKLY', 'COUNT' => 3],
+                    'start' => new DateTime('2017-08-31 11:00:00'), // Thursday
+                ],
+                '2017-09-14 11:00:00',
+            ],
+            // UNTIL
+            [
+                [
+                    'recurrence' => ['FREQ' => 'WEEKLY', 'COUNT' => 3, 'UNTIL' => new DateTime('2017-09-07 11:00:00')],
+                    'start' => new DateTime('2017-08-31 11:00:00'), // Thursday
+                ],
+                '2017-09-07 11:00:00',
+            ],
+            // Infinite recurrence, no count, no until
+            [
+                [
+                    'recurrence' => ['FREQ' => 'WEEKLY', 'INTERVAL' => '1'],
+                    'start' => new DateTime('2017-08-31 11:00:00'), // Thursday
+                ],
+                '2084-09-21 11:00:00',
+            ],
 
-        $recurrence = $this->plugin->get_recurrence();
-
-        $recurrence->init($recurrence_data, $start);
-        $first = $recurrence->first_occurrence();
-
-        $this->assertEquals($expected, $first ? $first->format('Y-m-d H:i:s') : '');
+            // TODO: Test an event with EXDATE/RDATEs
+        ];
     }
-
     /**
      * Data for test_first_occurrence()
      */
@@ -221,6 +251,40 @@ class RecurrenceTest extends PHPUnit\Framework\TestCase
                 '2017-08-01 11:00:00',
             ),
         );
+    }
+
+    /**
+     * Test for libcalendaring_recurrence::end()
+     *
+     * @dataProvider data_end
+     */
+    function test_end($event, $expected)
+    {
+        $recurrence = new libcalendaring_recurrence($this->plugin, $event);
+
+        $end = $recurrence->end();
+
+        $this->assertSame($expected, $end ? $end->format('Y-m-d H:i:s') : $end);
+    }
+
+    /**
+     * Test for libcalendaring_recurrence::first_occurrence()
+     *
+     * @dataProvider data_first_occurrence
+     */
+    function test_first_occurrence($recurrence_data, $start, $expected)
+    {
+        $start = new DateTime($start);
+        if (!empty($recurrence_data['UNTIL'])) {
+            $recurrence_data['UNTIL'] = new DateTime($recurrence_data['UNTIL']);
+        }
+
+        $recurrence = $this->plugin->get_recurrence();
+
+        $recurrence->init($recurrence_data, $start);
+        $first = $recurrence->first_occurrence();
+
+        $this->assertEquals($expected, $first ? $first->format('Y-m-d H:i:s') : '');
     }
 
     /**

@@ -128,7 +128,7 @@ class kolab_date_recurrence
         $event = $this->object->to_array();
 
         // recurrence end date is given
-        if ($event['recurrence']['UNTIL'] instanceof DateTimeInterface) {
+        if (isset($event['recurrence']['UNTIL']) && $event['recurrence']['UNTIL'] instanceof DateTimeInterface) {
             return $event['recurrence']['UNTIL'];
         }
 
@@ -139,12 +139,13 @@ class kolab_date_recurrence
             return $end_dt;
         }
 
-        // determine a reasonable end date if none given
-        if (!$event['recurrence']['COUNT'] && $event['end'] instanceof DateTimeInterface) {
-            $end_dt = clone $event['end'];
-            $end_dt->add(new DateInterval('P100Y'));
-
-            return $end_dt;
+        // determine a reasonable end date for an infinite recurrence
+        if (empty($event['recurrence']['COUNT'])) {
+            if (!empty($event['start']) && $event['start'] instanceof DateTimeInterface) {
+                $start_dt = clone $event['start'];
+                $start_dt->add(new DateInterval('P100Y'));
+                return $start_dt;
+            }
         }
 
         return false;

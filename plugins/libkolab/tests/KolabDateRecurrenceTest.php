@@ -27,32 +27,58 @@ class KolabDateRecurrenceTest extends PHPUnit\Framework\TestCase
     {
         $rcube = rcmail::get_instance();
         $rcube->plugins->load_plugin('libkolab', true, true);
+        $rcube->plugins->load_plugin('libcalendaring', true, true);
     }
 
     /**
-     * kolab_date_recurrence::first_occurrence()
-     *
-     * @dataProvider data_first_occurrence
+     * Data for test_end()
      */
-    function test_first_occurrence($recurrence_data, $start, $expected)
+    function data_end()
     {
-        if (!kolab_format::supports(3)) {
-            $this->markTestSkipped('No Kolab support');
-        }
+        return [
+            // non-recurring
+            [
+                [
+                    'recurrence' => [],
+                    'start' => new DateTime('2017-08-31 11:00:00')
+                ],
+                '2117-08-31 11:00:00',                             // expected result
+            ],
+            // daily
+            [
+                [
+                    'recurrence' => ['FREQ' => 'DAILY', 'INTERVAL' => '1', 'COUNT' => 2],
+                    'start' => new DateTime('2017-08-31 11:00:00')
+                ],
+                '2017-09-01 11:00:00',
+            ],
+            // weekly
+            [
+                [
+                    'recurrence' => ['FREQ' => 'WEEKLY', 'INTERVAL' => '1', 'COUNT' => 3],
+                    'start' => new DateTime('2017-08-31 11:00:00'), // Thursday
+                ],
+                '2017-09-14 11:00:00',
+            ],
+            // UNTIL
+            [
+                [
+                    'recurrence' => ['FREQ' => 'WEEKLY', 'INTERVAL' => '1', 'COUNT' => 3, 'UNTIL' => new DateTime('2017-09-07 11:00:00')],
+                    'start' => new DateTime('2017-08-31 11:00:00'), // Thursday
+                ],
+                '2017-09-07 11:00:00',
+            ],
+            // Infinite recurrence, no count, no until
+            [
+                [
+                    'recurrence' => ['FREQ' => 'WEEKLY', 'INTERVAL' => '1'],
+                    'start' => new DateTime('2017-08-31 11:00:00'), // Thursday
+                ],
+                '2117-08-31 11:00:00',
+            ],
 
-        $start = new DateTime($start);
-        if (!empty($recurrence_data['UNTIL'])) {
-            $recurrence_data['UNTIL'] = new DateTime($recurrence_data['UNTIL']);
-        }
-
-        $event  = array('start' => $start, 'recurrence' => $recurrence_data);
-        $object = kolab_format::factory('event', 3.0);
-        $object->set($event);
-
-        $recurrence = new kolab_date_recurrence($object);
-        $first      = $recurrence->first_occurrence();
-
-        $this->assertEquals($expected, $first ? $first->format('Y-m-d H:i:s') : '');
+            // TODO: Test an event with EXDATE/RDATE
+        ];
     }
 
     /**
@@ -211,6 +237,52 @@ class KolabDateRecurrenceTest extends PHPUnit\Framework\TestCase
                 '2017-08-01 11:00:00',
             ),
         );
+    }
+
+    /**
+     * kolab_date_recurrence::end()
+     *
+     * @dataProvider data_end
+     */
+    function test_end($event, $expected)
+    {
+        if (!kolab_format::supports(3)) {
+            $this->markTestSkipped('No Kolab support');
+        }
+
+        $object = kolab_format::factory('event', 3.0);
+        $object->set($event);
+
+        $recurrence = new kolab_date_recurrence($object);
+        $end        = $recurrence->end();
+
+        $this->assertSame($expected, $end ? $end->format('Y-m-d H:i:s') : $end);
+    }
+
+    /**
+     * kolab_date_recurrence::first_occurrence()
+     *
+     * @dataProvider data_first_occurrence
+     */
+    function test_first_occurrence($recurrence_data, $start, $expected)
+    {
+        if (!kolab_format::supports(3)) {
+            $this->markTestSkipped('No Kolab support');
+        }
+
+        $start = new DateTime($start);
+        if (!empty($recurrence_data['UNTIL'])) {
+            $recurrence_data['UNTIL'] = new DateTime($recurrence_data['UNTIL']);
+        }
+
+        $event  = array('start' => $start, 'recurrence' => $recurrence_data);
+        $object = kolab_format::factory('event', 3.0);
+        $object->set($event);
+
+        $recurrence = new kolab_date_recurrence($object);
+        $first      = $recurrence->first_occurrence();
+
+        $this->assertEquals($expected, $first ? $first->format('Y-m-d H:i:s') : '');
     }
 
     /**
