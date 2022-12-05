@@ -1,7 +1,5 @@
 <?php
 
-require_once realpath(__DIR__ . '/../../libcalendaring/lib/libcalendaring_itip.php');
-
 /**
  * iTIP functions for the Calendar plugin
  *
@@ -28,6 +26,8 @@ require_once realpath(__DIR__ . '/../../libcalendaring/lib/libcalendaring_itip.p
  */
 class calendar_itip extends libcalendaring_itip
 {
+    protected $db_itipinvitations;
+
     /**
      * Constructor to set text domain to calendar
      */

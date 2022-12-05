@@ -23,6 +23,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#[AllowDynamicProperties]
 class calendar extends rcube_plugin
 {
     const FREEBUSY_UNKNOWN   = 0;
@@ -42,6 +43,7 @@ class calendar extends rcube_plugin
     public $timezone;
     public $timezone_offset;
     public $gmt_offset;
+    public $dst_active;
     public $ui;
 
     public $defaults = [
@@ -1049,8 +1051,9 @@ $("#rcmfd_new_category").keypress(function(event) {
             $old = $this->driver->get_event($event);
 
             // load main event if savemode is 'all' or if deleting 'future' events
-            if (($event['_savemode'] == 'all' || ($event['_savemode'] == 'future' && $action == 'remove' && empty($event['_decline'])))
-                && !empty($old['recurrence_id'])
+            if (!empty($old['recurrence_id'])
+                && !empty($event['_savemode'])
+                && ($event['_savemode'] == 'all' || ($event['_savemode'] == 'future' && $action == 'remove' && empty($event['_decline'])))
             ) {
                 $old['id'] = $old['recurrence_id'];
                 $old = $this->driver->get_event($old);
@@ -1447,7 +1450,7 @@ $("#rcmfd_new_category").keypress(function(event) {
         // $success is a new event ID
         if ($success !== true) {
             // send update notification on the main event
-            if ($event['_savemode'] == 'future' && !empty($event['_notify'])
+            if (!empty($event['_savemode']) && $event['_savemode'] == 'future' && !empty($event['_notify'])
                 && !empty($old['attendees']) && !empty($old['recurrence_id'])
             ) {
                 $master = $this->driver->get_event(['id' => $old['recurrence_id'], 'calendar' => $old['calendar']], 0, true);
@@ -1462,7 +1465,7 @@ $("#rcmfd_new_category").keypress(function(event) {
             }
 
             // delete old reference if saved as new
-            if ($event['_savemode'] == 'future' || $event['_savemode'] == 'new') {
+            if (!empty($event['_savemode']) && ($event['_savemode'] == 'future' || $event['_savemode'] == 'new')) {
                 $old = null;
             }
 
@@ -1472,7 +1475,7 @@ $("#rcmfd_new_category").keypress(function(event) {
 
         // send out notifications
         if (!empty($event['_notify']) && (!empty($event['attendees']) || !empty($old['attendees']))) {
-            $_savemode = $event['_savemode'];
+            $_savemode = $event['_savemode'] ?? null;
 
             // send notification for the main event when savemode is 'all'
             if ($action != 'remove' && $_savemode == 'all'
@@ -2131,7 +2134,7 @@ $("#rcmfd_new_category").keypress(function(event) {
         }
 
         // mapping url => vurl, allday => allDay because of the fullcalendar client script
-        $event['vurl']   = $event['url'];
+        $event['vurl']   = $event['url'] ?? null;
         $event['allDay'] = !empty($event['allday']);
         unset($event['url']);
         unset($event['allday']);
@@ -2153,9 +2156,9 @@ $("#rcmfd_new_category").keypress(function(event) {
             // 'changed' might be empty for event recurrences (Bug #2185)
             'changed' => !empty($event['changed']) ? $this->lib->adjust_timezone($event['changed'])->format('c') : null,
             'created' => !empty($event['created']) ? $this->lib->adjust_timezone($event['created'])->format('c') : null,
-            'title'       => strval($event['title']),
-            'description' => strval($event['description']),
-            'location'    => strval($event['location']),
+            'title'       => strval($event['title'] ?? null),
+            'description' => strval($event['description'] ?? null),
+            'location'    => strval($event['location'] ?? null),
         ] + $event;
     }
 
@@ -2460,7 +2463,7 @@ $("#rcmfd_new_category").keypress(function(event) {
         }
 
         if ($rsvp === null) {
-            $rsvp = !$old || $event['sequence'] > $old['sequence'];
+            $rsvp = !$old || ($event['sequence'] ?? 0) > ($old['sequence'] ?? 0);
         }
 
         $itip        = $this->load_itip();
@@ -3990,11 +3993,15 @@ $("#rcmfd_new_category").keypress(function(event) {
      */
     public function find_first_occurrence($event)
     {
-        // Make sure libkolab plugin is loaded in case of Kolab driver
+        // Make sure libkolab/libcalendaring plugins are loaded
         $this->load_driver();
 
-        // Use libkolab to compute recurring events (and libkolab plugin)
-        if (class_exists('kolabformat') && class_exists('kolabcalendaring') && class_exists('kolab_date_recurrence')) {
+        $driver_name = $this->rc->config->get('calendar_driver', 'database');
+
+        // Use kolabcalendaring/kolabformat to compute recurring events only with the Kolab driver
+        if ($driver_name == 'kolab' && class_exists('kolabformat') && class_exists('kolabcalendaring')
+            && class_exists('kolab_date_recurrence')
+        ) {
             $object = kolab_format::factory('event', 3.0);
             $object->set($event);
 

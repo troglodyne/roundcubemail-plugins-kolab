@@ -52,8 +52,6 @@ class libcalendaring_recurrence
                 $this->duration = $event['start']->diff($event['end']);
             }
 
-            $event['start']->_dateonly = !empty($event['allday']);
-
             $this->init($event['recurrence'], $event['start']);
         }
     }
@@ -67,7 +65,7 @@ class libcalendaring_recurrence
     public function init($recurrence, $start)
     {
         $this->start      = $start;
-        $this->dateonly   = !empty($start->_dateonly);
+        $this->dateonly   = !empty($start->_dateonly) || !empty($this->event['allday']);
         $this->recurrence = $recurrence;
 
         $event = [
@@ -160,6 +158,7 @@ class libcalendaring_recurrence
             $end->add(new DateInterval('P100Y'));
         }
 */
+
         return isset($end) ? $this->toDateTime($end) : false;
     }
 

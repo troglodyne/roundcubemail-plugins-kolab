@@ -739,7 +739,7 @@ abstract class kolab_format
      */
     public static function merge_attachments(&$object, $old)
     {
-        $object['_attachments'] = (array) $old['_attachments'];
+        $object['_attachments'] = isset($old['_attachments']) && is_array($old['_attachments']) ? $old['_attachments'] : [];
 
         // delete existing attachment(s)
         if (!empty($object['deleted_attachments'])) {
@@ -771,7 +771,7 @@ abstract class kolab_format
             else {
                 // find attachment by name, so we can update it if exists
                 // and make sure there are no duplicates
-                foreach ((array) $object['_attachments'] as $cid => $att) {
+                foreach ($object['_attachments'] as $cid => $att) {
                     if ($att && $attachment['name'] == $att['name']) {
                         $key = $cid;
                     }

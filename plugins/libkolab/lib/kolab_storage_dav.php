@@ -46,9 +46,6 @@ class kolab_storage_dav
      */
     public function setup()
     {
-        $rcmail = rcube::get_instance();
-
-        $this->config = $rcmail->config;
         $this->dav = new kolab_dav_client($this->url);
     }
 

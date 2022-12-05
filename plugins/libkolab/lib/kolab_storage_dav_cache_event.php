@@ -41,19 +41,14 @@ class kolab_storage_dav_cache_event extends kolab_storage_dav_cache
 
         // extend date range for recurring events
         if (!empty($object['recurrence'])) {
-            if (empty($object['_formatobj'])) {
-                $event_xml = new kolab_format_event();
-                $event_xml->set($object);
-                $object['_formatobj'] = $event_xml;
-            }
-
-            $recurrence = new kolab_date_recurrence($object['_formatobj']);
+            $recurrence = libcalendaring::get_recurrence($object);
             $dtend = $recurrence->end() ?: new DateTime('now +100 years');
             $sql_data['dtend'] = $this->_convert_datetime($dtend);
         }
 
         // extend start/end dates to spawn all exceptions
-        if (is_array($object['exceptions'])) {
+        // FIXME: This should be done via libcalendaring_recurrence use above?
+        if (!empty($object['exceptions']) && is_array($object['exceptions'])) {
             foreach ($object['exceptions'] as $exception) {
                 if ($exception['start'] instanceof DateTimeInterface) {
                     $exstart = $this->_convert_datetime($exception['start']);
@@ -86,12 +81,18 @@ class kolab_storage_dav_cache_event extends kolab_storage_dav_cache
         $data = '';
 
         foreach ($this->fulltext_cols as $colname) {
-            list($col, $field) = explode(':', $colname);
+            list($col, $field) = strpos($colname, ':') ? explode(':', $colname) : [$colname, null];
+
+            if (empty($object[$col])) {
+                continue;
+            }
 
             if ($field) {
                 $a = [];
                 foreach ((array) $object[$col] as $attr) {
-                    $a[] = $attr[$field];
+                    if (!empty($attr[$field])) {
+                        $a[] = $attr[$field];
+                    }
                 }
                 $val = join(' ', $a);
             }
@@ -99,14 +100,15 @@ class kolab_storage_dav_cache_event extends kolab_storage_dav_cache
                 $val = is_array($object[$col]) ? join(' ', $object[$col]) : $object[$col];
             }
 
-            if (strlen($val))
+            if (is_string($val) && strlen($val)) {
                 $data .= $val . ' ';
+            }
         }
 
         $words = rcube_utils::normalize_string($data, true);
 
         // collect words from recurrence exceptions
-        if (is_array($object['exceptions'])) {
+        if (!empty($object['exceptions']) && is_array($object['exceptions'])) {
             foreach ($object['exceptions'] as $exception) {
                 $words = array_merge($words, $this->get_words($exception));
             }
@@ -137,14 +139,14 @@ class kolab_storage_dav_cache_event extends kolab_storage_dav_cache
         }
 
         // collect tags from recurrence exceptions
-        if (is_array($object['exceptions'])) {
+        if (!empty($object['exceptions']) && is_array($object['exceptions'])) {
             foreach ($object['exceptions'] as $exception) {
                 $tags = array_merge($tags, $this->get_tags($exception));
             }
         }
 
         if (!empty($object['status'])) {
-          $tags[] = 'x-status:' . strtolower($object['status']);
+            $tags[] = 'x-status:' . strtolower($object['status']);
         }
 
         return array_unique($tags);

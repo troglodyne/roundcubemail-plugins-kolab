@@ -332,7 +332,7 @@ class carddav_contacts extends rcube_addressbook
                 $this->sortindex = array_merge($this->sortindex, $local_sortindex);
             }
         }
-        else if (is_array($this->filter['ids'])) {
+        else if (isset($this->filter['ids']) && is_array($this->filter['ids'])) {
             $ids = $this->filter['ids'];
             if (count($ids)) {
                 $uids = array_map([$this, 'id2uid'], $this->filter['ids']);
@@ -1109,21 +1109,23 @@ class carddav_contacts extends rcube_addressbook
 
         switch ($this->sort_col) {
         case 'name':
-            $str = $rec['name'] . $rec['prefix'];
+            $str = ($rec['name'] ?? '') . ($rec['prefix'] ?? '');
         case 'firstname':
-            $str .= $rec['firstname'] . $rec['middlename'] . $rec['surname'];
+            $str .= ($rec['firstname'] ?? '') . ($rec['middlename'] ?? '') . ($rec['surname'] ?? '');
             break;
 
         case 'surname':
-            $str = $rec['surname'] . $rec['firstname'] . $rec['middlename'];
+            $str = ($rec['surname'] ?? '') . ($rec['firstname'] ?? '') . ($rec['middlename'] ?? '');
             break;
 
         default:
-            $str = $rec[$this->sort_col];
+            $str = $rec[$this->sort_col] ?? '';
             break;
         }
 
-        $str .= is_array($rec['email']) ? $rec['email'][0] : $rec['email'];
+        if (!empty($rec['email'])) {
+            $str .= is_array($rec['email']) ? $rec['email'][0] : $rec['email'];
+        }
 
         return mb_strtolower($str);
     }

@@ -582,8 +582,8 @@ class libcalendaring_vcalendar implements Iterator
                 if (substr($value, 0, 4) == 'http' && !strpos($value, ':attachment:')) {
                     $event['links'][] = $value;
                 }
-                else if (strlen($value) && strtoupper($params['VALUE']) == 'BINARY') {
-                    $attachment = self::map_keys($params, array('FMTTYPE' => 'mimetype', 'X-LABEL' => 'name', 'X-APPLE-FILENAME' => 'name'));
+                else if (is_string($value) && strlen($value) && !empty($params['VALUE']) && strtoupper($params['VALUE']) == 'BINARY') {
+                    $attachment = self::map_keys($params, ['FMTTYPE' => 'mimetype', 'X-LABEL' => 'name', 'X-APPLE-FILENAME' => 'name']);
                     $attachment['data'] = $value;
                     $attachment['size'] = strlen($value);
                     $event['attachments'][] = $attachment;

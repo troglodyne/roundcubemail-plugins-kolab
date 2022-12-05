@@ -163,12 +163,8 @@ class caldav_calendar extends kolab_storage_dav_folder
             }
 
             if (!empty($master)) {
-                // check for match in top-level exceptions (aka loose single occurrences)
-                if (!empty($master['_formatobj']) && ($instance = $master['_formatobj']->get_instance($instance_id))) {
-                    $this->events[$id] = $this->_to_driver_event($instance, false, true, $master);
-                }
                 // check for match on the first instance already
-                else if (!empty($master['_instance']) && $master['_instance'] == $instance_id) {
+                if (!empty($master['_instance']) && $master['_instance'] == $instance_id) {
                     $this->events[$id] = $master;
                 }
                 else if (!empty($master['recurrence'])) {
@@ -580,12 +576,6 @@ class caldav_calendar extends kolab_storage_dav_folder
      */
     public function get_recurring_events($event, $start, $end = null, $event_id = null, $limit = null)
     {
-        $object = $event['_formatobj'];
-
-        if (!is_object($object)) {
-            return [];
-        }
-
         // determine a reasonable end date if none given
         if (!$end) {
             $end = clone $event['start'];
@@ -641,7 +631,8 @@ class caldav_calendar extends kolab_storage_dav_folder
         }
 
         // Check first occurrence, it might have been moved
-        if ($first = $exdata[$event['start']->format('Ymd')]) {
+        if (!empty($exdata[$event['start']->format('Ymd')])) {
+            $first = $exdata[$event['start']->format('Ymd')];
             // return it only if not already in the result, but in the requested period
             if (!($event['start'] <= $end && $event['end'] >= $start)
                 && ($first['start'] <= $end && $first['end'] >= $start)
@@ -655,7 +646,7 @@ class caldav_calendar extends kolab_storage_dav_folder
         }
 
         // use libkolab to compute recurring events
-        $recurrence = new kolab_date_recurrence($object);
+        $recurrence = libcalendaring::get_recurrence($event);
 
         $i = 0;
         while ($next_event = $recurrence->next_instance()) {
@@ -663,9 +654,7 @@ class caldav_calendar extends kolab_storage_dav_folder
             $instance_id = $next_event['start']->format($recurrence_id_format);
 
             // use this event data for future recurring instances
-            if (!empty($futuredata[$datestr])) {
-                $overlay_data = $futuredata[$datestr];
-            }
+            $overlay_data = $futuredata[$datestr] ?? null;
 
             $rec_id      = $event['uid'] . '-' . $instance_id;
             $exception   = !empty($exdata[$datestr]) ? $exdata[$datestr] : $overlay_data;
@@ -762,16 +751,9 @@ class caldav_calendar extends kolab_storage_dav_folder
         // clean up exception data
         if (!empty($record['recurrence']) && !empty($record['recurrence']['EXCEPTIONS'])) {
             array_walk($record['recurrence']['EXCEPTIONS'], function(&$exception) {
-                unset($exception['_mailbox'], $exception['_msguid'], $exception['_formatobj'], $exception['_attachments']);
+                unset($exception['_attachments']);
             });
         }
-
-        // Load the given event data into a libkolabxml container
-        // it's needed for recurrence resolving, which uses libcalendaring
-        // TODO: Drop dependency on libkolabxml?
-        $event_xml = new kolab_format_event();
-        $event_xml->set($record);
-        $record['_formatobj'] = $event_xml;
 
         return $record;
     }
@@ -829,10 +811,7 @@ class caldav_calendar extends kolab_storage_dav_folder
 
         // clean up exception data
         if (!empty($event['exceptions'])) {
-            array_walk($event['exceptions'], function(&$exception) use ($cleanup_fn) {
-                unset($exception['_mailbox'], $exception['_msguid'], $exception['_formatobj']);
-                $cleanup_fn($exception);
-            });
+            array_walk($event['exceptions'], $cleanup_fn);
         }
 
         // copy meta data (starting with _) from old object

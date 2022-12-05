@@ -709,7 +709,8 @@ class kolab_calendar extends kolab_storage_folder_api
         }
 
         // Check first occurrence, it might have been moved
-        if ($first = $exdata[$event['start']->format('Ymd')]) {
+        if (!empty($exdata[$event['start']->format('Ymd')])) {
+            $first = $exdata[$event['start']->format('Ymd')];
             // return it only if not already in the result, but in the requested period
             if (!($event['start'] <= $end && $event['end'] >= $start)
                 && ($first['start'] <= $end && $first['end'] >= $start)
@@ -731,9 +732,7 @@ class kolab_calendar extends kolab_storage_folder_api
             $instance_id = $next_event['start']->format($recurrence_id_format);
 
             // use this event data for future recurring instances
-            if (!empty($futuredata[$datestr])) {
-                $overlay_data = $futuredata[$datestr];
-            }
+            $overlay_data = $futuredata[$datestr] ?? null;
 
             $rec_id      = $event['uid'] . '-' . $instance_id;
             $exception   = !empty($exdata[$datestr]) ? $exdata[$datestr] : $overlay_data;

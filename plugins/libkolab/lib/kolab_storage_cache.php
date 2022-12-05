@@ -49,6 +49,7 @@ class kolab_storage_cache
     protected $limit = null;
     protected $error = 0;
     protected $server_timezone;
+    protected $sync_start;
 
 
     /**
@@ -769,6 +770,7 @@ class kolab_storage_cache
     public function select($query = array(), $uids = false, $fast = false)
     {
         $result = $uids ? array() : new kolab_storage_dataset($this);
+        $count = null;
 
         // read from local cache DB (assume it to be synchronized)
         if ($this->ready) {
@@ -923,8 +925,12 @@ class kolab_storage_cache
     {
         if (!empty($sortcols)) {
             $sortcols = array_map(function($v) {
-                list($column, $order) = explode(' ', $v, 2);
-                return "`$column`" . ($order ? " $order" : '');
+                $v = trim($v);
+                if (strpos($v, ' ')) {
+                    list($column, $order) = explode(' ', $v, 2);
+                    return "`{$column}` {$order}";
+                }
+                return "`{$v}`";
             }, (array) $sortcols);
 
             $this->order_by = join(', ', $sortcols);
@@ -1257,13 +1263,15 @@ class kolab_storage_cache
         $write_query = "UPDATE `{$this->folders_table}` SET `synclock` = ? WHERE `folder_id` = ? AND `synclock` = ?";
 
         $max_lock_time = $this->_max_sync_lock_time();
+        $sync_lock = intval($this->metadata['synclock'] ?? 0);
 
         // wait if locked (expire locks after 10 minutes) ...
         // ... or if setting lock fails (another process meanwhile set it)
         while (
-            (intval($this->metadata['synclock']) + $max_lock_time > time()) ||
-            (($res = $this->db->query($write_query, time(), $this->folder_id, intval($this->metadata['synclock']))) &&
-                !($affected = $this->db->affected_rows($res)))
+            ($sync_lock + $max_lock_time > time()) ||
+            (($res = $this->db->query($write_query, time(), $this->folder_id, $sync_lock))
+                && !($affected = $this->db->affected_rows($res))
+            )
         ) {
             usleep(500000);
             $this->metadata = $this->db->fetch_assoc($this->db->query($read_query, $this->folder_id));

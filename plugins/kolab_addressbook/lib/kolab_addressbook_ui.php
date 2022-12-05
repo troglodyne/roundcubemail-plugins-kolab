@@ -89,7 +89,6 @@ class kolab_addressbook_ui
                 $content = html::tag('li', $idx ? null : array('class' => 'separator_above'),
                     $this->plugin->api->output->button(array(
                         'label'    => 'kolab_addressbook.'.str_replace('-', '', $command),
-                        'domain'   => $this->ID,
                         'class'    => str_replace('-', ' ', $command) . ' disabled',
                         'classact' => str_replace('-', ' ', $command) . ' active',
                         'command'  => $command,

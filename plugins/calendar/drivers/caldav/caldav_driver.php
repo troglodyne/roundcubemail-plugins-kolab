@@ -34,6 +34,8 @@ class caldav_driver extends kolab_driver
     public $alarm_types         = ['DISPLAY', 'AUDIO'];
     public $categoriesimmutable = true;
 
+    protected $scheduling_properties = ['start', 'end', 'location'];
+
     /**
      * Default constructor
      */
@@ -530,11 +532,6 @@ class caldav_driver extends kolab_driver
      */
     public function get_recurring_events($event, $start, $end = null)
     {
-        // load the given event data into a libkolabxml container
-        $event_xml = new kolab_format_event();
-        $event_xml->set($event);
-        $event['_formatobj'] = $event_xml;
-
         $this->_read_calendars();
         $storage = reset($this->calendars);
 
@@ -546,13 +543,8 @@ class caldav_driver extends kolab_driver
      */
     protected function get_recurrence_count($event, $dtstart)
     {
-        // load the given event data into a libkolabxml container
-        $event_xml = new kolab_format_event();
-        $event_xml->set($event);
-        $event['_formatobj'] = $event_xml;
-
         // use libkolab to compute recurring events
-        $recurrence = new kolab_date_recurrence($event['_formatobj']);
+        $recurrence = libcalendaring::get_recurrence($event);
 
         $count = 0;
         while (($next_event = $recurrence->next_instance()) && $next_event['start'] <= $dtstart && $count < 1000) {
@@ -560,6 +552,98 @@ class caldav_driver extends kolab_driver
         }
 
         return $count;
+    }
+
+    /**
+     * Determine whether the current change affects scheduling and reset attendee status accordingly
+     */
+    protected function check_scheduling(&$event, $old, $update = true)
+    {
+        // skip this check when importing iCal/iTip events
+        if (isset($event['sequence']) || !empty($event['_method'])) {
+            return false;
+        }
+
+        // iterate through the list of properties considered 'significant' for scheduling
+        $reschedule = $this->is_rescheduling_needed($event, $old);
+
+        // reset all attendee status to needs-action (#4360)
+        if ($update && $reschedule && !empty($event['attendees'])) {
+            $is_organizer = false;
+            $emails       = $this->cal->get_user_emails();
+            $attendees    = $event['attendees'];
+
+            foreach ($attendees as $i => $attendee) {
+                if ($attendee['role'] == 'ORGANIZER'
+                    && !empty($attendee['email'])
+                    && in_array(strtolower($attendee['email']), $emails)
+                ) {
+                    $is_organizer = true;
+                }
+                else if ($attendee['role'] != 'ORGANIZER'
+                    && $attendee['role'] != 'NON-PARTICIPANT'
+                    && $attendee['status'] != 'DELEGATED'
+                ) {
+                    $attendees[$i]['status'] = 'NEEDS-ACTION';
+                    $attendees[$i]['rsvp'] = true;
+                }
+            }
+
+            // update attendees only if I'm the organizer
+            if ($is_organizer || (!empty($event['organizer']) && in_array(strtolower($event['organizer']['email']), $emails))) {
+                $event['attendees'] = $attendees;
+            }
+        }
+
+        return $reschedule;
+    }
+
+    /**
+     * Identify changes considered relevant for scheduling
+     * 
+     * @param array Hash array with NEW object properties
+     * @param array Hash array with OLD object properties
+     *
+     * @return bool True if changes affect scheduling, False otherwise
+     */
+    protected function is_rescheduling_needed($object, $old = null)
+    {
+        $reschedule = false;
+
+        foreach ($this->scheduling_properties as $prop) {
+            $a = $old[$prop] ?? null;
+            $b = $object[$prop] ?? null;
+
+            if (!empty($object['allday'])
+                && ($prop == 'start' || $prop == 'end')
+                && $a instanceof DateTimeInterface
+                && $b instanceof DateTimeInterface
+            ) {
+                $a = $a->format('Y-m-d');
+                $b = $b->format('Y-m-d');
+            }
+
+            if ($prop == 'recurrence' && is_array($a) && is_array($b)) {
+                unset($a['EXCEPTIONS'], $b['EXCEPTIONS']);
+                $a = array_filter($a);
+                $b = array_filter($b);
+
+                // advanced rrule comparison: no rescheduling if series was shortened
+                if ($a['COUNT'] && $b['COUNT'] && $b['COUNT'] < $a['COUNT']) {
+                    unset($a['COUNT'], $b['COUNT']);
+                }
+                else if ($a['UNTIL'] && $b['UNTIL'] && $b['UNTIL'] < $a['UNTIL']) {
+                    unset($a['UNTIL'], $b['UNTIL']);
+                }
+            }
+
+            if ($a != $b) {
+                $reschedule = true;
+                break;
+            }
+        }
+
+        return $reschedule;
     }
 
     /**

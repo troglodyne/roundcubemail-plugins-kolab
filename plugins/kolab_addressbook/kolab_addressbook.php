@@ -37,6 +37,7 @@ class kolab_addressbook extends rcube_plugin
     private $sources;
     private $rc;
     private $ui;
+    private $recurrent = false;
 
     const GLOBAL_FIRST = 0;
     const PERSONAL_FIRST = 1;
@@ -221,8 +222,8 @@ class kolab_addressbook extends rcube_plugin
 
         $out .= $kolab . $spec;
 
-        $this->rc->output->set_env('contactgroups', array_filter($jsdata, function($src){ return $src['type'] == 'group'; }));
-        $this->rc->output->set_env('address_sources', array_filter($jsdata, function($src){ return $src['type'] != 'group'; }));
+        $this->rc->output->set_env('contactgroups', array_filter($jsdata, function($src){ return isset($src['type']) && $src['type'] == 'group'; }));
+        $this->rc->output->set_env('address_sources', array_filter($jsdata, function($src){ return !isset($src['type']) || $src['type'] != 'group'; }));
 
         $args['content'] = html::tag('ul', $args, $out, html::$common_attrib);
         return $args;
@@ -276,27 +277,27 @@ class kolab_addressbook extends rcube_plugin
     {
         $current = rcube_utils::get_input_value('_source', rcube_utils::INPUT_GPC);
 
-        if (!$source['virtual']) {
+        if (empty($source['virtual'])) {
             $jsdata[$id] = $source;
             $jsdata[$id]['name'] = html_entity_decode($source['name'], ENT_NOQUOTES, RCUBE_CHARSET);
         }
 
         // set class name(s)
         $classes = array('addressbook');
-        if ($source['group'])
+        if (!empty($source['group']))
             $classes[] = $source['group'];
         if ($current === $id)
             $classes[] = 'selected';
-        if ($source['readonly'])
+        if (!empty($source['readonly']))
             $classes[] = 'readonly';
-        if ($source['virtual'])
+        if (!empty($source['virtual']))
             $classes[] = 'virtual';
-        if ($source['class_name'])
+        if (!empty($source['class_name']))
             $classes[] = $source['class_name'];
 
         $name = !empty($source['listname']) ? $source['listname'] : (!empty($source['name']) ? $source['name'] : $id);
         $label_id = 'kabt:' . $id;
-        $inner = ($source['virtual'] ?
+        $inner = (!empty($source['virtual']) ?
             html::a(array('tabindex' => '0'), $name) :
             html::a(array(
                     'href' => $this->rc->url(array('_source' => $id)),
@@ -331,12 +332,12 @@ class kolab_addressbook extends rcube_plugin
             return html::div(null, $inner);
         }
 
-        $out .= html::tag('li', array(
+        $out = html::tag('li', array(
                 'id' => 'rcmli' . rcube_utils::html_identifier($id, true),
                 'class' => join(' ', $classes), 
                 'noclose' => true,
             ),
-            html::div($source['subscribed'] ? 'subscribed' : null, $inner)
+            html::div(!empty($source['subscribed']) ? 'subscribed' : null, $inner)
         );
 
         $groupdata = array('out' => '', 'jsdata' => $jsdata, 'source' => $id);

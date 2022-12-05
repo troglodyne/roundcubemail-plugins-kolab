@@ -36,21 +36,20 @@ class kolab_storage_dav_cache_contact extends kolab_storage_dav_cache
     protected function _serialize($object)
     {
         $sql_data = parent::_serialize($object);
-        $sql_data['type'] = $object['_type'] ?: 'contact';
+        $sql_data['type'] = !empty($object['_type']) ? $object['_type'] : 'contact';
 
         if ($sql_data['type'] == 'group' || (!empty($object['kind']) && $object['kind'] == 'group')) {
             $sql_data['type'] = 'group';
         }
 
         // columns for sorting
-        $sql_data['name']      = rcube_charset::clean($object['name'] . $object['prefix']);
-        $sql_data['firstname'] = rcube_charset::clean($object['firstname'] . $object['middlename'] . $object['surname']);
-        $sql_data['surname']   = rcube_charset::clean($object['surname']   . $object['firstname']  . $object['middlename']);
+        $sql_data['name']      = rcube_charset::clean(($object['name'] ?? '') . ($object['prefix'] ?? ''));
+        $sql_data['firstname'] = rcube_charset::clean(($object['firstname'] ?? '') . ($object['middlename'] ?? '') . ($object['surname'] ?? ''));
+        $sql_data['surname']   = rcube_charset::clean(($object['surname'] ?? '') . ($object['firstname'] ?? '') . ($object['middlename'] ?? ''));
         $sql_data['email']     = '';
 
         foreach ($object as $colname => $value) {
-            list($col, $field) = explode(':', $colname);
-            if ($col == 'email' && !empty($value)) {
+            if (!empty($value) && ($colname == 'email' || strpos($colname, 'email:') === 0)) {
                 $sql_data['email'] = is_array($value) ? $value[0] : $value;
                 break;
             }
@@ -84,14 +83,14 @@ class kolab_storage_dav_cache_contact extends kolab_storage_dav_cache
         $data = '';
 
         foreach ($object as $colname => $value) {
-            list($col, $field) = explode(':', $colname);
+            list($col, $field) = strpos($colname, ':') ? explode(':', $colname) : [$colname, null];
 
-            $val = '';
+            $val = null;
             if (in_array($col, $this->fulltext_cols)) {
                 $val = is_array($value) ? join(' ', $value) : $value;
             }
 
-            if (strlen($val)) {
+            if (is_string($val) && strlen($val)) {
                 $data .= $val . ' ';
             }
         }

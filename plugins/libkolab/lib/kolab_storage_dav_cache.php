@@ -159,6 +159,7 @@ class kolab_storage_dav_cache extends kolab_storage_cache
 
         // Fetch new objects and store in DB
         if (!empty($new_index)) {
+            $i = 0;
             foreach (array_chunk($new_index, $chunk_size, true) as $chunk) {
                 $objects = $this->folder->dav->getData($this->folder->href, $this->folder->get_dav_type(), $chunk);
 
@@ -412,6 +413,7 @@ class kolab_storage_dav_cache extends kolab_storage_cache
     public function select($query = [], $uids = false, $fast = false)
     {
         $result = $uids ? [] : new kolab_storage_dataset($this);
+        $count  = null;
 
         $this->_read_folder_data();
 

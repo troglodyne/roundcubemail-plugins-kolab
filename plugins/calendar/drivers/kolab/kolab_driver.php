@@ -1297,8 +1297,8 @@ class kolab_driver extends calendar_driver
 
             // when saving an instance in 'all' mode, copy recurrence exceptions over
             if (!empty($old['recurrence_id'])) {
-                $event['recurrence']['EXCEPTIONS'] = $master['recurrence']['EXCEPTIONS'];
-                $event['recurrence']['EXDATE']     = $master['recurrence']['EXDATE'];
+                $event['recurrence']['EXCEPTIONS'] = $master['recurrence']['EXCEPTIONS'] ?? [];
+                $event['recurrence']['EXDATE']     = $master['recurrence']['EXDATE'] ?? [];
             }
             else if (!empty($master['_instance'])) {
                 $event['_instance']       = $master['_instance'];
@@ -1388,7 +1388,7 @@ class kolab_driver extends calendar_driver
     /**
      * Determine whether the current change affects scheduling and reset attendee status accordingly
      */
-    public function check_scheduling(&$event, $old, $update = true)
+    protected function check_scheduling(&$event, $old, $update = true)
     {
         // skip this check when importing iCal/iTip events
         if (isset($event['sequence']) || !empty($event['_method'])) {
@@ -2235,7 +2235,9 @@ class kolab_driver extends calendar_driver
 
             foreach ($event['attendees'] as $attendee) {
                 if (in_array($attendee['email'], $user_emails)) {
-                    $partstat = $attendee['status'];
+                    if (!empty($attendee['status'])) {
+                        $partstat = $attendee['status'];
+                    }
                     break;
                 }
             }
