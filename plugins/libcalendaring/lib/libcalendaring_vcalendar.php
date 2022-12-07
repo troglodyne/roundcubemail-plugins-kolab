@@ -866,13 +866,13 @@ class libcalendaring_vcalendar implements Iterator
                 $dateonly = !$prop->hasTime();
 
                 foreach ($prop->getDateTimes() as $item) {
-                    $item = libcalendaring_datetime::createFromImmutable($item);
+                    $item = self::toDateTime($item);
                     $item->_dateonly = $dateonly;
                     $dt[] = $item;
                 }
             }
             else {
-                $dt = libcalendaring_datetime::createFromImmutable($prop->getDateTime());
+                $dt = self::toDateTime($prop->getDateTime());
                 if (!$prop->hasTime()) {
                     $dt->_dateonly = true;
                 }
@@ -895,7 +895,7 @@ class libcalendaring_vcalendar implements Iterator
                         $end = DateTimeParser::parseDateTime($end);
                     }
 
-                    $dt[] = [libcalendaring_datetime::createFromImmutable($start), libcalendaring_datetime::createFromImmutable($end)];
+                    $dt[] = [self::toDateTime($start), self::toDateTime($end)];
                 }
                 catch (Exception $e) {
                     // ignore single date parse errors
@@ -903,7 +903,7 @@ class libcalendaring_vcalendar implements Iterator
             }
         }
         else if ($prop instanceof \DateTimeInterface) {
-            $dt = libcalendaring_datetime::createFromImmutable($prop);
+            $dt = self::toDateTime($prop);
         }
 
         // force return value to array if requested
@@ -1487,6 +1487,18 @@ class libcalendaring_vcalendar implements Iterator
         }
 
         return $vt;
+    }
+
+    /**
+     * Convert DateTime into libcalendaring_datetime
+     */
+    private static function toDateTime($date)
+    {
+        return libcalendaring_datetime::createFromFormat(
+            'Y-m-d\\TH:i:s',
+            $date->format('Y-m-d\\TH:i:s'),
+            $date->getTimezone()
+        );
     }
 
 
