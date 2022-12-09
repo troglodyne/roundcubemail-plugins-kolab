@@ -132,10 +132,11 @@ class kolab_storage_dataset implements Iterator, ArrayAccess, Countable
             while (isset($this->index[$idx]) && count($uids) < self::CHUNK_SIZE) {
                 if (isset($this->data[$idx]) && !is_string($this->data[$idx])) {
                     // skip objects that had the raw content in the cache (are not empty)
-                    continue;
+                }
+                else {
+                    $uids[$idx] = $this->index[$idx];
                 }
 
-                $uids[$idx] = $this->index[$idx];
                 $idx++;
             }
 

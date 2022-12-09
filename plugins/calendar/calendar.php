@@ -2305,7 +2305,8 @@ $("#rcmfd_new_category").keypress(function(event) {
     private function is_html($event)
     {
           // check for opening and closing <html> or <body> tags
-        return preg_match('/<(html|body)(\s+[a-z]|>)/', $event['description'], $m)
+        return !empty($event['description'])
+            && preg_match('/<(html|body)(\s+[a-z]|>)/', $event['description'], $m)
             && strpos($event['description'], '</'.$m[1].'>') > 0;
     }
 

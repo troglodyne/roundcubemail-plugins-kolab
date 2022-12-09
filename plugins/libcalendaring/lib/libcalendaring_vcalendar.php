@@ -129,9 +129,10 @@ class libcalendaring_vcalendar implements Iterator
     /**
     * Import events from iCalendar format
     *
-    * @param  string vCalendar input
-    * @param  string Input charset (from envelope)
-    * @param  boolean True if parsing exceptions should be forwarded to the caller
+    * @param string vCalendar input
+    * @param string Input charset (from envelope)
+    * @param bool   True if parsing exceptions should be forwarded to the caller
+    *
     * @return array List of events extracted from the input
     */
     public function import($vcal, $charset = 'UTF-8', $forward_exceptions = false, $memcheck = true)
@@ -166,15 +167,16 @@ class libcalendaring_vcalendar implements Iterator
             }
         }
 
-        return array();
+        return [];
     }
 
     /**
     * Read iCalendar events from a file
     *
-    * @param  string File path to read from
-    * @param  string Input charset (from envelope)
-    * @param  boolean True if parsing exceptions should be forwarded to the caller
+    * @param string File path to read from
+    * @param string Input charset (from envelope)
+    * @param bool   True if parsing exceptions should be forwarded to the caller
+    *
     * @return array List of events extracted from the file
     */
     public function import_from_file($filepath, $charset = 'UTF-8', $forward_exceptions = false)

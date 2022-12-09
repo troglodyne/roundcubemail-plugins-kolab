@@ -265,6 +265,10 @@ class caldav_calendar extends kolab_storage_dav_folder
         }
 
         foreach ($this->storage->select($query) as $record) {
+            if (empty($record)) {
+                continue;
+            }
+
             $event = $this->_to_driver_event($record, !$virtual, false);
 
             // remember seen categories

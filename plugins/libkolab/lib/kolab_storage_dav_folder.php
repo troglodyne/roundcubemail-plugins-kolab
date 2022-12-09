@@ -514,10 +514,14 @@ class kolab_storage_dav_folder extends kolab_storage_folder
      *
      * @param array Object data in kolab_dav_client::fetchData() format
      *
-     * @return array Object properties
+     * @return array|false Object properties, False on error
      */
     public function from_dav($object)
     {
+        if (empty($object ) || empty($object['data'])) {
+            return false;
+        }
+
         if ($this->type == 'event') {
             $ical = libcalendaring::get_ical();
             $events = $ical->import($object['data']);
