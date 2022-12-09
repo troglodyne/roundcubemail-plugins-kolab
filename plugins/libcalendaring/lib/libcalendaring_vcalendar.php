@@ -1084,7 +1084,7 @@ class libcalendaring_vcalendar implements Iterator
 
         // all-day events end the next day
         if (!empty($event['allday']) && !empty($event['end'])) {
-            $event['end'] = clone $event['end'];
+            $event['end'] = self::toDateTime($event['end']);
             $event['end']->add(new \DateInterval('P1D'));
             $event['end']->_dateonly = true;
         }
