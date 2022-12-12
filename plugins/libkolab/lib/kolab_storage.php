@@ -850,7 +850,7 @@ class kolab_storage
         if (!$filter) {
             // Get ALL folders list, standard way
             if ($subscribed) {
-                $folders = self::_imap_list_subscribed($root, $mbox);
+                $folders = self::_imap_list_subscribed($root, $mbox, $filter);
             }
             else {
                 $folders = self::_imap_list_folders($root, $mbox);
@@ -882,7 +882,7 @@ class kolab_storage
 
         // Get folders list
         if ($subscribed) {
-            $folders = self::_imap_list_subscribed($root, $mbox);
+            $folders = self::_imap_list_subscribed($root, $mbox, $filter);
         }
         else {
             $folders = self::_imap_list_folders($root, $mbox);
@@ -944,12 +944,12 @@ class kolab_storage
      * Wrapper for rcube_imap::list_folders_subscribed()
      * with support for temporarily subscribed folders
      */
-    protected static function _imap_list_subscribed($root, $mbox)
+    protected static function _imap_list_subscribed($root, $mbox, $filter = null)
     {
         $folders = self::$imap->list_folders_subscribed($root, $mbox);
 
         // add temporarily subscribed folders
-        if (self::$with_tempsubs && is_array($_SESSION['kolab_subscribed_folders'])) {
+        if ($filter != 'mail' && self::$with_tempsubs && is_array($_SESSION['kolab_subscribed_folders'])) {
             $folders = array_unique(array_merge($folders, $_SESSION['kolab_subscribed_folders']));
         }
 
