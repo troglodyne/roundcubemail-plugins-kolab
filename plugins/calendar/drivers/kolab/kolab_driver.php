@@ -840,7 +840,7 @@ class kolab_driver extends calendar_driver
 
         if (($storage = $this->get_calendar($event['calendar'])) && ($event = $storage->get_event($event['id']))) {
             $event['_savemode'] = $savemode;
-            $decline  = $event['_decline'];
+            $decline  = !empty($event['_decline']);
             $savemode = 'all';
             $master   = $event;
 
@@ -1033,9 +1033,9 @@ class kolab_driver extends calendar_driver
             $fromcalendar = $storage;
         }
 
-        $success     = false;
-        $savemode    = 'all';
-        $attachments = [];
+        $success  = false;
+        $savemode = 'all';
+
         $old = $master = $storage->get_event($event['id']);
 
         if (!$old || empty($old['start'])) {
@@ -1220,7 +1220,7 @@ class kolab_driver extends calendar_driver
 
             // increment sequence of this instance if scheduling is affected
             if ($reschedule) {
-                $event['sequence'] = max($old['sequence'], $master['sequence']) + 1;
+                $event['sequence'] = max($old['sequence'] ?? 0, $master['sequence'] ?? 0) + 1;
             }
             else if (!isset($event['sequence'])) {
                 $event['sequence'] = !empty($old['sequence']) ? $old['sequence'] : $master['sequence'];
@@ -1538,12 +1538,17 @@ class kolab_driver extends calendar_driver
             $event['_instance'] = libcalendaring::recurrence_instance_identifier($event, !empty($master['allday']));
         }
 
-        if (!is_array($master['exceptions']) && isset($master['recurrence']['EXCEPTIONS'])) {
-            $master['exceptions'] = &$master['recurrence']['EXCEPTIONS'];
+        if (!isset($master['exceptions'])) {
+            if (isset($master['recurrence']['EXCEPTIONS'])) {
+                $master['exceptions'] = &$master['recurrence']['EXCEPTIONS'];
+            }
+            else {
+                $master['exceptions'] = [];
+            }
         }
 
         $existing = false;
-        foreach ((array) $master['exceptions'] as $i => $exception) {
+        foreach ($master['exceptions'] as $i => $exception) {
             if ($exception['_instance'] == $event['_instance']) {
                 $master['exceptions'][$i] = $event;
                 $existing = true;
@@ -1877,8 +1882,8 @@ class kolab_driver extends calendar_driver
 
         if ($event) {
             $attachments = isset($event['_attachments']) ? $event['_attachments'] : $event['attachments'];
-            foreach ((array) $attachments as $att) {
-                if ($att['id'] == $id) {
+            foreach ((array) $attachments as $idx => $att) {
+                if ((isset($att['id']) && $att['id'] == $id) || (!isset($att['id']) && $idx == $id)) {
                     return $att;
                 }
             }
@@ -2152,6 +2157,8 @@ class kolab_driver extends calendar_driver
 
         // translate internal '_attachments' to external 'attachments' list
         if (!empty($record['_attachments'])) {
+            $attachments = [];
+
             foreach ($record['_attachments'] as $key => $attachment) {
                 if ($attachment !== false) {
                     if (empty($attachment['name'])) {

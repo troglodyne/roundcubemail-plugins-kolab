@@ -184,6 +184,7 @@ class libcalendaring extends rcube_plugin
      * Shift dates into user's current timezone
      *
      * @param mixed Any kind of a date representation (DateTime object, string or unix timestamp)
+     *
      * @return object DateTime object in user's timezone
      */
     public function adjust_timezone($dt, $dateonly = false)
@@ -196,7 +197,7 @@ class libcalendaring extends rcube_plugin
         }
 
         if ($dt instanceof DateTimeInterface && empty($dt->_dateonly) && !$dateonly) {
-            $dt->setTimezone($this->timezone);
+            $dt = $dt->setTimezone($this->timezone);
         }
 
         return $dt;
@@ -1299,9 +1300,9 @@ class libcalendaring extends rcube_plugin
             unset($object['_instance'], $object['recurrence_date']);
         }
         // set instance and 'savemode' according to recurrence-id
-        else if (!empty($object['recurrence_date']) && is_a($object['recurrence_date'], 'DateTime')) {
+        else if (!empty($object['recurrence_date']) && $object['recurrence_date'] instanceof DateTimeInterface) {
             $object['_instance'] = self::recurrence_instance_identifier($object);
-            $object['_savemode'] = $object['thisandfuture'] ? 'future' : 'current';
+            $object['_savemode'] = !empty($object['thisandfuture']) ? 'future' : 'current';
         }
         else if (!empty($object['recurrence_id']) && !empty($object['_instance'])) {
             if (strlen($object['_instance']) > 4) {

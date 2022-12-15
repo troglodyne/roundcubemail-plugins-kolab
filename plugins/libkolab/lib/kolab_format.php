@@ -757,11 +757,11 @@ abstract class kolab_format
             // Roundcube ID has nothing to do with the storage ID, remove it
             // for uploaded/new attachments
             // FIXME: Roundcube uses 'data', kolab_format uses 'content'
-            if ($attachment['content'] || $attachment['path'] || $attachment['data']) {
+            if (!empty($attachment['content']) || !empty($attachment['path']) || !empty($attachment['data'])) {
                 unset($attachment['id']);
             }
 
-            if ($attachment['id']) {
+            if (!empty($attachment['id'])) {
                 foreach ((array) $object['_attachments'] as $cid => $att) {
                     if ($att && $attachment['id'] == $att['id']) {
                         $key = $cid;

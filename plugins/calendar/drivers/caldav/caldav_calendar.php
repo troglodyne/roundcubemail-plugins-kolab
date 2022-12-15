@@ -26,7 +26,7 @@ class caldav_calendar extends kolab_storage_dav_folder
     public $ready         = false;
     public $rights        = 'lrs';
     public $editable      = false;
-    public $attachments   = false; // TODO
+    public $attachments   = true;
     public $alarms        = false;
     public $history       = false;
     public $subscriptions = false;
@@ -188,20 +188,17 @@ class caldav_calendar extends kolab_storage_dav_folder
      */
     public function get_attachment_body($id, $event)
     {
-        if (!$this->ready) {
-            return false;
-        }
-
-        $data = $this->storage->get_attachment($event['id'], $id);
-
-        if ($data == null) {
+        $event = $this->get_event($event['id']);
+        $data = $this->storage->get_attachment($id, $event);
+/*
+        if ($data === false) {
             // try again with master UID
             $uid = preg_replace('/-\d+(T\d{6})?$/', '', $event['id']);
             if ($uid != $event['id']) {
-                $data = $this->storage->get_attachment($uid, $id);
+                $data = $this->storage->get_attachment($uid, $id); // TODO
             }
         }
-
+*/
         return $data;
     }
 
@@ -482,7 +479,10 @@ class caldav_calendar extends kolab_storage_dav_folder
         // unset($event['links']);
 
         $object = $this->_from_driver_event($event, $old);
-        $saved  = $this->storage->save($object, 'event', $old['uid']);
+
+        $object['created'] = $old['created'] ?? null;
+
+        $saved = $this->storage->save($object, 'event', $old['uid']);
 
         if (!$saved) {
             rcube::raise_error([

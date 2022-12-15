@@ -584,17 +584,26 @@ class libcalendaring_vcalendar implements Iterator
                 if (substr($value, 0, 4) == 'http' && !strpos($value, ':attachment:')) {
                     $event['links'][] = $value;
                 }
-                else if (is_string($value) && strlen($value) && !empty($params['VALUE']) && strtoupper($params['VALUE']) == 'BINARY') {
-                    $attachment = self::map_keys($params, ['FMTTYPE' => 'mimetype', 'X-LABEL' => 'name', 'X-APPLE-FILENAME' => 'name']);
-                    $attachment['data'] = $value;
-                    $attachment['size'] = strlen($value);
+                else if (!empty($params['VALUE']) && strtoupper($params['VALUE']) == 'BINARY') {
+                    $attachment = self::map_keys($params, [
+                            'FMTTYPE' => 'mimetype',
+                            'X-LABEL' => 'name',
+                            'X-APPLE-FILENAME' => 'name',
+                            'X-SIZE' => 'size'
+                    ]);
+
+                    $attachment['data'] = $value ?? null;
+                    $attachment['size'] = $attachment['size'] ?? strlen($value);
+                    $attachment['id']   = md5(($attachment['mimetype'] ?? 'application/octet-stream') . ($attachment['name'] ?? 'noname'));
+
                     $event['attachments'][] = $attachment;
                 }
                 break;
 
             default:
-                if (substr($prop->name, 0, 2) == 'X-')
-                    $event['x-custom'][] = array($prop->name, strval($value));
+                if (substr($prop->name, 0, 2) == 'X-') {
+                    $event['x-custom'][] = [$prop->name, strval($value)];
+                }
                 break;
             }
         }
@@ -769,8 +778,8 @@ class libcalendaring_vcalendar implements Iterator
      */
     private function _parse_freebusy($ve)
     {
-        $this->freebusy = array('_type' => 'freebusy', 'periods' => array());
-        $seen = array();
+        $this->freebusy = ['_type' => 'freebusy', 'periods' => []];
+        $seen = [];
 
         foreach ($ve->children() as $prop) {
             if (!($prop instanceof VObject\Property))
@@ -784,13 +793,13 @@ class libcalendaring_vcalendar implements Iterator
             case 'DTSTAMP':
             case 'DTSTART':
             case 'DTEND':
-                $propmap = array(
+                $propmap = [
                     'DTSTART' => 'start',
                     'DTEND' => 'end',
                     'CREATED' => 'created',
                     'LAST-MODIFIED' => 'changed',
                     'DTSTAMP' => 'changed'
-                );
+                ];
                 $this->freebusy[$propmap[$prop->name]] = self::convert_datetime($prop);
                 break;
 
@@ -825,7 +834,7 @@ class libcalendaring_vcalendar implements Iterator
                     }
 
                     if ($busyEnd && $busyEnd > $busyStart)
-                        $this->freebusy['periods'][] = array($busyStart, $busyEnd, $fbtype);
+                        $this->freebusy['periods'][] = [$busyStart, $busyEnd, $fbtype];
                 }
                 break;
 
@@ -1322,30 +1331,40 @@ class libcalendaring_vcalendar implements Iterator
 
         // export attachments
         if (!empty($event['attachments'])) {
-            foreach ((array)$event['attachments'] as $attach) {
+            foreach ((array) $event['attachments'] as $idx => $attach) {
                 // check available memory and skip attachment export if we can't buffer it
                 // @todo: use rcube_utils::mem_check()
                 if (is_callable($get_attachment) && $memory_limit > 0 && ($memory_used = function_exists('memory_get_usage') ? memory_get_usage() : 16*1024*1024)
-                    && $attach['size'] && $memory_used + $attach['size'] * 3 > $memory_limit) {
+                    && !empty($attach['size']) && $memory_used + $attach['size'] * 3 > $memory_limit
+                ) {
                     continue;
                 }
+
                 // embed attachments using the given callback function
-                if (is_callable($get_attachment) && ($data = call_user_func($get_attachment, $attach['id'], $event))) {
+                if (is_callable($get_attachment) && ($data = call_user_func($get_attachment, $attach['id'] ?? $idx, $event))) {
                     // embed attachments for iCal
                     $ve->add('ATTACH',
                         $data,
-                        array_filter(array('VALUE' => 'BINARY', 'ENCODING' => 'BASE64', 'FMTTYPE' => $attach['mimetype'], 'X-LABEL' => $attach['name'])));
+                        array_filter([
+                                'VALUE'    => 'BINARY',
+                                'ENCODING' => 'BASE64',
+                                'FMTTYPE'  => $attach['mimetype'] ?? null,
+                                'X-LABEL'  => $attach['name'] ?? null,
+                                'X-SIZE'   => $attach['size'] ?? null,
+                        ])
+                    );
                     unset($data);  // attempt to free memory
                 }
                 // list attachments as absolute URIs
                 else if (!empty($this->attach_uri)) {
                     $ve->add('ATTACH',
-                        strtr($this->attach_uri, array(
-                            '{{id}}'       => urlencode($attach['id']),
+                        strtr($this->attach_uri, [
+                            '{{id}}'       => urlencode($attach['id'] ?? $idx),
                             '{{name}}'     => urlencode($attach['name']),
                             '{{mimetype}}' => urlencode($attach['mimetype']),
-                        )),
-                        array('FMTTYPE' => $attach['mimetype'], 'VALUE' => 'URI'));
+                        ]),
+                        ['FMTTYPE' => $attach['mimetype'], 'VALUE' => 'URI']
+                    );
                 }
             }
         }

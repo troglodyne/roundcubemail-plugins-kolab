@@ -329,7 +329,7 @@ class kolab_attachments_handler
     /**
      * Template object for attachment display frame
      */
-    public function attachment_frame($attrib = array())
+    public function attachment_frame($attrib = [])
     {
         $mimetype = strtolower($this->attachment['mimetype']);
         list($ctype_primary, $ctype_secondary) = explode('/', $mimetype);
@@ -344,12 +344,12 @@ class kolab_attachments_handler
     /**
      *
      */
-    public function attachment_header($attrib = array())
+    public function attachment_header($attrib = [])
     {
         $rcmail  = rcmail::get_instance();
-        $dl_link = strtolower($attrib['downloadlink']) == 'true';
-        $dl_url  = $this->rc->url(array('_frame' => null, '_download' => 1) + $_GET);
-        $table   = new html_table(array('cols' => $dl_link ? 3 : 2));
+        $dl_link = strtolower($attrib['downloadlink'] ?? '') == 'true';
+        $dl_url  = $this->rc->url(['_frame' => null, '_download' => 1] + $_GET);
+        $table   = new html_table(['cols' => $dl_link ? 3 : 2]);
 
         if (!empty($this->attachment['name'])) {
             $table->add('title', rcube::Q($this->rc->gettext('filename')));

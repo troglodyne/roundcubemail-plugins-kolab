@@ -556,7 +556,7 @@ class kolab_storage_dav_cache extends kolab_storage_cache
 
                 $result = $this->db->query(
                     "INSERT INTO `{$this->cache_table}` ($cols)"
-                    . " VALUES (?, ?, " . $this->db->now() . ", ?, ?, ?, ?$extra_args)",
+                    . " VALUES (?, ?, ?, " . $this->db->now() . ", ?, ?, ?, ?$extra_args)",
                     $params
                 );
 
@@ -573,7 +573,7 @@ class kolab_storage_dav_cache extends kolab_storage_cache
                 $this->db->quote($this->folder_id),
                 $this->db->quote(rcube_charset::clean($object['uid'])),
                 $this->db->quote(rcube_charset::clean($object['etag'])),
-                $this->db->now(),
+                !empty($sql_data['created']) ? $this->db->quote($sql_data['created']) : $this->db->now(),
                 $this->db->quote($sql_data['changed']),
                 $this->db->quote($sql_data['data']),
                 $this->db->quote($sql_data['tags']),
@@ -619,10 +619,13 @@ class kolab_storage_dav_cache extends kolab_storage_cache
         }
 
         $data     = [];
-        $sql_data = ['changed' => null, 'tags' => '', 'words' => ''];
+        $sql_data = ['created' => date(self::DB_DATE_FORMAT), 'changed' => null, 'tags' => '', 'words' => ''];
 
         if (!empty($object['changed'])) {
-            $sql_data['changed'] = date(self::DB_DATE_FORMAT, is_object($object['changed']) ? $object['changed']->format('U') : $object['changed']);
+            $sql_data['changed'] = self::_convert_datetime($object['changed']);
+        }
+        if (!empty($object['created'])) {
+            $sql_data['created'] = self::_convert_datetime($object['created']);
         }
 
         // Store only minimal set of object properties
@@ -653,6 +656,20 @@ class kolab_storage_dav_cache extends kolab_storage_cache
      */
     protected function _unserialize($sql_arr, $noread = false, $fast_mode = false)
     {
+        $init = function(&$object) use ($sql_arr) {
+            if ($sql_arr['created'] && empty($object['created'])) {
+                $object['created'] = new DateTime($sql_arr['created'], $this->server_timezone);
+            }
+
+            if ($sql_arr['changed'] && empty($object['changed'])) {
+                $object['changed'] = new DateTime($sql_arr['changed'], $this->server_timezone);
+            }
+
+            $object['_type'] = !empty($sql_arr['type']) ? $sql_arr['type'] : $this->folder->type;
+            $object['uid']   = $sql_arr['uid'];
+            $object['etag']  = $sql_arr['etag'];
+        };
+
         if (!empty($sql_arr['data']) && ($object = json_decode($sql_arr['data'], true))) {
             foreach ($this->data_props as $prop) {
                 if (isset($object[$prop]) && is_array($object[$prop])
@@ -665,17 +682,7 @@ class kolab_storage_dav_cache extends kolab_storage_cache
                 }
             }
 
-            if ($sql_arr['created'] && empty($object['created'])) {
-                $object['created'] = new DateTime($sql_arr['created']);
-            }
-
-            if ($sql_arr['changed'] && empty($object['changed'])) {
-                $object['changed'] = new DateTime($sql_arr['changed']);
-            }
-
-            $object['_type'] = !empty($sql_arr['type']) ? $sql_arr['type'] : $this->folder->type;
-            $object['uid']   = $sql_arr['uid'];
-            $object['etag']  = $sql_arr['etag'];
+            $init($object);
         }
 
         if (!empty($fast_mode) && !empty($object)) {
@@ -686,6 +693,7 @@ class kolab_storage_dav_cache extends kolab_storage_cache
             if (!empty($object['_raw'])) {
                 $object['data'] = $object['_raw'];
                 if ($object = $this->folder->from_dav($object)) {
+                    $init($object);
                     return $object;
                 }
             }

@@ -344,73 +344,17 @@ class kolab_storage_dav_folder extends kolab_storage_folder
         if (!$type) {
             $type = $this->type;
         }
-/*
-        // copy attachments from old message
-        $copyfrom = $object['_copyfrom'] ?: $object['_msguid'];
-        if (!empty($copyfrom) && ($old = $this->cache->get($copyfrom, $type, $object['_mailbox']))) {
-            foreach ((array)$old['_attachments'] as $key => $att) {
-                if (!isset($object['_attachments'][$key])) {
-                    $object['_attachments'][$key] = $old['_attachments'][$key];
-                }
-                // unset deleted attachment entries
-                if ($object['_attachments'][$key] == false) {
-                    unset($object['_attachments'][$key]);
-                }
-                // load photo.attachment from old Kolab2 format to be directly embedded in xcard block
-                else if ($type == 'contact' && ($key == 'photo.attachment' || $key == 'kolab-picture.png') && $att['id']) {
-                    if (!isset($object['photo']))
-                        $object['photo'] = $this->get_attachment($copyfrom, $att['id'], $object['_mailbox']);
-                    unset($object['_attachments'][$key]);
-                }
-            }
-        }
 
-        // process attachments
-        if (is_array($object['_attachments'])) {
-            $numatt = count($object['_attachments']);
-            foreach ($object['_attachments'] as $key => $attachment) {
-                // FIXME: kolab_storage and Roundcube attachment hooks use different fields!
-                if (empty($attachment['content']) && !empty($attachment['data'])) {
-                    $attachment['content'] = $attachment['data'];
-                    unset($attachment['data'], $object['_attachments'][$key]['data']);
-                }
-
-                // make sure size is set, so object saved in cache contains this info
-                if (!isset($attachment['size'])) {
-                    if (!empty($attachment['content'])) {
-                        if (is_resource($attachment['content'])) {
-                            // this need to be a seekable resource, otherwise
-                            // fstat() failes and we're unable to determine size
-                            // here nor in rcube_imap_generic before IMAP APPEND
-                            $stat = fstat($attachment['content']);
-                            $attachment['size'] = $stat ? $stat['size'] : 0;
-                        }
-                        else {
-                            $attachment['size'] = strlen($attachment['content']);
-                        }
-                    }
-                    else if (!empty($attachment['path'])) {
-                        $attachment['size'] = filesize($attachment['path']);
-                    }
-                    $object['_attachments'][$key] = $attachment;
-                }
-
-                // generate unique keys (used as content-id) for attachments
-                if (is_numeric($key) && $key < $numatt) {
-                    // derrive content-id from attachment file name
-                    $ext = preg_match('/(\.[a-z0-9]{1,6})$/i', $attachment['name'], $m) ? $m[1] : null;
-                    $basename = preg_replace('/[^a-z0-9_.-]/i', '', basename($attachment['name'], $ext));  // to 7bit ascii
-                    if (!$basename) $basename = 'noname';
-                    $cid = $basename . '.' . microtime(true) . $key . $ext;
-
-                    $object['_attachments'][$cid] = $attachment;
-                    unset($object['_attachments'][$key]);
-                }
-            }
-        }
-*/
-        $rcmail = rcube::get_instance();
         $result = false;
+
+        if (empty($uid)) {
+            if (empty($object['created'])) {
+                $object['created'] = new DateTime('now');
+            }
+        }
+        else {
+            $object['changed'] = new DateTime('now');
+        }
 
         // generate and save object message
         if ($content = $this->to_dav($object)) {
@@ -531,6 +475,9 @@ class kolab_storage_dav_folder extends kolab_storage_folder
             }
 
             $result = $events[0];
+
+            $result['_attachments'] = $result['attachments'] ?? [];
+            unset($result['attachments']);
         }
         else if ($this->type == 'contact') {
             if (stripos($object['data'], 'BEGIN:VCARD') !== 0) {
@@ -609,7 +556,42 @@ class kolab_storage_dav_folder extends kolab_storage_folder
                 $object['recurrence']['EXCEPTIONS'] = $object['exceptions'];
             }
 
-            $result = $ical->export([$object]);
+            // pre-process attachments
+            if (isset($object['_attachments']) && is_array($object['_attachments'])) {
+                foreach ($object['_attachments'] as $key => $attachment) {
+                    if ($attachment === false) {
+                        // Deleted attachment
+                        unset($object['_attachments'][$key]);
+                        continue;
+                    }
+
+                    // make sure size is set
+                    if (!isset($attachment['size'])) {
+                        if (!empty($attachment['data'])) {
+                            if (is_resource($attachment['data'])) {
+                                // this need to be a seekable resource, otherwise
+                                // fstat() fails and we're unable to determine size
+                                // here nor in rcube_imap_generic before IMAP APPEND
+                                $stat = fstat($attachment['data']);
+                                $attachment['size'] = $stat ? $stat['size'] : 0;
+                            }
+                            else {
+                                $attachment['size'] = strlen($attachment['data']);
+                            }
+                        }
+                        else if (!empty($attachment['path'])) {
+                            $attachment['size'] = filesize($attachment['path']);
+                        }
+
+                        $object['_attachments'][$key] = $attachment;
+                    }
+                }
+            }
+
+            $object['attachments'] = $object['_attachments'] ?? [];
+            unset($object['_attachments']);
+
+            $result = $ical->export([$object], null, false, [$this, 'get_attachment']);
         }
         else if ($this->type == 'contact') {
             // copy values into vcard object
@@ -698,6 +680,45 @@ class kolab_storage_dav_folder extends kolab_storage_folder
     public function get_dav_type()
     {
         return kolab_storage_dav::get_dav_type($this->type);
+    }
+
+    /**
+     * Get body of an attachment
+     */
+    public function get_attachment($id, $event, $unused1 = null, $unused2 = false, $unused3 = null, $unused4 = false)
+    {
+        // Note: 'attachments' is defined when saving the data into the DAV server
+        //       '_attachments' is defined after fetching the object from the DAV server
+        if (is_int($id) && isset($event['attachments'][$id])) {
+            $attachment = $event['attachments'][$id];
+        }
+        else if (is_int($id) && isset($event['_attachments'][$id])) {
+            $attachment = $event['_attachments'][$id];
+        }
+        else if (is_string($id) && !empty($event['attachments'])) {
+            foreach ($event['attachments'] as $att) {
+                if (!empty($att['id']) && $att['id'] === $id) {
+                    $attachment = $att;
+                }
+            }
+        }
+        else if (is_string($id) && !empty($event['_attachments'])) {
+            foreach ($event['_attachments'] as $att) {
+                if (!empty($att['id']) && $att['id'] === $id) {
+                    $attachment = $att;
+                }
+            }
+        }
+
+        if (empty($attachment)) {
+            return false;
+        }
+
+        if (!empty($attachment['path'])) {
+            return file_get_contents($attachment['path']);
+        }
+
+        return $attachment['data'] ?? null;
     }
 
     /**

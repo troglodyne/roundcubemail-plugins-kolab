@@ -29,7 +29,7 @@ class caldav_driver extends kolab_driver
     public $alarms              = true;
     public $attendees           = true;
     public $freebusy            = true;
-    public $attachments         = false; // TODO
+    public $attachments         = true;
     public $undelete            = false; // TODO
     public $alarm_types         = ['DISPLAY', 'AUDIO'];
     public $categoriesimmutable = true;

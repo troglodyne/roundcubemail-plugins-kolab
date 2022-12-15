@@ -1149,11 +1149,11 @@ $("#rcmfd_new_category").keypress(function(event) {
             }
 
             // send cancellation for the main event
-            if ($event['_savemode'] == 'all') {
+            if (isset($event['_savemode']) && $event['_savemode'] == 'all') {
                 unset($old['_instance'], $old['recurrence_date'], $old['recurrence_id']);
             }
             // send an update for the main event's recurrence rule instead of a cancellation message
-            else if ($event['_savemode'] == 'future' && $success !== false && $success !== true) {
+            else if (isset($event['_savemode']) && $event['_savemode'] == 'future' && !is_bool($success)) {
                 $event['_savemode'] = 'all';  // force event_save_success() to load master event
                 $action  = 'edit';
                 $success = true;
@@ -2458,7 +2458,7 @@ $("#rcmfd_new_category").keypress(function(event) {
     private function notify_attendees($event, $old, $action = 'edit', $comment = null, $rsvp = null)
     {
         $is_cancelled = false;
-        if ($action == 'remove' || ($event['status'] == 'CANCELLED' && $old['status'] != $event['status'])) {
+        if ($action == 'remove' || ($event['status'] == 'CANCELLED' && ($old['status'] ?? '') != $event['status'])) {
             $event['cancelled'] = true;
             $is_cancelled = true;
         }
