@@ -33,6 +33,7 @@ class libcalendaring_recurrence
     protected $dateonly = false;
     protected $event;
     protected $duration;
+    protected $isStart = true;
 
     /**
      * Default constructor
@@ -109,7 +110,23 @@ class libcalendaring_recurrence
      */
     public function next_instance()
     {
-        if ($next_start = $this->next_start()) {
+        // Here's the workaround for an issue for an event with its start date excluded
+        // E.g. A daily event starting on 10th which is one of EXDATE dates
+        // should return 11th as next_instance() when called for the first time.
+        // Looks like Sabre is setting internal "current date" to 11th on such an object
+        // initialization, therefore calling next() would move it to 12th.
+        if ($this->isStart && ($next_start = $this->engine->getDtStart())
+            && $next_start->format('Ymd') != $this->start->format('Ymd')
+        ) {
+            $next_start = $this->toDateTime($next_start);
+        }
+        else {
+            $next_start = $this->next_start();
+        }
+
+        $this->isStart = false;
+
+        if ($next_start) {
             $next = $this->event;
             $next['start'] = $next_start;
 
@@ -119,7 +136,7 @@ class libcalendaring_recurrence
             }
 
             $next['recurrence_date'] = clone $next_start;
-            $next['_instance'] = libcalendaring::recurrence_instance_identifier($next, !empty($this->event['allday']));
+            $next['_instance'] = libcalendaring::recurrence_instance_identifier($next);
 
             unset($next['_formatobj']);
 

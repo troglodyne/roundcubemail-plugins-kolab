@@ -158,13 +158,11 @@ class RecurrenceTest extends PHPUnit\Framework\TestCase
                 '2017-09-08 11:00:00',
                 '2017-09-08 11:00:00',
             ),
-/*
             array(
                 array('FREQ' => 'MONTHLY', 'INTERVAL' => '1', 'BYMONTHDAY' => '8,9'),
                 '2017-08-31 11:00:00',
                 '2017-09-08 11:00:00',
             ),
-*/
             array(
                 array('FREQ' => 'MONTHLY', 'INTERVAL' => '1', 'BYMONTHDAY' => '8,9'),
                 '2017-09-08 11:00:00',
@@ -185,13 +183,11 @@ class RecurrenceTest extends PHPUnit\Framework\TestCase
                 '2017-09-08 11:00:00',
                 '2017-09-08 11:00:00',
             ),
-/*
             array(
                 array('FREQ' => 'MONTHLY', 'INTERVAL' => '2', 'BYMONTHDAY' => '8'),
                 '2017-08-31 11:00:00',
                 '2017-09-08 11:00:00', // ??????
             ),
-*/
             // yearly
             array(
                 array('FREQ' => 'YEARLY', 'INTERVAL' => '1'),
@@ -204,6 +200,7 @@ class RecurrenceTest extends PHPUnit\Framework\TestCase
                 '2017-08-16 12:00:00',
             ),
 /*
+            // Not supported by Sabre (requires BYMONTH too)
             array(
                 array('FREQ' => 'YEARLY', 'INTERVAL' => '1', 'BYDAY' => '-1MO'),
                 '2017-08-16 11:00:00',
@@ -215,7 +212,6 @@ class RecurrenceTest extends PHPUnit\Framework\TestCase
                 '2017-08-16 11:00:00',
                 '2017-08-28 11:00:00',
             ),
-/*
             array(
                 array('FREQ' => 'YEARLY', 'INTERVAL' => '1', 'BYMONTH' => '1', 'BYDAY' => '1MO'),
                 '2017-08-16 11:00:00',
@@ -226,7 +222,6 @@ class RecurrenceTest extends PHPUnit\Framework\TestCase
                 '2017-08-16 11:00:00',
                 '2017-09-04 11:00:00',
             ),
-*/
             array(
                 array('FREQ' => 'YEARLY', 'INTERVAL' => '2'),
                 '2017-08-16 11:00:00',
@@ -238,6 +233,7 @@ class RecurrenceTest extends PHPUnit\Framework\TestCase
                 '2017-08-16 11:00:00',
             ),
 /*
+            // Not supported by Sabre (requires BYMONTH too)
             array(
                 array('FREQ' => 'YEARLY', 'INTERVAL' => '2', 'BYDAY' => '-1MO'),
                 '2017-08-16 11:00:00',
@@ -333,5 +329,105 @@ class RecurrenceTest extends PHPUnit\Framework\TestCase
         $this->assertEquals($start->format('2017-09-07 H:i:s'), $next['start']->format('Y-m-d H:i:s'), 'Same time');
         $this->assertEquals($start->getTimezone()->getName(), $next['start']->getTimezone()->getName(), 'Same timezone');
         $this->assertTrue($next['start']->_dateonly, '_dateonly flag');
+    }
+
+    /**
+     * Test for libcalendaring_recurrence::next_instance()
+     */
+    function test_next_instance_exdate()
+    {
+        date_default_timezone_set('America/New_York');
+
+        $start = new libcalendaring_datetime('2023-01-18 10:00:00', new DateTimeZone('Europe/Berlin'));
+        $end = new libcalendaring_datetime('2023-01-18 10:30:00', new DateTimeZone('Europe/Berlin'));
+        $event = [
+            'start' => $start,
+            'end' => $end,
+            'recurrence' => [
+                'FREQ' => 'DAILY',
+                'INTERVAL' => '1',
+                'EXDATE' => [
+                    // Exclude the start date
+                    new libcalendaring_datetime('2023-01-18 10:00:00', new DateTimeZone('Europe/Berlin')),
+                ],
+            ],
+        ];
+
+        $recurrence = new libcalendaring_recurrence($this->plugin, $event);
+
+        $next = $recurrence->next_instance();
+
+        $this->assertEquals('2023-01-19 10:00:00', $next['start']->format('Y-m-d H:i:s'));
+        $this->assertEquals('Europe/Berlin', $next['start']->getTimezone()->getName());
+        $this->assertFalse($next['start']->_dateonly);
+
+        $next = $recurrence->next_instance();
+
+        $this->assertEquals('2023-01-20 10:00:00', $next['start']->format('Y-m-d H:i:s'));
+        $this->assertEquals('Europe/Berlin', $next['start']->getTimezone()->getName());
+        $this->assertFalse($next['start']->_dateonly);
+    }
+
+    /**
+     * Test for libcalendaring_recurrence::next_instance()
+     */
+    function test_next_instance_dst()
+    {
+        date_default_timezone_set('America/New_York');
+
+        $start = new libcalendaring_datetime('2021-03-10 10:00:00', new DateTimeZone('Europe/Berlin'));
+        $end = new libcalendaring_datetime('2021-03-10 10:30:00', new DateTimeZone('Europe/Berlin'));
+        $event = [
+            'start' => $start,
+            'end' => $end,
+            'recurrence' => [
+                'FREQ' => 'MONTHLY',
+                'INTERVAL' => '1',
+            ],
+        ];
+
+        $recurrence = new libcalendaring_recurrence($this->plugin, $event);
+
+        $next = $recurrence->next_instance();
+
+        $this->assertEquals('2021-04-10 10:00:00', $next['start']->format('Y-m-d H:i:s'));
+        $this->assertEquals('Europe/Berlin', $next['start']->getTimezone()->getName());
+
+        $next = $recurrence->next_instance();
+
+        $this->assertEquals('2021-05-10 10:00:00', $next['start']->format('Y-m-d H:i:s'));
+        $this->assertEquals('Europe/Berlin', $next['start']->getTimezone()->getName());
+
+        $start = new libcalendaring_datetime('2021-10-10 10:00:00', new DateTimeZone('Europe/Berlin'));
+        $end = new libcalendaring_datetime('2021-10-10 10:30:00', new DateTimeZone('Europe/Berlin'));
+        $event = [
+            'start' => $start,
+            'end' => $end,
+            'recurrence' => [
+                'FREQ' => 'MONTHLY',
+                'INTERVAL' => '1',
+            ],
+        ];
+
+        $recurrence = new libcalendaring_recurrence($this->plugin, $event);
+
+        $next = $recurrence->next_instance();
+
+        $this->assertEquals('2021-11-10 10:00:00', $next['start']->format('Y-m-d H:i:s'));
+        $this->assertEquals('Europe/Berlin', $next['start']->getTimezone()->getName());
+
+        $next = $recurrence->next_instance();
+
+        $this->assertEquals('2021-12-10 10:00:00', $next['start']->format('Y-m-d H:i:s'));
+        $this->assertEquals('Europe/Berlin', $next['start']->getTimezone()->getName());
+
+        $next = $recurrence->next_instance();
+        $next = $recurrence->next_instance();
+        $next = $recurrence->next_instance();
+        $next = $recurrence->next_instance();
+
+        $this->assertEquals('2022-04-10 10:00:00', $next['start']->format('Y-m-d H:i:s'));
+        $this->assertEquals('Europe/Berlin', $next['start']->getTimezone()->getName());
+
     }
 }

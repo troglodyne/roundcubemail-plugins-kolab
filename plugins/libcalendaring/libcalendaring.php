@@ -1348,6 +1348,27 @@ class libcalendaring extends rcube_plugin
         }
     }
 
+    /**
+     * Check if a specified event is "identical" to the specified recurrence exception
+     *
+     * @param array Hash array with occurrence properties
+     * @param array Hash array with exception properties
+     *
+     * @return bool
+     */
+    public static function is_recurrence_exception($event, $exception)
+    {
+        $instance_date = !empty($event['recurrence_date']) ? $event['recurrence_date'] : $event['start'];
+        $exception_date = !empty($exception['recurrence_date']) ? $exception['recurrence_date'] : $exception['start'];
+
+        if ($instance_date instanceof DateTimeInterface && $exception_date instanceof DateTimeInterface) {
+            // Timezone???
+            return $instance_date->format('Ymd') === $exception_date->format('Ymd');
+        }
+
+        return false;
+    }
+
 
     /*********  Attendee handling functions  *********/
 

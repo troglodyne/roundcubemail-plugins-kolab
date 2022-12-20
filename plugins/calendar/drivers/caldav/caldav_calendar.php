@@ -298,7 +298,7 @@ class caldav_calendar extends kolab_storage_dav_folder
                 // find and merge exception for the first instance
                 if ($virtual && !empty($event['recurrence']) && !empty($event['recurrence']['EXCEPTIONS'])) {
                     foreach ($event['recurrence']['EXCEPTIONS'] as $exception) {
-                        if ($event['_instance'] == $exception['_instance']) {
+                        if (libcalendaring::is_recurrence_exception($event, $exception)) {
                             unset($exception['calendar'], $exception['className'], $exception['_folder_id']);
                             // clone date objects from main event before adjusting them with exception data
                             if (is_object($event['start'])) {
@@ -307,6 +307,7 @@ class caldav_calendar extends kolab_storage_dav_folder
                             if (is_object($event['end'])) {
                                 $event['end'] = clone $record['end'];
                             }
+
                             kolab_driver::merge_exception_data($event, $exception);
                         }
                     }
@@ -364,9 +365,6 @@ class caldav_calendar extends kolab_storage_dav_folder
         // Apply event-to-mail relations
         // $config = kolab_storage_config::get_instance();
         // $config->apply_links($events);
-
-        // Avoid session race conditions that will loose temporary subscriptions
-        // $this->cal->rc->session->nowrite = true;
 
         return $events;
     }
@@ -649,7 +647,7 @@ class caldav_calendar extends kolab_storage_dav_folder
             return $events;
         }
 
-        // use libkolab to compute recurring events
+        // use libcalendaring to compute recurring events
         $recurrence = libcalendaring::get_recurrence($event);
 
         $i = 0;

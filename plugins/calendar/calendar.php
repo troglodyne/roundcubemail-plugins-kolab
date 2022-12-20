@@ -2457,11 +2457,10 @@ $("#rcmfd_new_category").keypress(function(event) {
      */
     private function notify_attendees($event, $old, $action = 'edit', $comment = null, $rsvp = null)
     {
-        $is_cancelled = false;
-        if ($action == 'remove' || ($event['status'] == 'CANCELLED' && ($old['status'] ?? '') != $event['status'])) {
-            $event['cancelled'] = true;
-            $is_cancelled = true;
-        }
+        $is_cancelled = $action == 'remove'
+            || (!empty($event['status']) && $event['status'] == 'CANCELLED' && ($old['status'] ?? '') != $event['status']);
+
+        $event['cancelled'] = $is_cancelled;
 
         if ($rsvp === null) {
             $rsvp = !$old || ($event['sequence'] ?? 0) > ($old['sequence'] ?? 0);
