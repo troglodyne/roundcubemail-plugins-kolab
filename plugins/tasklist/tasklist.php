@@ -717,20 +717,8 @@ class tasklist extends rcube_plugin
             }
         }
 
-        $attachments = array();
-        $taskid = $rec['id'];
-        if (!empty($_SESSION[self::SESSION_KEY]) && $_SESSION[self::SESSION_KEY]['id'] == $taskid) {
-            if (!empty($_SESSION[self::SESSION_KEY]['attachments'])) {
-                foreach ($_SESSION[self::SESSION_KEY]['attachments'] as $id => $attachment) {
-                    if (is_array($rec['attachments']) && in_array($id, $rec['attachments'])) {
-                        $attachments[$id] = $this->rc->plugins->exec_hook('attachment_get', $attachment);
-                        unset($attachments[$id]['abort'], $attachments[$id]['group']);
-                    }
-                }
-            }
-        }
-
-        $rec['attachments'] = $attachments;
+        $handler = new kolab_attachments_handler();
+        $rec['attachments'] = $handler->attachments_set(self::SESSION_KEY, $rec['id'], $rec['attachments'] ?? []);
 
         // convert link references into simple URIs
         if (array_key_exists('links', $rec)) {
@@ -805,11 +793,8 @@ class tasklist extends rcube_plugin
      */
     private function cleanup_task(&$rec)
     {
-        // remove temp. attachment files
-        if (!empty($_SESSION[self::SESSION_KEY]) && ($taskid = $_SESSION[self::SESSION_KEY]['id'])) {
-            $this->rc->plugins->exec_hook('attachments_cleanup', array('group' => $taskid));
-            $this->rc->session->remove(self::SESSION_KEY);
-        }
+        $handler = new kolab_attachments_handler();
+        $handler->attachments_cleanup(self::SESSION_KEY);
     }
 
     /**
@@ -1794,37 +1779,9 @@ class tasklist extends rcube_plugin
                 $task['links'] = array($msgref);
             }
             // copy mail attachments to task
-            else if ($message->attachments && $this->driver->attachments) {
-                if (!is_array($_SESSION[self::SESSION_KEY]) || $_SESSION[self::SESSION_KEY]['id'] != $task['id']) {
-                    $_SESSION[self::SESSION_KEY] = array(
-                        'id'          => $task['id'],
-                        'attachments' => array(),
-                    );
-                }
-
-                foreach ((array)$message->attachments as $part) {
-                    $attachment = array(
-                        'data'     => $imap->get_message_part($uid, $part->mime_id, $part),
-                        'size'     => $part->size,
-                        'name'     => $part->filename,
-                        'mimetype' => $part->mimetype,
-                        'group'    => $task['id'],
-                    );
-
-                    $attachment = $this->rc->plugins->exec_hook('attachment_save', $attachment);
-
-                    if ($attachment['status'] && !$attachment['abort']) {
-                        $id = $attachment['id'];
-                        $attachment['classname'] = rcube_utils::file2class($attachment['mimetype'], $attachment['name']);
-
-                        // store new attachment in session
-                        unset($attachment['status'], $attachment['abort'], $attachment['data']);
-                        $_SESSION[self::SESSION_KEY]['attachments'][$id] = $attachment;
-
-                        $attachment['id'] = 'rcmfile' . $attachment['id'];  // add prefix to consider it 'new'
-                        $task['attachments'][] = $attachment;
-                    }
-                }
+            else if (!empty($message->attachments) && $this->driver->attachments) {
+                $handler = new kolab_attachments_handler();
+                $task['attachments'] = $handler->copy_mail_attachments(self::SESSION_KEY, $task['id'], $message);
             }
 
             $this->rc->output->set_env('task_prop', $task);

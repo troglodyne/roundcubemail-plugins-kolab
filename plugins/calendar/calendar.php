@@ -2359,20 +2359,9 @@ $("#rcmfd_new_category").keypress(function(event) {
             $event['valarms'] = libcalendaring::from_client_alarms($event['valarms']);
         }
 
-        $attachments = [];
-        $eventid     = 'cal-' . (!empty($event['id']) ? $event['id'] : 'new');
-
-        if (!empty($_SESSION[self::SESSION_KEY]) && $_SESSION[self::SESSION_KEY]['id'] == $eventid) {
-            if (!empty($_SESSION[self::SESSION_KEY]['attachments'])) {
-                foreach ($_SESSION[self::SESSION_KEY]['attachments'] as $id => $attachment) {
-                    if (!empty($event['attachments']) && in_array($id, $event['attachments'])) {
-                        $attachments[$id] = $this->rc->plugins->exec_hook('attachment_get', $attachment);
-                    }
-                }
-            }
-        }
-
-        $event['attachments'] = $attachments;
+        $eventid = 'cal-' . (!empty($event['id']) ? $event['id'] : 'new');
+        $handler = new kolab_attachments_handler();
+        $event['attachments'] = $handler->attachments_set(self::SESSION_KEY, $eventid, $event['attachments'] ?? []);
 
         // convert link references into simple URIs
         if (array_key_exists('links', $event)) {
@@ -2445,11 +2434,8 @@ $("#rcmfd_new_category").keypress(function(event) {
      */
     private function cleanup_event(&$event)
     {
-        // remove temp. attachment files
-        if (!empty($_SESSION[self::SESSION_KEY]) && ($eventid = $_SESSION[self::SESSION_KEY]['id'])) {
-            $this->rc->plugins->exec_hook('attachments_cleanup', ['group' => $eventid]);
-            $this->rc->session->remove(self::SESSION_KEY);
-        }
+        $handler = new kolab_attachments_handler();
+        $handler->attachments_cleanup(self::SESSION_KEY);
     }
 
     /**
@@ -3805,38 +3791,9 @@ $("#rcmfd_new_category").keypress(function(event) {
                 $event['links'] = [$msgref];
             }
             // copy mail attachments to event
-            else if ($message->attachments) {
-                $eventid = 'cal-';
-                if (empty($_SESSION[self::SESSION_KEY]) || $_SESSION[self::SESSION_KEY]['id'] != $eventid) {
-                    $_SESSION[self::SESSION_KEY] = [
-                        'id'          => $eventid,
-                        'attachments' => [],
-                    ];
-                }
-
-                foreach ((array) $message->attachments as $part) {
-                    $attachment = [
-                        'data' => $imap->get_message_part($uid, $part->mime_id, $part),
-                        'size' => $part->size,
-                        'name' => $part->filename,
-                        'mimetype' => $part->mimetype,
-                        'group' => $eventid,
-                    ];
-
-                    $attachment = $this->rc->plugins->exec_hook('attachment_save', $attachment);
-
-                    if (!empty($attachment['status']) && !$attachment['abort']) {
-                        $id = $attachment['id'];
-                        $attachment['classname'] = rcube_utils::file2class($attachment['mimetype'], $attachment['name']);
-
-                        // store new attachment in session
-                        unset($attachment['status'], $attachment['abort'], $attachment['data']);
-                        $_SESSION[self::SESSION_KEY]['attachments'][$id] = $attachment;
-
-                        $attachment['id'] = 'rcmfile' . $attachment['id'];  // add prefix to consider it 'new'
-                        $event['attachments'][] = $attachment;
-                    }
-                }
+            else if (!empty($message->attachments) && !empty($this->driver->attachments)) {
+                $handler = new kolab_attachments_handler();
+                $event['attachments'] = $handler->copy_mail_attachments(self::SESSION_KEY, 'cal-', $message);
             }
 
             $this->rc->output->set_env('event_prop', $event);
