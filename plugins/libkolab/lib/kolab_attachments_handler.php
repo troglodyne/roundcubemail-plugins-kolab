@@ -114,14 +114,18 @@ class kolab_attachments_handler
             $this->rc->upload_progress();
         }
 
+        $uploads_api = method_exists($this->rc, 'insert_uploaded_file'); // Roundcube >= 1.7
+
         $id       = rcube_utils::get_input_value('_id', rcube_utils::INPUT_GPC);
         $uploadid = rcube_utils::get_input_value('_uploadid', rcube_utils::INPUT_GPC);
-        $recid    = $id_prefix . ($id ?: 'new');
+        $recid    = $uploads_api ? $session_key : ($id_prefix . ($id ?: 'new'));
 
-        if (empty($_SESSION[$session_key]) || $_SESSION[$session_key]['id'] != $recid) {
-            $_SESSION[$session_key] = [];
-            $_SESSION[$session_key]['id'] = $recid;
-            $_SESSION[$session_key]['attachments'] = [];
+        if (!$uploads_api) {
+            if (empty($_SESSION[$session_key]) || $_SESSION[$session_key]['id'] != $recid) {
+                $_SESSION[$session_key] = [];
+                $_SESSION[$session_key]['id'] = $recid;
+                $_SESSION[$session_key]['attachments'] = [];
+            }
         }
 
         // clear all stored output properties (like scripts and env vars)
@@ -142,15 +146,23 @@ class kolab_attachments_handler
                         'group'    => $recid,
                     ];
 
-                    $attachment = $this->rc->plugins->exec_hook('attachment_upload', $attachment);
+                    if ($uploads_api) {
+                        $err = !$this->rc->insert_uploaded_file($attachment);
+                    }
+                    else {
+                        $attachment = $this->rc->plugins->exec_hook('attachment_upload', $attachment);
+                    }
                 }
 
                 if (!$err && $attachment['status'] && !$attachment['abort']) {
                     $id = $attachment['id'];
 
-                    // store new attachment in session
                     unset($attachment['status'], $attachment['abort']);
-                    $this->rc->session->append($session_key . '.attachments', $id, $attachment);
+
+                    if (!$uploads_api) {
+                        // store new attachment in session
+                        $this->rc->session->append($session_key . '.attachments', $id, $attachment);
+                    }
 
                     if (!empty($_SESSION[$session_key . '_deleteicon'])
                         && ($icon = $_SESSION[$session_key . '_deleteicon'])
@@ -381,8 +393,11 @@ class kolab_attachments_handler
      */
     public function attachments_cleanup($session_key)
     {
-        // remove temp. attachments
-        if (!empty($_SESSION[$session_key]) && ($group = $_SESSION[$session_key]['id'])) {
+        // Roundcube >= 1.7
+        if (method_exists($this->rc, 'delete_uploaded_files')) {
+            $this->rc->delete_uploaded_files($session_key);
+        }
+        else if (!empty($_SESSION[$session_key]) && ($group = $_SESSION[$session_key]['id'])) {
             $this->rc->plugins->exec_hook('attachments_cleanup', ['group' => $group]);
             $this->rc->session->remove($session_key);
         }
@@ -395,15 +410,27 @@ class kolab_attachments_handler
     {
         $attachments = [];
 
-        if (!empty($_SESSION[$session_key]) && $_SESSION[$session_key]['id'] == $group) {
+        // Roundcube >= 1.7
+        if (method_exists($this->rc, 'list_uploaded_files')) {
+            foreach ($this->rc->list_uploaded_files($session_key) as $attachment) {
+                if (is_array($ids) && in_array($attachment['id'], $ids)) {
+                    $attachments[$attachment['id']] = $attachment;
+                }
+            }
+        }
+        else if (!empty($_SESSION[$session_key]) && $_SESSION[$session_key]['id'] == $group) {
             if (!empty($_SESSION[$session_key]['attachments'])) {
                 foreach ($_SESSION[$session_key]['attachments'] as $id => $attachment) {
                     if (is_array($ids) && in_array($id, $ids)) {
-                        $attachments[$id] = $this->rc->plugins->exec_hook('attachment_get', $attachment);
-                        unset($attachments[$id]['abort'], $attachments[$id]['group']);
+                        $attachments[$id] = $attachment;
                     }
                 }
             }
+        }
+
+        foreach ($attachments as $id => $attachment) {
+            $attachments[$id] = $this->rc->plugins->exec_hook('attachment_get', $attachment);
+            unset($attachments[$id]['abort'], $attachments[$id]['group']);
         }
 
         return $attachments;
@@ -416,12 +443,15 @@ class kolab_attachments_handler
     {
         $result = [];
         $imap   = $this->rc->get_storage();
+        $uploads_api = method_exists($this->rc, 'insert_uploaded_file'); // Roundcube >= 1.7
 
-        if (!empty($_SESSION[$session_key]) || $_SESSION[$session_key]['id'] != $group) {
-            $_SESSION[$session_key] = [
-                'id'          => $group,
-                'attachments' => [],
-            ];
+        if (!$uploads_api) {
+            if (!empty($_SESSION[$session_key]) || $_SESSION[$session_key]['id'] != $group) {
+                $_SESSION[$session_key] = [
+                    'id'          => $group,
+                    'attachments' => [],
+                ];
+            }
         }
 
         foreach ((array) $message->attachments as $part) {
@@ -433,15 +463,22 @@ class kolab_attachments_handler
                 'group'    => $group,
             ];
 
-            $attachment = $this->rc->plugins->exec_hook('attachment_save', $attachment);
+            if ($uploads_api) {
+                $attachment['status'] = $this->rc->insert_uploaded_file($attachment, 'attachment_save');
+            }
+            else {
+                $attachment = $this->rc->plugins->exec_hook('attachment_save', $attachment);
+            }
 
             if (!empty($attachment['status']) && empty($attachment['abort'])) {
                 $id = $attachment['id'];
                 $attachment['classname'] = rcube_utils::file2class($attachment['mimetype'], $attachment['name']);
 
-                // store new attachment in session
                 unset($attachment['status'], $attachment['abort'], $attachment['data']);
-                $_SESSION[$session_key]['attachments'][$id] = $attachment;
+                if (!$uploads_api) {
+                    // store new attachment in session
+                    $_SESSION[$session_key]['attachments'][$id] = $attachment;
+                }
 
                 $attachment['id'] = 'rcmfile' . $attachment['id'];  // add prefix to consider it 'new'
 
