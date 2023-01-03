@@ -21,13 +21,13 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
+#[AllowDynamicProperties]
 class tasklist_ui
 {
     private $rc;
     private $plugin;
     private $ready = false;
-    private $gui_objects = array();
+    private $gui_objects = [];
 
     function __construct($plugin)
     {
@@ -74,7 +74,7 @@ class tasklist_ui
      */
     function load_settings()
     {
-        $settings = array();
+        $settings = [];
 
         $settings['invite_shared'] = (int)$this->rc->config->get('calendar_allow_invite_shared', 0);
         $settings['itip_notify']   = (int)$this->rc->config->get('calendar_itip_send_option', 3);
@@ -120,7 +120,7 @@ class tasklist_ui
     /**
      * Render a HTML select box for user identity selection
      */
-    function identity_select($attrib = array())
+    function identity_select($attrib = [])
     {
         $attrib['name'] = 'identity';
         $select         = new html_select($attrib);
@@ -165,10 +165,10 @@ class tasklist_ui
     /**
      *
      */
-    public function tasklists($attrib = array())
+    public function tasklists($attrib = [])
     {
-        $tree = true;
-        $jsenv = array();
+        $tree  = true;
+        $jsenv = [];
         $lists = $this->plugin->driver->get_lists(0, $tree);
 
         if (empty($attrib['id'])) {
@@ -181,18 +181,18 @@ class tasklist_ui
         }
         else {
             // fall-back to flat folder listing
-            $attrib['class'] .= ' flat';
-
+            $attrib['class'] = ($attrib['class'] ?? '') . ' flat';
             $html = '';
-            foreach ((array)$lists as $id => $prop) {
+
+            foreach ((array) $lists as $id => $prop) {
                 if (!empty($attrib['activeonly']) && empty($prop['active'])) {
                     continue;
                 }
 
-                $html .= html::tag('li', array(
+                $html .= html::tag('li', [
                         'id' => 'rcmlitasklist' . rcube_utils::html_identifier($id),
-                        'class' => isset($prop['group']) ? $prop['group'] : null,
-                    ),
+                        'class' => $prop['group'] ?? null,
+                    ],
                     $this->tasklist_list_item($id, $prop, $jsenv, !empty($attrib['activeonly']))
                 );
             }
@@ -288,15 +288,19 @@ class tasklist_ui
                     'aria-labelledby' => $label_id
             ));
 
+            $actions = '';
+            if (!empty($prop['removable'])) {
+                $actions .= html::a(['href' => '#', 'class' => 'remove', 'title' => $this->plugin->gettext('removelist')], ' ');
+            }
+            $actions .= html::a(['href' => '#', 'class' => 'quickview', 'title' => $this->plugin->gettext('focusview'), 'role' => 'checkbox', 'aria-checked' => 'false'], ' ');
+            if (isset($prop['subscribed'])) {
+                $action .= html::a(['href' => '#', 'class' => 'subscribed', 'title' => $this->plugin->gettext('tasklistsubscribe'), 'role' => 'checkbox', 'aria-checked' => $prop['subscribed'] ? 'true' : 'false'], ' ');
+            }
+
             return html::div(join(' ', $classes),
-                html::a(array('class' => 'listname', 'title' => $title, 'href' => '#', 'id' => $label_id),
-                    !empty($prop['listname']) ? $prop['listname'] : $prop['name']) .
-                    (!empty($prop['virtual']) ? '' : $chbox . html::span('actions',
-                          (!empty($prop['removable']) ? html::a(array('href' => '#', 'class' => 'remove', 'title' => $this->plugin->gettext('removelist')), ' ') : '')
-                          . html::a(array('href' => '#', 'class' => 'quickview', 'title' => $this->plugin->gettext('focusview'), 'role' => 'checkbox', 'aria-checked' => 'false'), ' ')
-                          . (isset($prop['subscribed']) ? html::a(array('href' => '#', 'class' => 'subscribed', 'title' => $this->plugin->gettext('tasklistsubscribe'), 'role' => 'checkbox', 'aria-checked' => $prop['subscribed'] ? 'true' : 'false'), ' ') : '')
-                    )
-                )
+                html::a(['class' => 'listname', 'title' => $title, 'href' => '#', 'id' => $label_id],
+                    !empty($prop['listname']) ? $prop['listname'] : $prop['name'])
+                    . (!empty($prop['virtual']) ? '' : $chbox . html::span('actions', $actions))
             );
         }
 

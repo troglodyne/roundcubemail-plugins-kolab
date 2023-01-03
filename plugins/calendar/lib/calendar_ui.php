@@ -30,6 +30,9 @@ class calendar_ui
     private $ready = false;
 
     public $screen;
+    public $action;
+    public $calendar;
+
 
     function __construct($cal)
     {

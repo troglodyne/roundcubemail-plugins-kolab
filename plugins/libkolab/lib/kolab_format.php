@@ -751,7 +751,7 @@ abstract class kolab_format
         }
 
         // in kolab_storage attachments are indexed by content-id
-        foreach ((array) $object['attachments'] as $attachment) {
+        foreach ((array) ($object['attachments'] ?? []) as $attachment) {
             $key = null;
 
             // Roundcube ID has nothing to do with the storage ID, remove it

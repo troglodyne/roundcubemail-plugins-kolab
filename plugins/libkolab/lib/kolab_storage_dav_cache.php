@@ -157,9 +157,10 @@ class kolab_storage_dav_cache extends kolab_storage_cache
             }
         }
 
+        $i = 0;
+
         // Fetch new objects and store in DB
         if (!empty($new_index)) {
-            $i = 0;
             foreach (array_chunk($new_index, $chunk_size, true) as $chunk) {
                 $objects = $this->folder->dav->getData($this->folder->href, $this->folder->get_dav_type(), $chunk);
 
@@ -706,5 +707,39 @@ class kolab_storage_dav_cache extends kolab_storage_cache
         }
 
         return $object;
+    }
+
+    /**
+     * Read this folder's ID and cache metadata
+     */
+    protected function _read_folder_data()
+    {
+        // already done
+        if (!empty($this->folder_id) || !$this->ready) {
+            return;
+        }
+
+        // Different than in Kolab XML-based storage, in *DAV folders can
+        // contain different types of data, e.g. Calendar can store events and tasks.
+        // Therefore we both `resource` and `type` in WHERE.
+
+        $sql_arr = $this->db->fetch_assoc($this->db->query(
+                "SELECT `folder_id`, `synclock`, `ctag`, `changed` FROM `{$this->folders_table}`"
+                . " WHERE `resource` = ? AND `type` = ?",
+                $this->resource_uri,
+                $this->folder->type
+        ));
+
+        if ($sql_arr) {
+            $this->folder_id = $sql_arr['folder_id'];
+            $this->metadata  = $sql_arr;
+        }
+        else {
+            $this->db->query("INSERT INTO `{$this->folders_table}` (`resource`, `type`)"
+                . " VALUES (?, ?)", $this->resource_uri, $this->folder->type);
+
+            $this->folder_id = $this->db->insert_id('kolab_folders');
+            $this->metadata  = [];
+        }
     }
 }

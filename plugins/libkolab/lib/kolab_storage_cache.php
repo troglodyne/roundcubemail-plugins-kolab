@@ -92,8 +92,9 @@ class kolab_storage_cache
             $rcmail->add_shutdown_function(array($this, '_sync_unlock'));
         }
 
-        if ($storage_folder)
+        if ($storage_folder) {
             $this->set_folder($storage_folder);
+        }
     }
 
     /**
@@ -1261,15 +1262,13 @@ class kolab_storage_cache
 
         $read_query  = "SELECT `synclock`, `ctag` FROM `{$this->folders_table}` WHERE `folder_id` = ?";
         $write_query = "UPDATE `{$this->folders_table}` SET `synclock` = ? WHERE `folder_id` = ? AND `synclock` = ?";
-
         $max_lock_time = $this->_max_sync_lock_time();
-        $sync_lock = intval($this->metadata['synclock'] ?? 0);
 
         // wait if locked (expire locks after 10 minutes) ...
         // ... or if setting lock fails (another process meanwhile set it)
         while (
-            ($sync_lock + $max_lock_time > time()) ||
-            (($res = $this->db->query($write_query, time(), $this->folder_id, $sync_lock))
+            (intval($this->metadata['synclock'] ?? 0) + $max_lock_time > time()) ||
+            (($res = $this->db->query($write_query, time(), $this->folder_id, intval($this->metadata['synclock'] ?? 0)))
                 && !($affected = $this->db->affected_rows($res))
             )
         ) {

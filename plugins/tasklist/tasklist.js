@@ -296,7 +296,7 @@ function rcube_tasklist_ui(settings)
         rcmail.addEventListener('plugin.update_tasklist', update_list);
         rcmail.addEventListener('plugin.destroy_tasklist', destroy_list);
         rcmail.addEventListener('plugin.unlock_saving', unlock_saving);
-        rcmail.addEventListener('plugin.refresh_tagcloud', function() { update_tagcloud(); });
+        rcmail.addEventListener('plugin.refresh_tagcloud', function() { update_taglist(); });
         rcmail.addEventListener('requestrefresh', before_refresh);
         rcmail.addEventListener('plugin.reload_data', function(){
             list_tasks(null, true);
@@ -2755,10 +2755,10 @@ function rcube_tasklist_ui(settings)
      */
     function task_show_attachments(list, container, task, edit)
     {
-      libkolab.list_attachments(list, container, edit, task,
-        function(id) { remove_attachment(id); },
-        function(data) { load_attachment(data); }
-      );
+        libkolab.list_attachments(list, container, edit, task,
+            function(id) { remove_attachment(id); },
+            function(data) { load_attachment(data); }
+        );
     };
 
     /**

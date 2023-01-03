@@ -687,6 +687,6 @@ class caldav_driver extends kolab_driver
             ],
         ];
 
-        return kolab_utils::folder_form($form, $folder, 'calendar', [], true);
+        return kolab_utils::folder_form($form, '', 'calendar', [], true);
     }
 }

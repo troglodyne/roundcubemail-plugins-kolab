@@ -33,8 +33,8 @@ use \Sabre\VObject\DateTimeParser;
 class libcalendaring_vcalendar implements Iterator
 {
     private $timezone;
-    private $attach_uri = null;
-    private $prodid = '-//Roundcube libcalendaring//Sabre//Sabre VObject//EN';
+    private $attach_uri;
+    private $prodid;
     private $type_component_map = array('event' => 'VEVENT', 'task' => 'VTODO');
     private $attendee_keymap = array(
         'name'   => 'CN',
@@ -73,7 +73,7 @@ class libcalendaring_vcalendar implements Iterator
     function __construct($tz = null)
     {
         $this->timezone = $tz;
-        $this->prodid = '-//Roundcube libcalendaring ' . RCUBE_VERSION . '//Sabre//Sabre VObject ' . VObject\Version::VERSION . '//EN';
+        $this->prodid = '-//Roundcube ' . RCUBE_VERSION . '//Sabre VObject ' . VObject\Version::VERSION . '//EN';
     }
 
     /**

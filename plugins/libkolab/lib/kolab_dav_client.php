@@ -264,9 +264,9 @@ class kolab_dav_client
         foreach ($response->getElementsByTagName('response') as $element) {
             $folder = $this->getFolderPropertiesFromResponse($element);
 
-            // Note: Addressbooks don't have 'type' specified
+            // Note: Addressbooks don't have 'types' specified
             if (($component == 'VCARD' && in_array('addressbook', $folder['resource_type']))
-                || $folder['type'] === $component
+                || in_array($component, (array) $folder['types'])
             ) {
                 $folders[] = $folder;
             }
@@ -296,18 +296,7 @@ class kolab_dav_client
 
         $response = $this->request($location, 'PUT', $content, $headers);
 
-        if ($response !== false) {
-            // Note: ETag is not always returned, e.g. https://github.com/cyrusimap/cyrus-imapd/issues/2456
-            $etag = isset($this->responseHeaders['etag']) ? $this->responseHeaders['etag'] : null;
-
-            if (is_string($etag) && preg_match('|^".*"$|', $etag)) {
-                $etag = substr($etag, 1, -1);
-            }
-
-            return $etag;
-        }
-
-        return false;
+        return $this->getETagFromResponse($response);
     }
 
     /**
@@ -336,6 +325,23 @@ class kolab_dav_client
         $response = $this->request($location, 'DELETE', '', ['Depth' => 1, 'Prefer' => 'return-minimal']);
 
         return $response !== false;
+    }
+
+    /**
+     * Move a DAV object
+     *
+     * @param string $source Source object location
+     * @param string $target Target object content
+     *
+     * @return false|string|null ETag string (or NULL) on success, False on error
+     */
+    public function move($source, $target)
+    {
+        $headers = ['Destination' => $target];
+
+        $response = $this->request($source, 'MOVE', '', $headers);
+
+        return $this->getETagFromResponse($response);
     }
 
     /**
@@ -665,10 +671,10 @@ class kolab_dav_client
             $ctag = $ctag->nodeValue;
         }
 
-        $component = null;
+        $components = [];
         if ($set_element = $element->getElementsByTagName('supported-calendar-component-set')->item(0)) {
-            if ($comp_element = $set_element->getElementsByTagName('comp')->item(0)) {
-                $component = $comp_element->attributes->getNamedItem('name')->nodeValue;
+            foreach ($set_element->getElementsByTagName('comp') as $comp_element) {
+                $components[] = $comp_element->attributes->getNamedItem('name')->nodeValue;
             }
         }
 
@@ -685,7 +691,7 @@ class kolab_dav_client
             'name' => $name,
             'ctag' => $ctag,
             'color' => $color,
-            'type' => $component,
+            'types' => $components,
             'resource_type' => $types,
         ];
 
@@ -739,6 +745,25 @@ class kolab_dav_client
             'etag' => $etag,
             'uid' => $uid,
         ];
+    }
+
+    /**
+     * Get ETag from a response
+     */
+    protected function getETagFromResponse($response)
+    {
+        if ($response !== false) {
+            // Note: ETag is not always returned, e.g. https://github.com/cyrusimap/cyrus-imapd/issues/2456
+            $etag = isset($this->responseHeaders['etag']) ? $this->responseHeaders['etag'] : null;
+
+            if (is_string($etag) && preg_match('|^".*"$|', $etag)) {
+                $etag = substr($etag, 1, -1);
+            }
+
+            return $etag;
+        }
+
+        return false;
     }
 
     /**

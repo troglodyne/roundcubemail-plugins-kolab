@@ -20,6 +20,8 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
+#[AllowDynamicProperties]
 class kolab_storage_dav_folder extends kolab_storage_folder
 {
     public $dav;
@@ -310,8 +312,8 @@ class kolab_storage_dav_folder extends kolab_storage_folder
     /**
      * Move a Kolab object message to another IMAP folder
      *
-     * @param string Object UID
-     * @param string IMAP folder to move object to
+     * @param string                   Object UID
+     * @param kolab_storage_dav_folder Target folder to move object into
      *
      * @return bool True on success, false on failure
      */
@@ -321,9 +323,16 @@ class kolab_storage_dav_folder extends kolab_storage_folder
             return false;
         }
 
-        // TODO
+        $source = $this->object_location($uid);
+        $target = $target_folder->object_location($uid);
 
-        return false;
+        $success = $this->dav->move($source, $target) !== false;
+
+        if ($success) {
+            $this->cache->set($uid, false);
+        }
+
+        return $success;
     }
 
     /**
@@ -466,15 +475,15 @@ class kolab_storage_dav_folder extends kolab_storage_folder
             return false;
         }
 
-        if ($this->type == 'event') {
+        if ($this->type == 'event' || $this->type == 'task') {
             $ical = libcalendaring::get_ical();
-            $events = $ical->import($object['data']);
+            $objects = $ical->import($object['data']);
 
-            if (!count($events) || empty($events[0]['uid'])) {
+            if (!count($objects) || empty($objects[0]['uid'])) {
                 return false;
             }
 
-            $result = $events[0];
+            $result = $objects[0];
 
             $result['_attachments'] = $result['attachments'] ?? [];
             unset($result['attachments']);
@@ -550,11 +559,14 @@ class kolab_storage_dav_folder extends kolab_storage_folder
     {
         $result = '';
 
-        if ($this->type == 'event') {
+        if ($this->type == 'event' || $this->type == 'task') {
             $ical = libcalendaring::get_ical();
+
             if (!empty($object['exceptions'])) {
                 $object['recurrence']['EXCEPTIONS'] = $object['exceptions'];
             }
+
+            $object['_type'] = $this->type;
 
             // pre-process attachments
             if (isset($object['_attachments']) && is_array($object['_attachments'])) {
@@ -669,7 +681,7 @@ class kolab_storage_dav_folder extends kolab_storage_folder
         return $result;
     }
 
-    protected function object_location($uid)
+    public function object_location($uid)
     {
         return unslashify($this->href) . '/' . urlencode($uid) . '.' . $this->get_dav_ext();
     }

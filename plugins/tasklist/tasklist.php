@@ -22,6 +22,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#[AllowDynamicProperties]
 class tasklist extends rcube_plugin
 {
     const FILTER_MASK_TODAY = 1;
@@ -206,7 +207,8 @@ class tasklist extends rcube_plugin
         $action = rcube_utils::get_input_value('action', rcube_utils::INPUT_GPC);
         $rec    = rcube_utils::get_input_value('t', rcube_utils::INPUT_POST, true);
         $oldrec = $rec;
-        $success = $refresh = $got_msg = false;
+        $success = $got_msg = false;
+        $refresh = [];
 
         // force notify if hidden + active
         $itip_send_option = (int)$this->rc->config->get('calendar_itip_send_option', 3);
@@ -284,8 +286,7 @@ class tasklist extends rcube_plugin
               foreach ((array)$rec['id'] as $id) {
                   $r = $rec;
                   $r['id'] = $id;
-                  if ($this->driver->move_task($r)) {
-                      $new_task = $this->driver->get_task($r);
+                  if ($this->driver->move_task($r) && ($new_task = $this->driver->get_task($r))) {
                       $new_task['tempid'] = $id;
                       $refresh[] = $new_task;
                       $success = true;
@@ -330,7 +331,7 @@ class tasklist extends rcube_plugin
                 // update parent task to adjust list of children
                 if (!empty($oldrec['parent_id'])) {
                     $parent = array('id' => $oldrec['parent_id'], 'list' => $rec['list']);
-                    if ($parent = $this->driver->get_task()) {
+                    if ($parent = $this->driver->get_task($parent)) {
                         $refresh[] = $parent;
                     }
                 }
@@ -547,23 +548,26 @@ class tasklist extends rcube_plugin
                 $itip = $this->load_itip();
                 $itip->set_sender_email($sender['email']);
 
-                if ($itip->send_itip_message($this->to_libcal($task), 'REPLY', $task['organizer'], 'itipsubject' . $status, 'itipmailbody' . $status))
+                if ($itip->send_itip_message($this->to_libcal($task), 'REPLY', $task['organizer'], 'itipsubject' . $status, 'itipmailbody' . $status)) {
                     $this->rc->output->command('display_message', $this->gettext(array('name' => 'sentresponseto', 'vars' => array('mailto' => $task['organizer']['name'] ?: $task['organizer']['email']))), 'confirmation');
-                else
+                }
+                else {
                     $this->rc->output->command('display_message', $this->gettext('itipresponseerror'), 'error');
+                }
             }
         }
 
         // unlock client
         $this->rc->output->command('plugin.unlock_saving', $success);
 
-        if ($refresh) {
+        if (!empty($refresh)) {
             if (!empty($refresh['id'])) {
                 $this->encode_task($refresh);
             }
             else if (is_array($refresh)) {
-                foreach ($refresh as $i => $r)
+                foreach ($refresh as $i => $r) {
                     $this->encode_task($refresh[$i]);
+                }
             }
             $this->rc->output->command('plugin.update_task', $refresh);
         }
@@ -688,13 +692,13 @@ class tasklist extends rcube_plugin
         }
 
         // convert the submitted recurrence settings
-        if (is_array($rec['recurrence'])) {
+        if (isset($rec['recurrence']) && is_array($rec['recurrence'])) {
             $refdate = null;
             if (!empty($rec['date'])) {
-                $refdate = new DateTime($rec['date'] . ' ' . $rec['time'], $this->timezone);
+                $refdate = new DateTime($rec['date'] . ' ' . ($rec['time'] ?? ''), $this->timezone);
             }
             else if (!empty($rec['startdate'])) {
-                $refdate = new DateTime($rec['startdate'] . ' ' . $rec['starttime'], $this->timezone);
+                $refdate = new DateTime($rec['startdate'] . ' ' . ($rec['starttime'] ?? ''), $this->timezone);
             }
 
             if ($refdate) {
@@ -732,7 +736,7 @@ class tasklist extends rcube_plugin
 
         if (!empty($rec['attendees'])) {
             foreach ((array) $rec['attendees'] as $i => $attendee) {
-                if (is_string($attendee['rsvp'])) {
+                if (isset($attendee['rsvp']) && is_string($attendee['rsvp'])) {
                     $rec['attendees'][$i]['rsvp'] = $attendee['rsvp'] == 'true' || $attendee['rsvp'] == '1';
                 }
             }
@@ -768,16 +772,17 @@ class tasklist extends rcube_plugin
         try {
             // parse date from user format (#2801)
             $date_format = $this->rc->config->get(empty($rec[$time_key]) ? 'date_format' : 'date_long', 'Y-m-d');
-            $date = DateTime::createFromFormat($date_format, trim($rec[$date_key] . ' ' . $rec[$time_key]), $this->timezone);
+            $date = DateTime::createFromFormat($date_format, trim(($rec[$date_key] ?? '') . ' ' . ($rec[$time_key] ?? '')), $this->timezone);
 
             // fall back to default strtotime logic
             if (empty($date)) {
-                $date = new DateTime($rec[$date_key] . ' ' . $rec[$time_key], $this->timezone);
+                $date = new DateTime(($rec[$date_key] ?? '') . ' ' . ($rec[$time_key] ?? ''), $this->timezone);
             }
 
             $rec[$date_key] = $date->format('Y-m-d');
-            if (!empty($rec[$time_key]))
+            if (!empty($rec[$time_key])) {
                 $rec[$time_key] = $date->format('H:i');
+            }
 
             return true;
         }
@@ -804,7 +809,7 @@ class tasklist extends rcube_plugin
     private function handle_recurrence(&$rec, $old)
     {
         $clone = null;
-        if ($this->driver->is_complete($rec) && $old && !$this->driver->is_complete($old) && is_array($rec['recurrence'])) {
+        if ($this->driver->is_complete($rec) && $old && !$this->driver->is_complete($old) && !empty($rec['recurrence'])) {
             $engine = libcalendaring::get_recurrence();
             $rrule = $rec['recurrence'];
             $updates = array();
@@ -814,12 +819,13 @@ class tasklist extends rcube_plugin
                 if (empty($rec[$date_key]))
                     continue;
 
-                $date = new DateTime($rec[$date_key] . ' ' . $rec[$time_key], $this->timezone);
+                $date = new DateTime($rec[$date_key] . ' ' . ($rec[$time_key] ?? ''), $this->timezone);
                 $engine->init($rrule, $date);
                 if ($next = $engine->next_start()) {
                     $updates[$date_key] = $next->format('Y-m-d');
-                    if (!empty($rec[$time_key]))
+                    if (!empty($rec[$time_key])) {
                         $updates[$time_key] = $next->format('H:i');
+                    }
                 }
             }
 
@@ -1174,15 +1180,15 @@ class tasklist extends rcube_plugin
      */
     private function encode_task(&$rec)
     {
-        $rec['mask'] = $this->filter_mask($rec);
-        $rec['flagged'] = intval($rec['flagged']);
-        $rec['complete'] = floatval($rec['complete']);
+        $rec['mask']     = $this->filter_mask($rec);
+        $rec['flagged']  = intval($rec['flagged'] ?? 0);
+        $rec['complete'] = floatval($rec['complete'] ?? 0);
 
-        if (is_object($rec['created'])) {
+        if (!empty($rec['created']) && is_object($rec['created'])) {
             $rec['created_'] = $this->rc->format_date($rec['created']);
             $rec['created'] = $rec['created']->format('U');
         }
-        if (is_object($rec['changed'])) {
+        if (!empty($rec['changed']) && is_object($rec['changed'])) {
             $rec['changed_'] = $this->rc->format_date($rec['changed']);
             $rec['changed'] = $rec['changed']->format('U');
         }
@@ -1190,9 +1196,9 @@ class tasklist extends rcube_plugin
             $rec['changed'] = null;
         }
 
-        if ($rec['date']) {
+        if (!empty($rec['date'])) {
             try {
-                $date = new DateTime($rec['date'] . ' ' . $rec['time'], $this->timezone);
+                $date = new DateTime($rec['date'] . ' ' . ($rec['time'] ?? ''), $this->timezone);
                 $rec['datetime'] = intval($date->format('U'));
                 $rec['date'] = $date->format($this->rc->config->get('date_format', 'Y-m-d'));
                 $rec['_hasdate'] = 1;
@@ -1206,9 +1212,9 @@ class tasklist extends rcube_plugin
             $rec['_hasdate'] = 0;
         }
 
-        if ($rec['startdate']) {
+        if (!empty($rec['startdate'])) {
             try {
-                $date = new DateTime($rec['startdate'] . ' ' . $rec['starttime'], $this->timezone);
+                $date = new DateTime($rec['startdate'] . ' ' . ($rec['starttime'] ?? ''), $this->timezone);
                 $rec['startdatetime'] = intval($date->format('U'));
                 $rec['startdate'] = $date->format($this->rc->config->get('date_format', 'Y-m-d'));
             }
@@ -1224,12 +1230,13 @@ class tasklist extends rcube_plugin
 
         if (!empty($rec['recurrence'])) {
             $rec['recurrence_text'] = $this->lib->recurrence_text($rec['recurrence']);
-            $rec['recurrence'] = $this->lib->to_client_recurrence($rec['recurrence'], $rec['time'] || $rec['starttime']);
+            $rec['recurrence'] = $this->lib->to_client_recurrence($rec['recurrence'], !empty($rec['time']) || !empty($rec['starttime']));
         }
 
         if (!empty($rec['attachments'])) {
             foreach ((array) $rec['attachments'] as $k => $attachment) {
                 $rec['attachments'][$k]['classname'] = rcube_utils::file2class($attachment['mimetype'], $attachment['name']);
+                unset($rec['attachments'][$k]['data']);
             }
         }
 
@@ -1248,17 +1255,21 @@ class tasklist extends rcube_plugin
             $rec['description'] = $h2t->get_text();
         }
 
-        if (!is_array($rec['tags']))
-            $rec['tags'] = (array)$rec['tags'];
+        if (!isset($rec['tags']) || !is_array($rec['tags'])) {
+            $rec['tags'] = (array) ($rec['tags'] ?? '');
+        }
+
         sort($rec['tags'], SORT_LOCALE_STRING);
 
-        if (in_array($rec['id'], $this->collapsed_tasks))
-          $rec['collapsed'] = true;
+        if (in_array($rec['id'], $this->collapsed_tasks)) {
+            $rec['collapsed'] = true;
+        }
 
-        if (empty($rec['parent_id']))
+        if (empty($rec['parent_id'])) {
             $rec['parent_id'] = null;
+        }
 
-        $this->task_titles[$rec['id']] = $rec['title'];
+        $this->task_titles[$rec['id']] = $rec['title'] ?? '';
     }
 
     /**
@@ -1267,7 +1278,9 @@ class tasklist extends rcube_plugin
     private function is_html($task)
     {
         // check for opening and closing <html> or <body> tags
-        return (preg_match('/<(html|body)(\s+[a-z]|>)/', $task['description'], $m) && strpos($task['description'], '</'.$m[1].'>') > 0);
+        return isset($task['description'])
+            && preg_match('/<(html|body)(\s+[a-z]|>)/', $task['description'], $m)
+            && strpos($task['description'], '</' . $m[1] . '>') > 0;
     }
 
     /**
@@ -1303,9 +1316,9 @@ class tasklist extends rcube_plugin
         static $today, $today_date, $tomorrow, $weeklimit;
 
         if (!$today) {
-            $today_date    = new DateTime('now', $this->timezone);
+            $today_date    = new libcalendaring_datetime('now', $this->timezone);
             $today         = $today_date->format('Y-m-d');
-            $tomorrow_date = new DateTime('now + 1 day', $this->timezone);
+            $tomorrow_date = new libcalendaring_datetime('now + 1 day', $this->timezone);
             $tomorrow      = $tomorrow_date->format('Y-m-d');
 
             // In Kolab-mode we hide "Next 7 days" filter, which means
@@ -1320,21 +1333,25 @@ class tasklist extends rcube_plugin
         }
 
         $mask    = 0;
-        $start   = $rec['startdate'] ?: '1900-00-00';
-        $duedate = $rec['date'] ?: '3000-00-00';
+        $start   = !empty($rec['startdate']) ? $rec['startdate'] : '1900-00-00';
+        $duedate = !empty($rec['date']) ? $rec['date'] : '3000-00-00';
 
-        if ($rec['flagged'])
+        if (!empty($rec['flagged'])) {
             $mask |= self::FILTER_MASK_FLAGGED;
-        if ($this->driver->is_complete($rec))
+        }
+        if ($this->driver->is_complete($rec)) {
             $mask |= self::FILTER_MASK_COMPLETE;
+        }
 
-        if (empty($rec['date']))
+        if (empty($rec['date'])) {
             $mask |= self::FILTER_MASK_NODATE;
-        else if ($rec['date'] < $today)
+        }
+        else if ($rec['date'] < $today) {
             $mask |= self::FILTER_MASK_OVERDUE;
+        }
 
         if (empty($rec['recurrence']) || $duedate < $today || $start > $weeklimit) {
-            if ($duedate <= $today || ($rec['startdate'] && $start <= $today))
+            if ($duedate <= $today || (!empty($rec['startdate']) && $start <= $today))
                 $mask |= self::FILTER_MASK_TODAY;
             else if (($start > $today && $start <= $tomorrow) || ($duedate > $today && $duedate <= $tomorrow))
                 $mask |= self::FILTER_MASK_TOMORROW;
@@ -1343,8 +1360,8 @@ class tasklist extends rcube_plugin
             else if ($start > $weeklimit || $duedate > $weeklimit)
                 $mask |= self::FILTER_MASK_LATER;
         }
-        else if ($rec['startdate'] || $rec['date']) {
-            $date = new DateTime($rec['startdate'] ?: $rec['date'], $this->timezone);
+        else if (!empty($rec['startdate']) || !empty($rec['date'])) {
+            $date = new libcalendaring_datetime(!empty($rec['startdate']) ? $rec['startdate'] : $rec['date'], $this->timezone);
 
             // set safe recurrence start
             while ($date->format('Y-m-d') >= $today) {
@@ -1392,10 +1409,12 @@ class tasklist extends rcube_plugin
         }
 
         // add masks for assigned tasks
-        if ($this->is_organizer($rec) && !empty($rec['attendees']) && $this->is_attendee($rec) === false)
+        if ($this->is_organizer($rec) && !empty($rec['attendees']) && $this->is_attendee($rec) === false) {
             $mask |= self::FILTER_MASK_ASSIGNED;
-        else if (/*empty($rec['attendees']) ||*/ $this->is_attendee($rec) !== false)
+        }
+        else if (/*empty($rec['attendees']) ||*/ $this->is_attendee($rec) !== false) {
             $mask |= self::FILTER_MASK_MYTASKS;
+        }
 
         return $mask;
     }
@@ -1406,7 +1425,7 @@ class tasklist extends rcube_plugin
     public function is_attendee($task)
     {
         $emails = $this->lib->get_user_emails();
-        foreach ((array)$task['attendees'] as $i => $attendee) {
+        foreach ((array) ($task['attendees'] ?? []) as $i => $attendee) {
             if ($attendee['email'] && in_array(strtolower($attendee['email']), $emails)) {
                 return $i;
             }
@@ -1732,7 +1751,7 @@ class tasklist extends rcube_plugin
         $id   = rcube_utils::get_input_value('_id', rcube_utils::INPUT_GPC);
         $rev  = rcube_utils::get_input_value('_rev', rcube_utils::INPUT_GPC);
 
-        $task       = array('id' => $task, 'list' => $list, 'rev' => $rev);
+        $task       = ['id' => $task, 'list' => $list, 'rev' => $rev];
         $attachment = $this->driver->get_attachment($id, $task);
 
         // show part page
@@ -1741,7 +1760,9 @@ class tasklist extends rcube_plugin
         }
         // deliver attachment content
         else if ($attachment) {
-            $attachment['body'] = $this->driver->get_attachment_body($id, $task);
+            if (empty($attachment['body'])) {
+                $attachment['body'] = $this->driver->get_attachment_body($id, $task);
+            }
             $handler->attachment_get($attachment);
         }
 
