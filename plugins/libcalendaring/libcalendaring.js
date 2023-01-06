@@ -71,6 +71,15 @@ function rcube_libcalendaring(settings)
     };
 
     /**
+     * Convert Moment.js object into a Date object
+     */
+    this.moment2date = function(moment)
+    {
+        // Moment.toDate() is different regarding timezone handling
+        return new Date(moment.format('YYYY-MM-DD[T]HH:mm:ss'));
+    };
+
+    /**
      * Create a nice human-readable string for the date/time range
      */
     this.event_date_text = function(event, voice)
@@ -81,8 +90,8 @@ function rcube_libcalendaring(settings)
         event.end = event.start;
 
       // Support Moment.js objects
-      var start = 'toDate' in event.start ? event.start.toDate() : event.start,
-        end = event.end && 'toDate' in event.end ? event.end.toDate() : event.end;
+      var start = 'toDate' in event.start ? this.moment2date(event.start) : event.start,
+        end = event.end && 'toDate' in event.end ? this.moment2date(event.end) : event.end;
 
       var fromto, duration = end.getTime() / 1000 - start.getTime() / 1000,
         until = voice ? ' ' + rcmail.gettext('until','libcalendaring') + ' ' : ' — ';
@@ -258,18 +267,19 @@ function rcube_libcalendaring(settings)
      */
     this.format_datetime = function(date, mode, voice)
     {
-        var res = '';
+        var res = [];
+
         if (!mode || mode == 1) {
-          res += $.datepicker.formatDate(voice ? 'MM d yy' : this.datepicker_settings.dateFormat, date, this.datepicker_settings);
+          res.push($.datepicker.formatDate(voice ? 'MM d yy' : this.datepicker_settings.dateFormat, date, this.datepicker_settings));
         }
-        if (!mode) {
-            res += voice ? ' ' + rcmail.gettext('at','libcalendaring') + ' ' : ' ';
+        if (!mode && voice) {
+            res.push(rcmail.gettext('at','libcalendaring'));
         }
         if (!mode || mode == 2) {
-            res += this.format_time(date, voice);
+            res.push(this.format_time(date, voice));
         }
 
-        return res;
+        return res.join(' ');
     }
 
     /**
@@ -293,6 +303,7 @@ function rcube_libcalendaring(settings)
 
         var i, i2, c, formatter, res = '',
           format = voice ? settings['time_format'].replace(':',' ').replace('HH','H').replace('hh','h').replace('mm','m').replace('ss','s') : settings['time_format'];
+
         for (i=0; i < format.length; i++) {
             c = format.charAt(i);
             for (i2=Math.min(i+2, format.length); i2 > i; i2--) {
