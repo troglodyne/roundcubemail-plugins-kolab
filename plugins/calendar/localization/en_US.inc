@@ -44,6 +44,7 @@ $labels['category'] = 'Category';
 $labels['categories'] = 'Categories';
 $labels['addcalendar'] = 'Add calendar';
 $labels['createcalendar'] = 'Create new calendar';
+$labels['edcalendar'] = 'Edit calendar';
 $labels['editcalendar'] = 'Edit/Share calendar';
 $labels['deletecalendar'] = 'Delete calendar';
 $labels['name'] = 'Name';

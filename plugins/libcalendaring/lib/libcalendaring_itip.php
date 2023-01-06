@@ -793,11 +793,15 @@ class libcalendaring_itip
         $this->rc->output->add_script("rcube_libcalendaring.fetch_itip_object_status(" . rcube_output::json_serialize($metadata) . ")", 'docready');
 
         // get localized texts from the right domain
-        foreach (array('savingdata','deleteobjectconfirm','declinedeleteconfirm','declineattendee',
+        $output_labels = [];
+        $labels = ['savingdata','deleteobjectconfirm','declinedeleteconfirm','declineattendee',
             'cancel','itipdelegated','declineattendeeconfirm','itipcomment','delegateinvitation',
-            'delegateto','delegatersvpme','delegateinvalidaddress') as $label) {
-            $this->rc->output->command('add_label', "itip.$label", $this->gettext($label));
+            'delegateto','delegatersvpme','delegateinvalidaddress'
+        ];
+        foreach ($labels as $label) {
+            $output_labels["itip.$label"] = $this->gettext($label);
         }
+        $this->rc->output->command('add_label', $output_labels);
 
         // show event details with buttons
         return $this->itip_object_details_table($event, $title) .
@@ -828,16 +832,21 @@ class libcalendaring_itip
         }
 
         // add localized texts for the delegation dialog
+        $output_labels = [];
         if (in_array('delegated', $actions)) {
-            foreach (array('itipdelegated','itipcomment','delegateinvitation',
-                  'delegateto','delegatersvpme','delegateinvalidaddress','cancel') as $label) {
-                $this->rc->output->command('add_label', "itip.$label", $this->gettext($label));
+            $labels = ['itipdelegated','itipcomment','delegateinvitation',
+                  'delegateto','delegatersvpme','delegateinvalidaddress','cancel'
+            ];
+            foreach ($labels as $label) {
+                $output_labels["itip.$label"] = $this->gettext($label);
             }
         }
 
-        foreach (array('all','current','future') as $mode) {
-            $this->rc->output->command('add_label', "rsvpmode$mode", $this->gettext("rsvpmode$mode"));
+        foreach (['all','current','future'] as $mode) {
+            $output_labels["rsvpmode$mode"] = $this->gettext("rsvpmode$mode");
         }
+
+        $this->rc->output->command('add_label', $output_labels);
 
         $savemode_radio = new html_radiobutton(array('name' => '_rsvpmode', 'class' => 'rsvp-replymode'));
 

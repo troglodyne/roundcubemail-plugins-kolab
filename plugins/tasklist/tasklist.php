@@ -78,19 +78,16 @@ class tasklist extends rcube_plugin
         $this->require_plugin('libcalendaring');
         $this->require_plugin('libkolab');
 
-        $this->rc  = rcube::get_instance();
-        $this->lib = libcalendaring::get_instance();
-
-        $this->register_task('tasks', 'tasklist');
-
         // load plugin configuration
         $this->load_config();
 
+        $this->rc       = rcube::get_instance();
+        $this->lib      = libcalendaring::get_instance();
         $this->timezone = $this->lib->timezone;
 
-        // proceed initialization in startup hook
-        $this->add_hook('startup', array($this, 'startup'));
+        $this->register_task('tasks', 'tasklist');
 
+        $this->add_hook('startup', array($this, 'startup'));
         $this->add_hook('user_delete', array($this, 'user_delete'));
     }
 
@@ -100,8 +97,9 @@ class tasklist extends rcube_plugin
     public function startup($args)
     {
         // the tasks module can be enabled/disabled by the kolab_auth plugin
-        if ($this->rc->config->get('tasklist_disabled', false) || !$this->rc->config->get('tasklist_enabled', true))
+        if ($this->rc->config->get('tasklist_disabled', false) || !$this->rc->config->get('tasklist_enabled', true)) {
             return;
+        }
 
         // load localizations
         $this->add_texts('localization/', $args['task'] == 'tasks' && (!$args['action'] || $args['action'] == 'print'));
@@ -158,6 +156,13 @@ class tasklist extends rcube_plugin
         }
 
         if (!$this->rc->output->ajax_call && empty($this->rc->output->env['framed'])) {
+            // A hack to replace "Edit/Share List" label with "Edit list", for CalDAV driver
+            if ($args['task'] == 'tasks' && $this->rc->config->get('tasklist_driver', 'database') === 'caldav') {
+                $merge = ['tasklist.editlist' => $this->gettext('edlist')];
+                $this->rc->load_language(null, [], $merge);
+                $this->rc->output->command('add_label', $merge);
+            }
+
             $this->load_ui();
             $this->ui->init();
         }
@@ -190,8 +195,8 @@ class tasklist extends rcube_plugin
         $driver_name  = $this->rc->config->get('tasklist_driver', 'database');
         $driver_class = 'tasklist_' . $driver_name . '_driver';
 
-        require_once($this->home . '/drivers/tasklist_driver.php');
-        require_once($this->home . '/drivers/' . $driver_name . '/' . $driver_class . '.php');
+        require_once $this->home . '/drivers/tasklist_driver.php';
+        require_once $this->home . '/drivers/' . $driver_name . '/' . $driver_class . '.php';
 
         $this->driver = new $driver_class($this);
 

@@ -104,17 +104,17 @@ class calendar extends rcube_plugin
         $this->require_plugin('libcalendaring');
         $this->require_plugin('libkolab');
 
+        require $this->home . '/lib/calendar_ui.php';
+
+        // load localizations
+        $this->add_texts('localization/', $this->rc->task == 'calendar' && (!$this->rc->action || $this->rc->action == 'print'));
+
         $this->lib             = libcalendaring::get_instance();
         $this->timezone        = $this->lib->timezone;
         $this->gmt_offset      = $this->lib->gmt_offset;
         $this->dst_active      = $this->lib->dst_active;
         $this->timezone_offset = $this->gmt_offset / 3600 - $this->dst_active;
-
-        // load localizations
-        $this->add_texts('localization/', $this->rc->task == 'calendar' && (!$this->rc->action || $this->rc->action == 'print'));
-
-        require($this->home . '/lib/calendar_ui.php');
-        $this->ui = new calendar_ui($this);
+        $this->ui              = new calendar_ui($this);
     }
 
     /**
@@ -140,6 +140,13 @@ class calendar extends rcube_plugin
             // settings are required in (almost) every GUI step
             if ($args['action'] != 'attend') {
                 $this->rc->output->set_env('calendar_settings', $this->load_settings());
+            }
+
+            // A hack to replace "Edit/Share Calendar" label with "Edit calendar", for CalDAV driver
+            if ($args['task'] == 'calendar' && $this->rc->config->get('calendar_driver', 'database') === 'caldav') {
+                $merge = ['calendar.editcalendar' => $this->gettext('edcalendar')];
+                $this->rc->load_language(null, [], $merge);
+                $this->rc->output->command('add_label', $merge);
             }
         }
 
@@ -246,8 +253,8 @@ class calendar extends rcube_plugin
         $driver_name = $this->rc->config->get('calendar_driver', 'database');
         $driver_class = $driver_name . '_driver';
 
-        require_once($this->home . '/drivers/calendar_driver.php');
-        require_once($this->home . '/drivers/' . $driver_name . '/' . $driver_class . '.php');
+        require_once $this->home . '/drivers/calendar_driver.php';
+        require_once $this->home . '/drivers/' . $driver_name . '/' . $driver_class . '.php';
 
         $this->driver = new $driver_class($this);
 
@@ -262,7 +269,8 @@ class calendar extends rcube_plugin
     private function load_itip()
     {
         if (empty($this->itip)) {
-            require_once($this->home . '/lib/calendar_itip.php');
+            require_once $this->home . '/lib/calendar_itip.php';
+
             $this->itip = new calendar_itip($this);
 
             if ($this->rc->config->get('kolab_invitation_calendars')) {
@@ -2791,8 +2799,8 @@ $("#rcmfd_new_category").keypress(function(event) {
         if ($driver_name = $this->rc->config->get('calendar_resources_driver')) {
             $driver_class = 'resources_driver_' . $driver_name;
 
-            require_once($this->home . '/drivers/resources_driver.php');
-            require_once($this->home . '/drivers/' . $driver_name . '/' . $driver_class . '.php');
+            require_once $this->home . '/drivers/resources_driver.php';
+            require_once $this->home . '/drivers/' . $driver_name . '/' . $driver_class . '.php';
 
             $this->resources_dir = new $driver_class($this);
         }
