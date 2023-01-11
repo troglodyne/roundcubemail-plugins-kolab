@@ -475,7 +475,7 @@ class carddav_contacts extends rcube_addressbook
                 $colname = $pos ? substr($col, 0, $pos) : $col;
 
                 foreach ((array)$contact[$col] as $val) {
-                    if ($advanced) {
+                    if (!empty($advanced)) {
                         $found[$colname] = $this->compare_search_value($colname, $val, $value[array_search($colname, $fields)], $mode);
                     }
                     else {
@@ -485,8 +485,9 @@ class carddav_contacts extends rcube_addressbook
             }
 
             // compare matches
-            if (($advanced && count($found) >= $scount) ||
-                (!$advanced && rcube_utils::words_match(mb_strtolower($contents), $value))) {
+            if ((!empty($advanced) && count($found) >= $scount)
+                || (empty($advanced) && rcube_utils::words_match(mb_strtolower($contents), $value))
+            ) {
                 $this->filter['ids'][] = $id;
             }
         }

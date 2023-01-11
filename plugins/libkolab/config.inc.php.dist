@@ -10,6 +10,9 @@ $config['kolab_format_version']  = '3.0';
 
 // Optional override of the URL to read and trigger Free/Busy information of Kolab users
 // Defaults to /freebusy or https://<imap-server->/freebusy
+// Note that we add <email>.ifb path automatically, with optional query parameeters.
+// You can prevent addition of path by specifying an URL with %u variable, e.g.
+// "https://dav.domain.tld/freebusy/user/%u" (works with Cyrus v3 Freebusy service).
 $config['kolab_freebusy_server'] = null;
 
 // Enables listing of only subscribed folders. This e.g. will limit

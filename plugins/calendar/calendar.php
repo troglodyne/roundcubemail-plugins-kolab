@@ -2608,11 +2608,6 @@ $("#rcmfd_new_category").keypress(function(event) {
         if (!$end)   $end = $start + 86400 * 30;
         if (!$interval) $interval = 60;  // 1 hour
 
-        if (!$dte) {
-            $dts = new DateTime('@'.$start);
-            $dts->setTimezone($this->timezone);
-        }
-
         $fblist = $this->driver->get_freebusy_list($email, $start, $end);
         $slots  = '';
 
@@ -2661,7 +2656,9 @@ $("#rcmfd_new_category").keypress(function(event) {
             $t = $t_end;
         }
 
-        $dte = new DateTime('@'.$t_end);
+        $dts = new DateTime('@' . $start);
+        $dts->setTimezone($this->timezone);
+        $dte = new DateTime('@' . $t_end);
         $dte->setTimezone($this->timezone);
 
         // let this information be cached for 5min

@@ -277,10 +277,10 @@ class kolab_storage
      */
     public static function get_freebusy_server()
     {
-        self::setup();
+        $rcmail = rcube::get_instance();
 
         $url = 'https://' . $_SESSION['imap_host'] . '/freebusy';
-        $url = self::$config->get('kolab_freebusy_server', $url);
+        $url = $rcmail->config->get('kolab_freebusy_server', $url);
         $url = rcube_utils::resolve_url($url);
 
         return unslashify($url);
@@ -301,19 +301,34 @@ class kolab_storage
         $param = array();
         $utc = new \DateTimeZone('UTC');
 
+        // https://www.calconnect.org/pubdocs/CD0903%20Freebusy%20Read%20URL.pdf
+
         if ($start instanceof \DateTime) {
             $start->setTimezone($utc);
-            $param['dtstart'] = $start->format('Ymd\THis\Z');
+            $param['start'] = $param['dtstart'] = $start->format('Ymd\THis\Z');
         }
+
         if ($end instanceof \DateTime) {
             $end->setTimezone($utc);
-            $param['dtend'] = $end->format('Ymd\THis\Z');
+            $param['end'] = $param['dtend'] = $end->format('Ymd\THis\Z');
         }
+
         if (!empty($param)) {
             $query = '?' . http_build_query($param);
         }
 
-        return self::get_freebusy_server() . '/' . $email . '.ifb' . $query;
+        $url = self::get_freebusy_server();
+
+        if (strpos($url, '%u')) {
+            // Expected configured full URL, just replace the %u variable
+            // Note: Cyrus v3 Free-Busy service does not use .ifb extension
+            $url = str_replace('%u', rawurlencode($email), $url);
+        }
+        else {
+            $url .= '/' . $email . '.ifb';
+        }
+
+        return $url . $query;
     }
 
     /**
