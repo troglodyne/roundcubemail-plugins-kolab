@@ -272,7 +272,7 @@ class kolab_delegation_engine
         }
 
         // Get delegates of current user
-        $delegates = $user[$this->ldap_delegate_field];
+        $delegates = $user[$this->ldap_delegate_field] ?? null;
 
         if (!empty($delegates)) {
             foreach ((array)$delegates as $dn) {

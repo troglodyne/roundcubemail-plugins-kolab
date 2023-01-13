@@ -105,7 +105,7 @@ class kolab_ldap extends rcube_ldap_generic
                 $replaces = array('%dn' => '', '%dc' => $dc, '%d' => $d, '%fu' => $fu, '%u' => $u);
 
                 // Search for the dn to use to authenticate
-                if ($this->config['search_base_dn'] && $this->config['search_filter']
+                if (($this->config['search_base_dn'] ?? false) && ($this->config['search_filter'] ?? false)
                     && (strstr($bind_dn, '%dn') || strstr($base_dn, '%dn') || strstr($groups_base_dn, '%dn'))
                 ) {
                     $search_attribs = array('uid');
