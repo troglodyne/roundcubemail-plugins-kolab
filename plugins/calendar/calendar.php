@@ -142,8 +142,8 @@ class calendar extends rcube_plugin
                 $this->rc->output->set_env('calendar_settings', $this->load_settings());
             }
 
-            // A hack to replace "Edit/Share Calendar" label with "Edit calendar", for CalDAV driver
-            if ($args['task'] == 'calendar' && $this->rc->config->get('calendar_driver', 'database') === 'caldav') {
+            // A hack to replace "Edit/Share Calendar" label with "Edit calendar", for non-Kolab driver
+            if ($args['task'] == 'calendar' && $this->rc->config->get('calendar_driver', 'database') !== 'kolab') {
                 $merge = ['calendar.editcalendar' => $this->gettext('edcalendar')];
                 $this->rc->load_language(null, [], $merge);
                 $this->rc->output->command('add_label', $merge);

@@ -156,8 +156,8 @@ class tasklist extends rcube_plugin
         }
 
         if (!$this->rc->output->ajax_call && empty($this->rc->output->env['framed'])) {
-            // A hack to replace "Edit/Share List" label with "Edit list", for CalDAV driver
-            if ($args['task'] == 'tasks' && $this->rc->config->get('tasklist_driver', 'database') === 'caldav') {
+            // A hack to replace "Edit/Share List" label with "Edit list", for non-Kolab drivers
+            if ($args['task'] == 'tasks' && $this->rc->config->get('tasklist_driver', 'database') !== 'kolab') {
                 $merge = ['tasklist.editlist' => $this->gettext('edlist')];
                 $this->rc->load_language(null, [], $merge);
                 $this->rc->output->command('add_label', $merge);
