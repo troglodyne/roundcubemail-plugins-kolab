@@ -218,7 +218,7 @@ class tasklist_ui
             $prop = $data[$id];
             $is_collapsed = false; // TODO: determine this somehow?
 
-            $content = $this->tasklist_list_item($id, $prop, $jsenv, $attrib['activeonly']);
+            $content = $this->tasklist_list_item($id, $prop, $jsenv, $attrib['activeonly'] ?? null);
 
             if (!empty($folder->children)) {
                 $content .= html::tag('ul', array('style' => ($is_collapsed ? "display:none;" : null)),
@@ -294,7 +294,7 @@ class tasklist_ui
             }
             $actions .= html::a(['href' => '#', 'class' => 'quickview', 'title' => $this->plugin->gettext('focusview'), 'role' => 'checkbox', 'aria-checked' => 'false'], ' ');
             if (isset($prop['subscribed'])) {
-                $action .= html::a(['href' => '#', 'class' => 'subscribed', 'title' => $this->plugin->gettext('tasklistsubscribe'), 'role' => 'checkbox', 'aria-checked' => $prop['subscribed'] ? 'true' : 'false'], ' ');
+                $actions .= html::a(['href' => '#', 'class' => 'subscribed', 'title' => $this->plugin->gettext('tasklistsubscribe'), 'role' => 'checkbox', 'aria-checked' => $prop['subscribed'] ? 'true' : 'false'], ' ');
             }
 
             return html::div(join(' ', $classes),

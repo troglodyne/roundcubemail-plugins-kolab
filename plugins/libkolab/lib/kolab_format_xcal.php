@@ -117,7 +117,7 @@ abstract class kolab_format_xcal extends kolab_format
             'location'    => $this->obj->location(),
             'description' => $this->obj->description(),
             'url'         => $this->obj->url(),
-            'status'      => $status_map[$this->obj->status()],
+            'status'      => $status_map[$this->obj->status()] ?? null,
             'priority'    => $this->obj->priority(),
             'categories'  => self::vector2array($this->obj->categories()),
             'start'       => self::php_datetime($this->obj->start()),
@@ -345,19 +345,19 @@ abstract class kolab_format_xcal extends kolab_format
         }
 
         $this->obj->setSummary($object['title']);
-        $this->obj->setLocation($object['location']);
+        $this->obj->setLocation($object['location'] ?? null);
         $this->obj->setDescription($object['description']);
         $this->obj->setPriority($object['priority']);
-        $this->obj->setCategories(self::array2vector($object['categories']));
-        $this->obj->setUrl(strval($object['url']));
+        $this->obj->setCategories(self::array2vector($object['categories'] ?? null));
+        $this->obj->setUrl(strval($object['url'] ?? null));
 
         if (method_exists($this->obj, 'setComment')) {
-            $this->obj->setComment($object['comment']);
+            $this->obj->setComment($object['comment'] ?? null);
         }
 
         // process event attendees
         $attendees = new vectorattendee;
-        foreach ((array)$object['attendees'] as $i => $attendee) {
+        foreach ((array)($object['attendees'] ?? []) as $i => $attendee) {
             if ($attendee['role'] == 'ORGANIZER') {
                 $object['organizer'] = $attendee;
             }
@@ -412,7 +412,7 @@ abstract class kolab_format_xcal extends kolab_format
             $this->obj->setOrganizer($organizer);
         }
 
-        if ($object['start'] instanceof DateTimeInterface) {
+        if (($object['start'] ?? null) instanceof DateTimeInterface) {
             $start_tz = $object['start']->getTimezone();
         }
 
@@ -420,7 +420,7 @@ abstract class kolab_format_xcal extends kolab_format
         $rr = new RecurrenceRule;
         $rr->setFrequency(RecurrenceRule::FreqNone);
 
-        if ($object['recurrence'] && !empty($object['recurrence']['FREQ'])) {
+        if (($object['recurrence'] ?? null) && !empty($object['recurrence']['FREQ'])) {
             $freq     = $object['recurrence']['FREQ'];
             $bysetpos = explode(',', $object['recurrence']['BYSETPOS']);
 
@@ -502,7 +502,7 @@ abstract class kolab_format_xcal extends kolab_format
         // save alarm(s)
         $valarms = new vectoralarm;
         $valarm_hashes = array();
-        if ($object['valarms']) {
+        if ($object['valarms'] ?? null) {
             foreach ($object['valarms'] as $valarm) {
                 if (!array_key_exists($valarm['action'], $this->alarm_type_map)) {
                     continue;  // skip unknown alarm types
@@ -577,7 +577,7 @@ abstract class kolab_format_xcal extends kolab_format
             }
         }
         // legacy support
-        else if ($object['alarms']) {
+        else if ($object['alarms'] ?? null) {
             list($offset, $type) = explode(":", $object['alarms']);
 
             if ($type == 'EMAIL' && !empty($object['_owner'])) {  // email alarms implicitly go to event owner
@@ -636,16 +636,16 @@ abstract class kolab_format_xcal extends kolab_format
         $object = $obj ?: $this->data;
 
         foreach (self::$fulltext_cols as $colname) {
-            list($col, $field) = explode(':', $colname);
+            list($col, $field) = array_pad(explode(':', $colname), 2, null);
 
             if ($field) {
                 $a = array();
-                foreach ((array)$object[$col] as $attr)
+                foreach ((array)($object[$col] ?? []) as $attr)
                     $a[] = $attr[$field];
                 $val = join(' ', $a);
             }
             else {
-                $val = is_array($object[$col]) ? join(' ', $object[$col]) : $object[$col];
+                $val = is_array($object[$col] ?? null) ? join(' ', $object[$col]) : $object[$col] ?? null;
             }
 
             if (strlen($val))
@@ -655,7 +655,7 @@ abstract class kolab_format_xcal extends kolab_format
         $words = rcube_utils::normalize_string($data, true);
 
         // collect words from recurrence exceptions
-        if (is_array($object['exceptions'])) {
+        if (is_array($object['exceptions'] ?? null)) {
             foreach ($object['exceptions'] as $exception) {
                 $words = array_merge($words, $this->get_words($exception));
             }
@@ -674,12 +674,12 @@ abstract class kolab_format_xcal extends kolab_format
         $tags = array();
         $object = $obj ?: $this->data;
 
-        if (!empty($object['valarms'])) {
+        if (!empty($object['valarms'] ?? null)) {
             $tags[] = 'x-has-alarms';
         }
 
         // create tags reflecting participant status
-        if (is_array($object['attendees'])) {
+        if (is_array($object['attendees'] ?? null)) {
             foreach ($object['attendees'] as $attendee) {
                 if (!empty($attendee['email']) && !empty($attendee['status']))
                     $tags[] = 'x-partstat:' . $attendee['email'] . ':' . strtolower($attendee['status']);
@@ -687,7 +687,7 @@ abstract class kolab_format_xcal extends kolab_format
         }
 
         // collect tags from recurrence exceptions
-        if (is_array($object['exceptions'])) {
+        if (is_array($object['exceptions'] ?? null)) {
             foreach ($object['exceptions'] as $exception) {
                 $tags = array_merge($tags, $this->get_tags($exception));
             }
@@ -717,10 +717,10 @@ abstract class kolab_format_xcal extends kolab_format
         }
 
         foreach ($this->_scheduling_properties ?: self::$scheduling_properties as $prop) {
-            $a = $old[$prop];
-            $b = $object[$prop];
+            $a = $old[$prop] ?? null;
+            $b = $object[$prop] ?? null;
 
-            if ($object['allday']
+            if (($object['allday'] ?? false)
                 && ($prop == 'start' || $prop == 'end')
                 && $a instanceof DateTimeInterface
                 && $b instanceof DateTimeInterface

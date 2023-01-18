@@ -50,6 +50,7 @@ class kolab_storage_cache
     protected $error = 0;
     protected $server_timezone;
     protected $sync_start;
+    protected $cache_bypassed = 0;
 
 
     /**
@@ -380,7 +381,7 @@ class kolab_storage_cache
         $mbox_data = $this->imap->folder_data($this->folder->name);
 
         // Removed vanished messages from the database
-        $vanished = (array) rcube_imap_generic::uncompressMessageSet($mbox_data['VANISHED']);
+        $vanished = (array) rcube_imap_generic::uncompressMessageSet($mbox_data['VANISHED'] ?? null);
 
         // Remove redundant entries from IMAP and DB
         $vanished = array_merge($removed, array_intersect($vanished, $existing));
@@ -412,7 +413,7 @@ class kolab_storage_cache
                 // Deduplication: remove older objects with the same UID
                 // Here we do not resolve conflicts, we just make sure
                 // the most recent version of the object will be used
-                if ($old_msguid = $old_index[$object['uid']]) {
+                if ($old_msguid = ($old_index[$object['uid']] ?? null)) {
                     if ($old_msguid < $msguid) {
                         $del_index[] = $old_msguid;
                     }
@@ -1078,11 +1079,11 @@ class kolab_storage_cache
      */
     protected function _unserialize($sql_arr)
     {
-        if ($sql_arr['fast-mode'] && !empty($sql_arr['data']) && ($object = json_decode($sql_arr['data'], true))) {
+        if (($sql_arr['fast-mode'] ?? false) && !empty($sql_arr['data']) && ($object = json_decode($sql_arr['data'], true))) {
             $object['uid'] = $sql_arr['uid'];
 
             foreach ($this->data_props as $prop) {
-                if (isset($object[$prop]) && is_array($object[$prop]) && $object[$prop]['cl'] == 'DateTime') {
+                if (isset($object[$prop]) && is_array($object[$prop]) && isset($object[$prop]['cl']) && $object[$prop]['cl'] == 'DateTime') {
                     $object[$prop] = new DateTime($object[$prop]['dt'], new DateTimeZone($object[$prop]['tz']));
                 }
                 else if (!isset($object[$prop]) && isset($sql_arr[$prop])) {
@@ -1098,7 +1099,7 @@ class kolab_storage_cache
                 $object['changed'] = new DateTime($sql_arr['changed']);
             }
 
-            $object['_type']     = $sql_arr['type'] ?: $this->folder->type;
+            $object['_type']     = $sql_arr['type'] ?? $this->folder->type;
             $object['_msguid']   = $sql_arr['msguid'];
             $object['_mailbox']  = $this->folder->name;
         }

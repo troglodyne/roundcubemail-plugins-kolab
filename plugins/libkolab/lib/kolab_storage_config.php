@@ -186,10 +186,10 @@ class kolab_storage_config
             $object['type'] = $type;
         }
 
-        $status = $folder->save($object, self::FOLDER_TYPE . '.' . $object['type'], $object['uid']);
+        $status = $folder->save($object, self::FOLDER_TYPE . '.' . ($object['type'] ?? null), $object['uid'] ?? null);
 
         // on success, update cached tags list
-        if ($status && $object['category'] == 'tag' && is_array($this->tags)) {
+        if ($status && ($object['category'] ?? null) == 'tag' && is_array($this->tags)) {
             $found = false;
             unset($object['_formatobj']); // we don't need it anymore
 
@@ -256,7 +256,7 @@ class kolab_storage_config
         }
 
         // find folder object
-        if ($object['_mailbox']) {
+        if ($object['_mailbox'] ?? false) {
             foreach ($this->folders as $folder) {
                 if ($folder->name == $object['_mailbox']) {
                     break;
@@ -676,7 +676,7 @@ class kolab_storage_config
 
             // assign links to objects
             foreach ((array) $relation['members'] as $member) {
-                if (($id = $ids[$member]) !== null) {
+                if (($id = ($ids[$member] ?? null)) !== null) {
                     foreach ($id as $i) {
                         $records[$i]['links'] = array_unique(array_merge($records[$i]['links'], $members));
                     }

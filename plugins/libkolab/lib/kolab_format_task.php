@@ -62,8 +62,8 @@ class kolab_format_task extends kolab_format_xcal
             $status = $this->status_map[$object['status']];
         $this->obj->setStatus($status);
 
-        $this->obj->setStart(self::get_datetime($object['start'], null, $object['start']->_dateonly));
-        $this->obj->setDue(self::get_datetime($object['due'], null, $object['due']->_dateonly));
+        $this->obj->setStart(self::get_datetime($object['start'] ?? null, null, ($object['start'] ?? null) ? $object['start']->_dateonly : null));
+        $this->obj->setDue(self::get_datetime($object['due'] ?? null, null, ($object['due'] ?? null) ? $object['due']->_dateonly : null));
 
         $related = new vectors;
         if (!empty($object['parent_id']))
@@ -140,13 +140,13 @@ class kolab_format_task extends kolab_format_xcal
         $tags = parent::get_tags($obj);
         $object = $obj ?: $this->data;
 
-        if ($object['status'] == 'COMPLETED' || ($object['complete'] == 100 && empty($object['status'])))
+        if (($object['status'] ?? null) == 'COMPLETED' || (($object['complete'] ?? null) == 100 && empty($object['status'] ?? null)))
             $tags[] = 'x-complete';
 
-        if ($object['priority'] == 1)
+        if (($object['priority'] ?? 0) == 1)
             $tags[] = 'x-flagged';
 
-        if ($object['parent_id'])
+        if ($object['parent_id'] ?? false)
             $tags[] = 'x-parent:' . $object['parent_id'];
 
         return array_unique($tags);
