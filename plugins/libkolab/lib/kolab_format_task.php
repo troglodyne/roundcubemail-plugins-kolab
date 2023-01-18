@@ -58,12 +58,16 @@ class kolab_format_task extends kolab_format_xcal
         $status = kolabformat::StatusUndefined;
         if ($object['complete'] == 100 && !array_key_exists('status', $object))
             $status = kolabformat::StatusCompleted;
-        else if ($object['status'] && array_key_exists($object['status'], $this->status_map))
+        else if (!empty($object['status']) && array_key_exists($object['status'], $this->status_map))
             $status = $this->status_map[$object['status']];
         $this->obj->setStatus($status);
 
-        $this->obj->setStart(self::get_datetime($object['start'] ?? null, null, ($object['start'] ?? null) ? $object['start']->_dateonly : null));
-        $this->obj->setDue(self::get_datetime($object['due'] ?? null, null, ($object['due'] ?? null) ? $object['due']->_dateonly : null));
+        if (!empty($object['start'])) {
+            $this->obj->setStart(self::get_datetime($object['start'], null, !empty($object['start']->_dateonly)));
+        }
+        if (!empty($object['due'])) {
+            $this->obj->setDue(self::get_datetime($object['due'], null, !empty($object['due']->_dateonly)));
+        }
 
         $related = new vectors;
         if (!empty($object['parent_id']))
@@ -76,7 +80,7 @@ class kolab_format_task extends kolab_format_xcal
     }
 
     /**
-     *
+     * Check if the object is valid
      */
     public function is_valid()
     {
@@ -123,7 +127,7 @@ class kolab_format_task extends kolab_format_xcal
      */
     public function get_reference_date()
     {
-        if ($this->data['due'] && $this->data['due'] instanceof DateTimeInterface) {
+        if (!empty($this->data['due']) && $this->data['due'] instanceof DateTimeInterface) {
             return $this->data['due'];
         }
 
@@ -143,10 +147,10 @@ class kolab_format_task extends kolab_format_xcal
         if (($object['status'] ?? null) == 'COMPLETED' || (($object['complete'] ?? null) == 100 && empty($object['status'] ?? null)))
             $tags[] = 'x-complete';
 
-        if (($object['priority'] ?? 0) == 1)
+        if (!empty($object['priority']))
             $tags[] = 'x-flagged';
 
-        if ($object['parent_id'] ?? false)
+        if (!empty($object['parent_id']))
             $tags[] = 'x-parent:' . $object['parent_id'];
 
         return array_unique($tags);

@@ -197,7 +197,7 @@ class kolab_storage_folder extends kolab_storage_folder_api
     {
         $fdata = $this->get_imap_data();
         $this->check_error();
-        return sprintf('%d-%d-%d', $fdata['UIDVALIDITY'] ?? null, $fdata['HIGHESTMODSEQ'] ?? null, $fdata['UIDNEXT'] ?? null);
+        return sprintf('%d-%d-%d', $fdata['UIDVALIDITY'] ?? 0, $fdata['HIGHESTMODSEQ'] ?? 0, $fdata['UIDNEXT'] ?? 0);
     }
 
     /**
@@ -637,7 +637,7 @@ class kolab_storage_folder extends kolab_storage_folder_api
         }
 
         // process attachments
-        if (is_array($object['_attachments'] ?? null)) {
+        if (!empty($object['_attachments'])) {
             $numatt = count($object['_attachments']);
             foreach ($object['_attachments'] as $key => $attachment) {
                 // FIXME: kolab_storage and Roundcube attachment hooks use different fields!
@@ -922,7 +922,7 @@ class kolab_storage_folder extends kolab_storage_folder_api
         $format = null;
         if (is_object($object['_formatobj'] ?? null))
             $format = $object['_formatobj'];
-        else if ($object['_msguid'] ?? null && ($old = $this->cache->get($object['_msguid'], $type, $object['_mailbox'] ?? null)))
+        else if (!empty($object['_msguid']) && ($old = $this->cache->get($object['_msguid'], $type, $object['_mailbox'] ?? null)))
             $format = $old['_formatobj'] ?? null;
 
         // create new kolab_format instance

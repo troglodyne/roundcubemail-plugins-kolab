@@ -113,16 +113,16 @@ class kolab_format_contact extends kolab_format
         // organisation related properties (affiliation)
         $org = new Affiliation;
         $offices = new vectoraddress;
-        if ($object['organization'] ?? null)
+        if (!empty($object['organization']))
             $org->setOrganisation($object['organization']);
-        if ($object['department'] ?? null)
+        if (!empty($object['department']))
             $org->setOrganisationalUnits(self::array2vector($object['department']));
-        if ($object['profession'] ?? null)
+        if (!empty($object['profession']))
             $org->setRoles(self::array2vector($object['profession']));
 
         $rels = new vectorrelated;
         foreach (array('manager','assistant') as $field) {
-            if (!empty($object[$field] ?? null)) {
+            if (!empty($object[$field])) {
                 $reltype = $this->relatedmap[$field];
                 foreach ((array)$object[$field] as $value) {
                     $rels->push(new Related(Related::Text, $value, $reltype));
@@ -160,17 +160,17 @@ class kolab_format_contact extends kolab_format
             $type = $this->addresstypes[$address['type']];
             if (isset($type))
                 $adr->setTypes($type);
-            else if ($address['type'] ?? null)
+            else if (!empty($address['type']))
                 $adr->setLabel($address['type']);
-            if ($address['street'] ?? null)
+            if (!empty($address['street']))
                 $adr->setStreet($address['street']);
-            if ($address['locality'] ?? null)
+            if (!empty($address['locality']))
                 $adr->setLocality($address['locality']);
-            if ($address['code'] ?? null)
+            if (!empty($address['code']))
                 $adr->setCode($address['code']);
-            if ($address['region'] ?? null)
+            if (!empty($address['region']))
                 $adr->setRegion($address['region']);
-            if ($address['country'] ?? null)
+            if (!empty($address['country']))
                 $adr->setCountry($address['country']);
 
             if (($address['type'] ?? null) == 'office')
@@ -210,7 +210,7 @@ class kolab_format_contact extends kolab_format
         if (isset($object['anniversary']))
             $this->obj->setAnniversary(self::get_datetime($object['anniversary'], false, true));
 
-        if (!empty($object['photo'] ?? null)) {
+        if (!empty($object['photo'])) {
             if ($type = rcube_mime::image_content_type($object['photo']))
                 $this->obj->setPhoto($object['photo'], $type);
         }
@@ -230,7 +230,7 @@ class kolab_format_contact extends kolab_format
             }
         }
         // add other relateds
-        if (is_array($object['related'] ?? null)) {
+        if (!empty($object['related']) && is_array($object['related'])) {
             foreach ($object['related'] as $value) {
                 $rels->push(new Related(Related::Text, $value));
             }
@@ -248,8 +248,8 @@ class kolab_format_contact extends kolab_format
                 $pkcs7_index = $i;
         }
 
-        $pgpkey   = ($object['pgppublickey'] ?? false)   ? new Key($object['pgppublickey'], Key::PGP) : new Key();
-        $pkcs7key = ($object['pkcs7publickey'] ?? false) ? new Key($object['pkcs7publickey'], Key::PKCS7_MIME) : new Key();
+        $pgpkey   = !empty($object['pgppublickey']) ? new Key($object['pgppublickey'], Key::PGP) : new Key();
+        $pkcs7key = !empty($object['pkcs7publickey']) ? new Key($object['pkcs7publickey'], Key::PKCS7_MIME) : new Key();
 
         if ($pgp_index >= 0)
             $keys->set($pgp_index, $pgpkey);

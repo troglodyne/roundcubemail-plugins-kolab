@@ -67,18 +67,18 @@ class kolab_format_event extends kolab_format_xcal
         $status = kolabformat::StatusUndefined;
         if ($object['free_busy'] == 'tentative')
             $status = kolabformat::StatusTentative;
-        if ($object['cancelled'] ?? false)
+        if (!empty($object['cancelled']))
             $status = kolabformat::StatusCancelled;
-        else if ($object['status'] && array_key_exists($object['status'], $this->status_map))
+        else if (!empty($object['status']) && array_key_exists($object['status'], $this->status_map))
             $status = $this->status_map[$object['status']];
         $this->obj->setStatus($status);
 
         // save (recurrence) exceptions
-        if (is_array($object['recurrence'] ?? null) && is_array($object['recurrence']['EXCEPTIONS'] ?? null) && !isset($object['exceptions'])) {
+        if (!empty($object['recurrence']['EXCEPTIONS']) && !isset($object['exceptions'])) {
             $object['exceptions'] = $object['recurrence']['EXCEPTIONS'];
         }
 
-        if (is_array($object['exceptions'] ?? null)) {
+        if (!empty($object['exceptions'])) {
             $recurrence_id_format = libkolab::recurrence_id_format($object);
             $vexceptions = new vectorevent;
             foreach ($object['exceptions'] as $i => $exception) {
@@ -112,12 +112,13 @@ class kolab_format_event extends kolab_format_xcal
             }
         }
 
-        if (($object['recurrence_date'] ?? false) && $object['recurrence_date'] instanceof DateTimeInterface) {
-            if ($object['recurrence'] ?? false) {
+        if (!empty($object['recurrence_date']) && $object['recurrence_date'] instanceof DateTimeInterface) {
+            if (!empty($object['recurrence'])) {
                 // unset recurrence_date for master events with rrule
                 $object['recurrence_date'] = null;
             }
-            $this->obj->setRecurrenceID(self::get_datetime($object['recurrence_date'], null, $object['allday']), (bool)$object['thisandfuture']);
+            $recid = self::get_datetime($object['recurrence_date'], null, !empty($object['allday']));
+            $this->obj->setRecurrenceID($recid, !empty($object['thisandfuture']));
         }
 
         // cache this data
@@ -216,7 +217,7 @@ class kolab_format_event extends kolab_format_xcal
             $object['exceptions'] = $recurrence_exceptions;
 
             // also link with recurrence.EXCEPTIONS for compatibility
-            if (is_array($object['recurrence'] ?? null)) {
+            if (!empty($object['recurrence']) && isset($object['exceptions'])) {
                 $object['recurrence']['EXCEPTIONS'] = &$object['exceptions'];
             }
         }

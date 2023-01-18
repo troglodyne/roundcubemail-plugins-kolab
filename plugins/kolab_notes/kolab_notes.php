@@ -540,7 +540,7 @@ class kolab_notes extends rcube_plugin
 
         // deliver from in-memory cache
         $key = $list_id . ':' . $uid;
-        if ($this->cache[$key] ?? false) {
+        if (!empty($this->cache[$key])) {
             return $this->cache[$key];
         }
 
@@ -732,7 +732,7 @@ class kolab_notes extends rcube_plugin
             return false;
 
         // moved from another folder
-        if (($note['_fromlist'] ?? false) && ($fromfolder = $this->get_folder($note['_fromlist']))) {
+        if (!empty($note['_fromlist']) && ($fromfolder = $this->get_folder($note['_fromlist']))) {
             if (!$fromfolder->move($note['uid'], $folder->name))
                 return false;
 
@@ -741,7 +741,7 @@ class kolab_notes extends rcube_plugin
 
         // load previous version of this record to merge
         $old = null;
-        if ($note['uid']) {
+        if (!empty($note['uid'])) {
             $old = $folder->get_object($note['uid']);
             if (!$old || PEAR::isError($old))
                 return false;
@@ -1407,7 +1407,7 @@ class kolab_notes extends rcube_plugin
         }
 
         // make list of categories unique
-        if (is_array($object['tags'] ?? null)) {
+        if (!empty($object['tags'])) {
             $object['tags'] = array_unique(array_filter($object['tags']));
         }
 

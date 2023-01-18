@@ -471,7 +471,7 @@ class kolab_addressbook extends rcube_plugin
     public function contact_form($p)
     {
         // none of our business
-        if (!is_object($GLOBALS['CONTACTS'] ?? null) || !is_a($GLOBALS['CONTACTS'], 'kolab_contacts')) {
+        if (empty($GLOBALS['CONTACTS']) || !($GLOBALS['CONTACTS'] instanceof kolab_contacts)) {
             return $p;
         }
 

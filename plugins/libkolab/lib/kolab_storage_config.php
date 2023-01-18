@@ -256,7 +256,7 @@ class kolab_storage_config
         }
 
         // find folder object
-        if ($object['_mailbox'] ?? false) {
+        if (!empty($object['_mailbox'])) {
             foreach ($this->folders as $folder) {
                 if ($folder->name == $object['_mailbox']) {
                     break;
@@ -676,9 +676,9 @@ class kolab_storage_config
 
             // assign links to objects
             foreach ((array) $relation['members'] as $member) {
-                if (($id = ($ids[$member] ?? null)) !== null) {
-                    foreach ($id as $i) {
-                        $records[$i]['links'] = array_unique(array_merge($records[$i]['links'], $members));
+                if (!empty($ids[$member])) {
+                    foreach ($ids[$member] as $i) {
+                        $records[$i]['links'] = array_unique(array_merge($records[$i]['links'] ?? [], $members));
                     }
                 }
             }

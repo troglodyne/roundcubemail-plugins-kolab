@@ -1079,11 +1079,11 @@ class kolab_storage_cache
      */
     protected function _unserialize($sql_arr)
     {
-        if (($sql_arr['fast-mode'] ?? false) && !empty($sql_arr['data']) && ($object = json_decode($sql_arr['data'], true))) {
+        if (!empty($sql_arr['fast-mode']) && !empty($sql_arr['data']) && ($object = json_decode($sql_arr['data'], true))) {
             $object['uid'] = $sql_arr['uid'];
 
             foreach ($this->data_props as $prop) {
-                if (isset($object[$prop]) && is_array($object[$prop]) && isset($object[$prop]['cl']) && $object[$prop]['cl'] == 'DateTime') {
+                if (!empty($object[$prop]['cl']) && $object[$prop]['cl'] == 'DateTime') {
                     $object[$prop] = new DateTime($object[$prop]['dt'], new DateTimeZone($object[$prop]['tz']));
                 }
                 else if (!isset($object[$prop]) && isset($sql_arr[$prop])) {
@@ -1099,9 +1099,9 @@ class kolab_storage_cache
                 $object['changed'] = new DateTime($sql_arr['changed']);
             }
 
-            $object['_type']     = $sql_arr['type'] ?? $this->folder->type;
-            $object['_msguid']   = $sql_arr['msguid'];
-            $object['_mailbox']  = $this->folder->name;
+            $object['_type']    = !empty($sql_arr['type']) ? $sql_arr['type'] : $this->folder->type;
+            $object['_msguid']  = $sql_arr['msguid'];
+            $object['_mailbox'] = $this->folder->name;
         }
         // Fetch object xml
         else {

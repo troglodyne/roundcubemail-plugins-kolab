@@ -417,7 +417,7 @@ abstract class kolab_format
     protected function update_uid()
     {
         // get generated UID
-        if (!($this->data['uid'] ?? null)) {
+        if (empty($this->data['uid'])) {
             if ($this->xmlobject) {
                 $this->data['uid'] = $this->xmlobject->getSerializedUID();
             }
@@ -541,13 +541,14 @@ abstract class kolab_format
     {
         $this->init();
 
-        if (!empty($object['uid']))
+        if (!empty($object['uid'])) {
             $this->obj->setUid($object['uid']);
+        }
 
         // set some automatic values if missing
         if (method_exists($this->obj, 'setCreated')) {
             // Always set created date to workaround libkolabxml (>1.1.4) bug
-            $created = $object['created'] ?? new DateTime('now');
+            $created = !empty($object['created']) ? $object['created'] : new DateTime('now');
             $created->setTimezone(new DateTimeZone('UTC')); // must be UTC
             $this->obj->setCreated(self::get_datetime($created));
             $object['created'] = $created;

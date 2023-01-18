@@ -45,14 +45,14 @@ class tasklist_ui
         }
 
         // add taskbar button
-        $this->plugin->add_button(array(
+        $this->plugin->add_button([
             'command'    => 'tasks',
             'class'      => 'button-tasklist',
             'classsel'   => 'button-tasklist button-selected',
             'innerclass' => 'button-inner',
             'label'      => 'tasklist.navtitle',
             'type'       => 'link'
-        ), 'taskbar');
+        ], 'taskbar');
 
         $this->plugin->include_stylesheet($this->plugin->local_skin_path() . '/tasklist.css');
 
@@ -92,11 +92,11 @@ class tasklist_ui
         }
 
         $identity['emails'][] = $this->rc->user->get_username();
-        $settings['identity'] = array(
+        $settings['identity'] = [
             'name'   => $identity['name'],
             'email'  => strtolower($identity['email']),
             'emails' => ';' . strtolower(join(';', $identity['emails']))
-        );
+        ];
 
         if ($list = rcube_utils::get_input_value('_list', rcube_utils::INPUT_GPC)) {
             $settings['selected_list'] = $list;
@@ -218,18 +218,18 @@ class tasklist_ui
             $prop = $data[$id];
             $is_collapsed = false; // TODO: determine this somehow?
 
-            $content = $this->tasklist_list_item($id, $prop, $jsenv, $attrib['activeonly'] ?? null);
+            $content = $this->tasklist_list_item($id, $prop, $jsenv, !empty($attrib['activeonly']));
 
             if (!empty($folder->children)) {
-                $content .= html::tag('ul', array('style' => ($is_collapsed ? "display:none;" : null)),
+                $content .= html::tag('ul', ['style' => ($is_collapsed ? "display:none;" : null)],
                     $this->list_tree_html($folder, $data, $jsenv, $attrib));
             }
 
             if (strlen($content)) {
-                $out .= html::tag('li', array(
+                $out .= html::tag('li', [
                       'id' => 'rcmlitasklist' . rcube_utils::html_identifier($id),
                       'class' => $prop['group'] . ($prop['virtual'] ? ' virtual' : ''),
-                    ),
+                    ],
                     $content);
             }
         }
@@ -277,13 +277,13 @@ class tasklist_ui
             $classes[] = $prop['class'];
         }
 
-        if (!$activeonly || $prop['active']) {
+        if (!$activeonly || !empty($prop['active'])) {
             $label_id = 'tl:' . $id;
             $chbox = html::tag('input', array(
                     'type'    => 'checkbox',
                     'name'    => '_list[]',
                     'value'   => $id,
-                    'checked' => $prop['active'],
+                    'checked' => !empty($prop['active']),
                     'title'   => $this->plugin->gettext('activate'),
                     'aria-labelledby' => $label_id
             ));
@@ -514,16 +514,16 @@ class tasklist_ui
     /**
      *
      */
-    function edit_attendees_notify($attrib = array())
+    function edit_attendees_notify($attrib = [])
     {
-        $checkbox = new html_checkbox(array('name' => '_notify', 'id' => 'edit-attendees-donotify', 'value' => 1, 'class' => 'pretty-checkbox'));
+        $checkbox = new html_checkbox(['name' => '_notify', 'id' => 'edit-attendees-donotify', 'value' => 1, 'class' => 'pretty-checkbox']);
         return html::div($attrib, html::label(null, $checkbox->show(1) . ' ' . $this->plugin->gettext('sendnotifications')));
     }
 
     /**
      * Form for uploading and importing tasks
      */
-    function tasks_import_form($attrib = array())
+    function tasks_import_form($attrib = [])
     {
         if (empty($attrib['id'])) {
             $attrib['id'] = 'rcmImportForm';
@@ -572,33 +572,33 @@ class tasklist_ui
     /**
      * Form to select options for exporting tasks
      */
-    function tasks_export_form($attrib = array())
+    function tasks_export_form($attrib = [])
     {
         if (empty($attrib['id'])) {
             $attrib['id'] = 'rcmTaskExportForm';
         }
 
         $html = html::div('form-section form-group row',
-            html::label(array('for' => 'task-export-list', 'class' => 'col-sm-4 col-form-label'), $this->plugin->gettext('list'))
-            . html::div('col-sm-8', $this->tasklist_select(array(
+            html::label(['for' => 'task-export-list', 'class' => 'col-sm-4 col-form-label'], $this->plugin->gettext('list'))
+            . html::div('col-sm-8', $this->tasklist_select([
                         'name'  => 'source',
                         'id'    => 'task-export-list',
-                        'extra' => array('' => '- ' . $this->plugin->gettext('currentview') . ' -'),
-                )))
+                        'extra' => ['' => '- ' . $this->plugin->gettext('currentview') . ' -'],
+                ]))
         );
 
-        $checkbox = new html_checkbox(array('name' => 'attachments', 'id' => 'task-export-attachments', 'value' => 1, 'class' => 'form-check-input pretty-checkbox'));
+        $checkbox = new html_checkbox(['name' => 'attachments', 'id' => 'task-export-attachments', 'value' => 1, 'class' => 'form-check-input pretty-checkbox']);
         $html .= html::div('form-section row form-check',
-            html::label(array('for' => 'task-export-attachments', 'class' => 'col-sm-4 col-form-label'), $this->plugin->gettext('exportattachments'))
+            html::label(['for' => 'task-export-attachments', 'class' => 'col-sm-4 col-form-label'], $this->plugin->gettext('exportattachments'))
             . html::div('col-sm-8', $checkbox->show(1))
         );
 
         $this->register_gui_object('exportform', $attrib['id']);
 
-        return html::tag('form', array(
-                'action' => $this->rc->url(array('task' => 'tasklist', 'action' => 'export')),
+        return html::tag('form', [
+                'action' => $this->rc->url(['task' => 'tasklist', 'action' => 'export']),
                 'method' => 'post', 'id' => $attrib['id']
-            ),
+            ],
             $html
         );
     }

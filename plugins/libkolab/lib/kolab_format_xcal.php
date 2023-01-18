@@ -420,7 +420,7 @@ abstract class kolab_format_xcal extends kolab_format
         $rr = new RecurrenceRule;
         $rr->setFrequency(RecurrenceRule::FreqNone);
 
-        if (($object['recurrence'] ?? null) && !empty($object['recurrence']['FREQ'])) {
+        if (!empty($object['recurrence']['FREQ'])) {
             $freq     = $object['recurrence']['FREQ'];
             $bysetpos = explode(',', $object['recurrence']['BYSETPOS']);
 
@@ -502,7 +502,7 @@ abstract class kolab_format_xcal extends kolab_format
         // save alarm(s)
         $valarms = new vectoralarm;
         $valarm_hashes = array();
-        if ($object['valarms'] ?? null) {
+        if (!empty($object['valarms'])) {
             foreach ($object['valarms'] as $valarm) {
                 if (!array_key_exists($valarm['action'], $this->alarm_type_map)) {
                     continue;  // skip unknown alarm types
@@ -577,7 +577,7 @@ abstract class kolab_format_xcal extends kolab_format
             }
         }
         // legacy support
-        else if ($object['alarms'] ?? null) {
+        else if (!empty($object['alarms'])) {
             list($offset, $type) = explode(":", $object['alarms']);
 
             if ($type == 'EMAIL' && !empty($object['_owner'])) {  // email alarms implicitly go to event owner
@@ -638,14 +638,18 @@ abstract class kolab_format_xcal extends kolab_format
         foreach (self::$fulltext_cols as $colname) {
             list($col, $field) = array_pad(explode(':', $colname), 2, null);
 
+            if (empty($object[$col])) {
+                continue;
+            }
+
             if ($field) {
                 $a = array();
-                foreach ((array)($object[$col] ?? []) as $attr)
+                foreach ((array) $object[$col] as $attr)
                     $a[] = $attr[$field];
                 $val = join(' ', $a);
             }
             else {
-                $val = is_array($object[$col] ?? null) ? join(' ', $object[$col]) : $object[$col] ?? null;
+                $val = is_array($object[$col]) ? join(' ', $object[$col]) : $object[$col];
             }
 
             if (strlen($val))
@@ -655,7 +659,7 @@ abstract class kolab_format_xcal extends kolab_format
         $words = rcube_utils::normalize_string($data, true);
 
         // collect words from recurrence exceptions
-        if (is_array($object['exceptions'] ?? null)) {
+        if (!empty($object['exceptions'])) {
             foreach ($object['exceptions'] as $exception) {
                 $words = array_merge($words, $this->get_words($exception));
             }
@@ -674,12 +678,12 @@ abstract class kolab_format_xcal extends kolab_format
         $tags = array();
         $object = $obj ?: $this->data;
 
-        if (!empty($object['valarms'] ?? null)) {
+        if (!empty($object['valarms'])) {
             $tags[] = 'x-has-alarms';
         }
 
         // create tags reflecting participant status
-        if (is_array($object['attendees'] ?? null)) {
+        if (!empty($object['attendees'])) {
             foreach ($object['attendees'] as $attendee) {
                 if (!empty($attendee['email']) && !empty($attendee['status']))
                     $tags[] = 'x-partstat:' . $attendee['email'] . ':' . strtolower($attendee['status']);
@@ -687,14 +691,14 @@ abstract class kolab_format_xcal extends kolab_format
         }
 
         // collect tags from recurrence exceptions
-        if (is_array($object['exceptions'] ?? null)) {
+        if (!empty($object['exceptions'])) {
             foreach ($object['exceptions'] as $exception) {
                 $tags = array_merge($tags, $this->get_tags($exception));
             }
         }
 
         if (!empty($object['status'])) {
-          $tags[] = 'x-status:' . strtolower($object['status']);
+            $tags[] = 'x-status:' . strtolower($object['status']);
         }
 
         return array_unique($tags);
@@ -713,14 +717,14 @@ abstract class kolab_format_xcal extends kolab_format
         $reschedule = false;
 
         if (!is_array($old)) {
-            $old = $this->data['uid'] ? $this->data : $this->to_array();
+            $old = !empty($this->data['uid']) ? $this->data : $this->to_array();
         }
 
         foreach ($this->_scheduling_properties ?: self::$scheduling_properties as $prop) {
             $a = $old[$prop] ?? null;
             $b = $object[$prop] ?? null;
 
-            if (($object['allday'] ?? false)
+            if (!empty($object['allday'])
                 && ($prop == 'start' || $prop == 'end')
                 && $a instanceof DateTimeInterface
                 && $b instanceof DateTimeInterface

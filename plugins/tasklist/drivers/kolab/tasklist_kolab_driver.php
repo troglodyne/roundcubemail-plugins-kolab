@@ -653,11 +653,11 @@ class tasklist_kolab_driver extends tasklist_driver
             }
         }
 
-        if ($filter['since'] ?? false) {
+        if (!empty($filter['since'])) {
             $query[] = array('changed', '>=', $filter['since']);
         }
 
-        if ($filter['uid'] ?? false) {
+        if (!empty($filter['uid'])) {
             $query[] = array('uid', '=', (array) $filter['uid']);
         }
 
@@ -709,7 +709,7 @@ class tasklist_kolab_driver extends tasklist_driver
                 $folder = $this->folders[$list_id];
             if (is_numeric($list_id) || !$folder)
                 continue;
-            if (!($this->tasks[$id] ?? false) && ($object = $folder->get_object($id))) {
+            if (empty($this->tasks[$id]) && ($object = $folder->get_object($id))) {
                 $this->load_tags($object);
                 $this->tasks[$id] = $this->_to_rcube_task($object, $list_id);
                 break;
@@ -1302,10 +1302,10 @@ class tasklist_kolab_driver extends tasklist_driver
             $task['created'] = $record['created'];
         }
 
-        if ($record['valarms'] ?? false) {
+        if (!empty($record['valarms'])) {
             $task['valarms'] = $record['valarms'];
         }
-        else if ($record['alarms'] ?? false) {
+        else if (!empty($record['alarms'])) {
             $task['alarms'] = $record['alarms'];
         }
 
@@ -1320,7 +1320,7 @@ class tasklist_kolab_driver extends tasklist_driver
             }
         }
 
-        if (!empty($record['_attachments'] ?? [])) {
+        if (!empty($record['_attachments'])) {
             foreach ($record['_attachments'] as $key => $attachment) {
                 if ($attachment !== false) {
                     if (empty($attachment['name'])) {
@@ -1381,7 +1381,7 @@ class tasklist_kolab_driver extends tasklist_driver
         if ($task['complete'] == 1.0 && empty($task['complete']))
             $object['status'] = 'COMPLETED';
 
-        if ($task['flagged'] ?? false)
+        if (!empty($task['flagged']))
             $object['priority'] = 1;
         else
             $object['priority'] = ($old['priority'] ?? 0) > 1 ? $old['priority'] : 0;
@@ -1462,7 +1462,7 @@ class tasklist_kolab_driver extends tasklist_driver
 
         // load previous version of this task to merge
         $old = null;
-        if ($task['id'] ?? null) {
+        if (!empty($task['id'])) {
             $old = $folder->get_object($task['uid']);
             if (!$old || PEAR::isError($old))
                 return false;

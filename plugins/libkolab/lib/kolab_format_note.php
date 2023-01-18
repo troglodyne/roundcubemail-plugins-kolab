@@ -124,20 +124,24 @@ class kolab_format_note extends kolab_format
     {
         $data = '';
         foreach (self::$fulltext_cols as $col) {
+            if (empty($this->data[$col])) {
+                continue;
+            }
+
             // convert HTML content to plain text
             if ($col == 'description' && preg_match('/<(html|body)(\s[a-z]|>)/', $this->data[$col], $m) && strpos($this->data[$col], '</'.$m[1].'>')) {
-                $converter = new rcube_html2text($this->data[$col] ?? null, false, false, 0);
+                $converter = new rcube_html2text($this->data[$col], false, false, 0);
                 $val = $converter->get_text();
             }
             else {
-                $val = is_array($this->data[$col] ?? null) ? join(' ', $this->data[$col] ?? null) : ($this->data[$col] ?? null);
+                $val = is_array($this->data[$col]) ? join(' ', $this->data[$col]) : $this->data[$col];
             }
 
-            if (strlen($val))
+            if (strlen($val)) {
                 $data .= $val . ' ';
+            }
         }
 
         return array_filter(array_unique(rcube_utils::normalize_string($data, true)));
     }
-
 }

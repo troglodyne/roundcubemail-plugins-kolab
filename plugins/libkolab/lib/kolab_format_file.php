@@ -48,7 +48,7 @@ class kolab_format_file extends kolab_format
         }
 
         // Add file attachment
-        if (!empty($object['_attachments'] ?? null)) {
+        if (!empty($object['_attachments'])) {
             $cid         = key($object['_attachments']);
             $attach_attr = $object['_attachments'][$cid];
             $attach      = new Attachment;
@@ -98,7 +98,7 @@ class kolab_format_file extends kolab_format
      *
      * @return array  Config object data as hash array
      */
-    public function to_array($data = array())
+    public function to_array($data = [])
     {
         // return cached result
         if (!empty($this->data)) {
@@ -109,10 +109,10 @@ class kolab_format_file extends kolab_format
         $object = parent::to_array($data);
 
         // read object properties
-        $object += array(
+        $object += [
             'categories'  => self::vector2array($this->obj->categories()),
             'notes'       => $this->obj->note(),
-        );
+        ];
 
         return $this->data = $object;
     }
@@ -124,19 +124,17 @@ class kolab_format_file extends kolab_format
      */
     public function get_tags()
     {
-        $tags = array();
+        $tags = [];
 
-        foreach ((array)($this->data['categories'] ?? null) as $cat) {
+        foreach ((array)($this->data['categories'] ?? []) as $cat) {
             $tags[] = rcube_utils::normalize_string($cat);
         }
 
         // Add file mimetype to tags
-        if (!empty($this->data['_attachments'] ?? null)) {
-            reset($this->data['_attachments']);
-            $key        = key($this->data['_attachments']);
-            $attachment = $this->data['_attachments'][$key];
+        if (!empty($this->data['_attachments'])) {
+            $attachment = $this->data['_attachments'][array_key_first($this->data['_attachments'])];
 
-            if ($attachment['mimetype'] ?? false) {
+            if (!empty($attachment['mimetype'])) {
                 $tags[] = $attachment['mimetype'];
             }
         }

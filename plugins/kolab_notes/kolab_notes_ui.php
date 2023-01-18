@@ -76,13 +76,14 @@ class kolab_notes_ui
     public function folders($attrib)
     {
         $attrib += array('id' => 'rcmkolabnotebooks');
+        $is_select = ($attrib['type'] ?? null) == 'select';
 
-        if (($attrib['type'] ?? null) == 'select') {
+        if ($is_select) {
             $attrib['is_escaped'] = true;
             $select = new html_select($attrib);
         }
 
-        $tree = ($attrib['type'] ?? null) != 'select' ? true : null;
+        $tree  = $is_select ? true : null;
         $lists = $this->plugin->get_lists($tree);
         $jsenv = array();
 
@@ -94,12 +95,12 @@ class kolab_notes_ui
             foreach ($lists as $prop) {
                 $id = $prop['id'];
 
-                if (!$prop['virtual']) {
+                if (empty($prop['virtual'])) {
                     unset($prop['user_id']);
                     $jsenv[$id] = $prop;
                 }
 
-                if ($attrib['type'] == 'select') {
+                if ($is_select) {
                     if ($prop['editable'] || strpos($prop['rights'], 'i') !== false) {
                         $select->add($prop['name'], $prop['id']);
                     }
@@ -115,7 +116,7 @@ class kolab_notes_ui
         $this->rc->output->set_env('kolab_notebooks', $jsenv);
         $this->rc->output->add_gui_object('notebooks', $attrib['id']);
 
-        return ($attrib['type'] ?? null) == 'select' ? $select->show() : html::tag('ul', $attrib, $html, html::$common_attrib);
+        return $is_select ? $select->show() : html::tag('ul', $attrib, $html, html::$common_attrib);
     }
 
     /**
@@ -139,7 +140,7 @@ class kolab_notes_ui
             if (strlen($content)) {
                 $out .= html::tag('li', array(
                       'id' => 'rcmliknb' . rcube_utils::html_identifier($id),
-                      'class' => $prop['group'] . (($prop['virtual'] ?? false) ? ' virtual' : ''),
+                      'class' => $prop['group'] . (!empty($prop['virtual']) ? ' virtual' : ''),
                     ),
                     $content);
             }
@@ -153,13 +154,13 @@ class kolab_notes_ui
      */
     public function folder_list_item($id, $prop, &$jsenv, $checkbox = false)
     {
-        if (!($prop['virtual'] ?? false)) {
+        if (empty($prop['virtual'])) {
             unset($prop['user_id']);
             $jsenv[$id] = $prop;
         }
 
         $classes = array('folder');
-        if ($prop['virtual'] ?? false) {
+        if (!empty($prop['virtual'])) {
             $classes[] = 'virtual';
         }
         else if (!$prop['editable']) {
@@ -172,21 +173,21 @@ class kolab_notes_ui
             $classes[] = $prop['class'];
         }
 
-        $title = $prop['title'] ?? ($prop['name'] != $prop['listname'] || strlen($prop['name']) > 25 ?
+        $title = !empty($prop['title']) ? $prop['title'] : ($prop['name'] != $prop['listname'] || strlen($prop['name']) > 25 ?
           html_entity_decode($prop['name'], ENT_COMPAT, RCUBE_CHARSET) : '');
 
         $label_id = 'nl:' . $id;
-        $attr = ($prop['virtual'] ?? false) ? array('tabindex' => '0') : array('href' => $this->rc->url(array('_list' => $id)));
+        $attr = !empty($prop['virtual']) ? array('tabindex' => '0') : array('href' => $this->rc->url(array('_list' => $id)));
         return html::div(join(' ', $classes),
             html::a($attr + array('class' => 'listname', 'title' => $title, 'id' => $label_id), $prop['listname'] ?: $prop['name']) .
-            (($prop['virtual'] ?? false) ? '' :
+            (!empty($prop['virtual']) ? '' :
                 ($checkbox ?
                     html::tag('input', array('type' => 'checkbox', 'name' => '_list[]', 'value' => $id, 'checked' => $prop['active'], 'aria-labelledby' => $label_id)) :
                     ''
                 ) .
                 html::span('handle', '') .
                 html::span('actions',
-                    (!$prop['default'] ?
+                    (empty($prop['default']) ?
                         html::a(array('href' => '#', 'class' => 'remove', 'title' => $this->plugin->gettext('removelist')), ' ') :
                         ''
                     ) .

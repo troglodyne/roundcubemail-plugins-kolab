@@ -39,14 +39,14 @@ class kolab_storage_cache_event extends kolab_storage_cache
         $sql_data['dtend']   = $this->_convert_datetime($object['end'] ?? null);
 
         // extend date range for recurring events
-        if ($object['recurrence'] ?? null) {
+        if (!empty($object['recurrence'])) {
             $recurrence = new kolab_date_recurrence($object['_formatobj']);
             $dtend = $recurrence->end() ?: new DateTime('now +100 years');
             $sql_data['dtend'] = $this->_convert_datetime($dtend);
         }
 
         // extend start/end dates to spawn all exceptions
-        if (is_array($object['exceptions'] ?? null)) {
+        if (!empty($object['exceptions'])) {
             foreach ($object['exceptions'] as $exception) {
                 if (($exception['start'] ?? null) instanceof DateTimeInterface) {
                     $exstart = $this->_convert_datetime($exception['start']);

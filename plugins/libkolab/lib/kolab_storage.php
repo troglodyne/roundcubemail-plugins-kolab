@@ -129,7 +129,7 @@ class kolab_storage
             $config = self::$config->get($name);
         }
 
-        if (self::$ldap[$name] ?? false) {
+        if (!empty(self::$ldap[$name])) {
             return self::$ldap[$name];
         }
 

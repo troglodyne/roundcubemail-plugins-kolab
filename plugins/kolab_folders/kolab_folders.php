@@ -159,7 +159,9 @@ class kolab_folders extends rcube_plugin
 
         // Add type-based style for table rows
         // See kolab_folders::folder_class_name()
-        if ($table = ($args['table'] ?? null)) {
+        if (!empty($args['table'])) {
+            $table = $args['table'];
+
             for ($i=1, $cnt=$table->size(); $i<=$cnt; $i++) {
                 $attrib = $table->get_row_attribs($i);
                 $folder = $attrib['foldername']; // UTF7-IMAP
@@ -176,8 +178,8 @@ class kolab_folders extends rcube_plugin
         }
 
         // Add type-based class for list items
-        if (is_array($args['list'] ?? null)) {
-            foreach ((array)$args['list'] as $k => $item) {
+        if (!empty($args['list']) && is_array($args['list'])) {
+            foreach ($args['list'] as $k => $item) {
                 $folder = $item['folder_imap']; // UTF7-IMAP
                 $type   = $folderdata[$folder] ?? null;
 
@@ -597,14 +599,13 @@ class kolab_folders extends rcube_plugin
      */
     static function folder_class_name($type)
     {
-        list($ctype, $subtype) = array_pad(explode('.', $type), 2, null);
+        if ($type && strpos($type, '.')) {
+            list($ctype, $subtype) = explode('.', $type);
 
-        $class[] = 'type-' . ($ctype ? $ctype : 'mail');
+            return 'type-' . $ctype . ' subtype-' . $subtype;
+        }
 
-        if ($subtype)
-            $class[] = 'subtype-' . $subtype;
-
-        return implode(' ', $class);
+        return 'type-' . ($type ? $type : 'mail');
     }
 
     /**
@@ -745,7 +746,7 @@ class kolab_folders extends rcube_plugin
         $value = $storage->get_metadata($folder, $this->expire_annotation);
 
         if (is_array($value)) {
-            return ($value[$folder] ?? false) ? intval($value[$folder][$this->expire_annotation]) : 0;
+            return !empty($value[$folder]) ? intval($value[$folder][$this->expire_annotation] ?? 0) : 0;
         }
 
         return false;

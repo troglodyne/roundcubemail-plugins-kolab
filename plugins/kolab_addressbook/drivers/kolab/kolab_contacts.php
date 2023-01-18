@@ -166,7 +166,7 @@ class kolab_contacts extends rcube_addressbook
 
         // set localized labels for proprietary cols
         foreach ($this->coltypes as $col => $prop) {
-            if (is_string($prop['label'] ?? null)) {
+            if (!empty($prop['label']) && is_string($prop['label'])) {
                 $this->coltypes[$col]['label'] = $rcube->gettext($prop['label']);
             }
         }
@@ -1320,10 +1320,10 @@ class kolab_contacts extends rcube_addressbook
      */
     private function _from_rcube_contact($contact, $old = array())
     {
-        if (!($contact['uid'] ?? null) && ($contact['ID'] ?? null)) {
+        if (empty($contact['uid']) && !empty($contact['ID'])) {
             $contact['uid'] = $this->id2uid($contact['ID']);
         }
-        else if (!($contact['uid'] ?? null) && ($old['uid'] ?? null)) {
+        else if (empty($contact['uid']) && !empty($old['uid'])) {
             $contact['uid'] = $old['uid'];
         }
 
@@ -1380,7 +1380,7 @@ class kolab_contacts extends rcube_addressbook
         // convert one-item-array elements into string element
         // this is needed e.g. to properly import birthday field
         foreach ($this->coltypes as $type => $col_def) {
-            if (($col_def['limit'] ?? null) == 1 && is_array($contact[$type] ?? null)) {
+            if (($col_def['limit'] ?? 0) == 1 && !empty($contact[$type]) && is_array($contact[$type])) {
                 $contact[$type] = array_shift(array_filter($contact[$type]));
             }
         }

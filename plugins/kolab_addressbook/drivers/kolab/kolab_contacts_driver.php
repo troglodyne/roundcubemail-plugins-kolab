@@ -242,7 +242,7 @@ class kolab_contacts_driver
      */
     public function abook_prop($id, $abook)
     {
-        if (property_exists($abook, 'virtual') && $abook->virtual) {
+        if (!empty($abook->virtual)) {
             return [
                 'id'       => $id,
                 'name'     => $abook->get_name(),

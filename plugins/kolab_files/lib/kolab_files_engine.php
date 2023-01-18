@@ -923,7 +923,7 @@ class kolab_files_engine
      */
     public function quota_display($attrib)
     {
-        if (!($attrib['id'] ?? false)) {
+        if (empty($attrib['id'])) {
             $attrib['id'] = 'rcmquotadisplay';
         }
 
@@ -1078,7 +1078,7 @@ class kolab_files_engine
     {
         $url = $this->url_srv . '/api/';
 
-        if (!property_exists($this, "request") || !$this->request) {
+        if (empty($this->request)) {
             $config = array(
                 'store_body'       => true,
                 'follow_redirects' => true,

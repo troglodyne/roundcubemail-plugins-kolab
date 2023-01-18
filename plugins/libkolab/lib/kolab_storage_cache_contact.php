@@ -37,22 +37,26 @@ class kolab_storage_cache_contact extends kolab_storage_cache
         $sql_data = parent::_serialize($object);
         $sql_data['type'] = $object['_type'];
 
-        // columns for sorting
-        $sql_data['name']      = rcube_charset::clean(($object['name'] ?? null) . ($object['prefix'] ?? null));
-        $sql_data['firstname'] = rcube_charset::clean(($object['firstname'] ?? null) . ($object['middlename'] ?? null) . ($object['surname'] ?? null));
-        $sql_data['surname']   = rcube_charset::clean(($object['surname'] ?? null)   . ($object['firstname'] ?? null)  . ($object['middlename'] ?? null));
-        $sql_data['email']     = rcube_charset::clean(is_array($object['email'] ?? null) ? $object['email'][0] : ($object['email'] ?? null));
+        $email = is_array($object['email'] ?? null) ? $object['email'][0] : ($object['email'] ?? '');
 
-        if (is_array($sql_data['email'] ?? null)) {
-            $sql_data['email'] = $sql_data['email']['address'];
+        // columns for sorting
+        $sql_data['name']      = rcube_charset::clean(($object['name'] ?? '') . ($object['prefix'] ?? ''));
+        $sql_data['firstname'] = rcube_charset::clean(($object['firstname'] ?? '') . ($object['middlename'] ?? '') . ($object['surname'] ?? ''));
+        $sql_data['surname']   = rcube_charset::clean(($object['surname'] ?? '')   . ($object['firstname'] ?? '')  . ($object['middlename'] ?? ''));
+
+        if (is_array($email)) {
+            $sql_data['email'] = $email['address'] ?? '';
+        }
+        else {
+            $sql_data['email'] = rcube_charset::clean($email);
         }
         // avoid value being null
-        if (empty($sql_data['email'] ?? null)) {
+        if (empty($sql_data['email'])) {
             $sql_data['email'] = '';
         }
 
         // use organization if name is empty
-        if (empty($sql_data['name'] ?? null) && !empty($object['organization'] ?? null)) {
+        if (empty($sql_data['name']) && !empty($object['organization'])) {
             $sql_data['name'] = rcube_charset::clean($object['organization']);
         }
 
