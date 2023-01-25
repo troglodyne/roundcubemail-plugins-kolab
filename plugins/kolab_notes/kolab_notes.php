@@ -112,7 +112,7 @@ class kolab_notes extends rcube_plugin
             }
         }
 
-        if (!$this->rc->output->ajax_call && !($this->rc->output->env['framed'] ?? null)) {
+        if (!$this->rc->output->ajax_call && empty($this->rc->output->env['framed'])) {
             $this->load_ui();
         }
 

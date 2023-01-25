@@ -146,7 +146,7 @@ class kolab_files_engine
         $this->rc->output->set_env('files_api_version', $caps['VERSION'] ?? 3);
         $this->rc->output->set_env('files_user', $this->rc->get_user_name());
 
-        if ($caps['DOCEDIT'] ?? false) {
+        if (!empty($caps['DOCEDIT'])) {
             $this->plugin->add_label('declinednotice', 'invitednotice', 'acceptedownernotice',
                 'declinedownernotice', 'requestednotice', 'acceptednotice', 'declinednotice',
                 'more', 'accept', 'decline', 'join', 'status', 'when', 'file', 'comment',
@@ -896,7 +896,8 @@ class kolab_files_engine
         $attrib['src']             = $href;
         $attrib['onload']          = 'kolab_files_frame_load(this)';
 
-        $form = null;
+        $form = '';
+
         // editor requires additional arguments via POST
         if (!empty($this->file_data['viewer']['post'])) {
             $attrib['src'] = 'program/resources/blank.gif';
@@ -1061,9 +1062,9 @@ class kolab_files_engine
             }
         }
 
-        if (($_SESSION['kolab_files_caps']['MANTICORE'] ?? false) || ($_SESSION['kolab_files_caps']['WOPI'] ?? false)) {
+        if (!empty($_SESSION['kolab_files_caps']['MANTICORE']) || !empty($_SESSION['kolab_files_caps']['WOPI'])) {
             $_SESSION['kolab_files_caps']['DOCEDIT'] = true;
-            $_SESSION['kolab_files_caps']['DOCTYPE'] = $_SESSION['kolab_files_caps']['MANTICORE'] ? 'manticore' : 'wopi';
+            $_SESSION['kolab_files_caps']['DOCTYPE'] = !empty($_SESSION['kolab_files_caps']['WOPI']) ? 'wopi' : 'manticore';
         }
 
         if (!empty($_SESSION['kolab_files_caps']) && !isset($_SESSION['kolab_files_caps']['MOUNTPOINTS'])) {
@@ -1647,11 +1648,11 @@ class kolab_files_engine
 
         $editor_type = null;
         $got_editor = null;
-        if ($this->file_data['viewer']['wopi'] ?? false) {
+        if (!empty($this->file_data['viewer']['wopi'])) {
             $editor_type = 'wopi';
             $got_editor  = ($viewer & 4);
         }
-        else if ($this->file_data['viewer']['manticore'] ?? false) {
+        else if (!empty($this->file_data['viewer']['manticore'])) {
             $editor_type = 'manticore';
             $got_editor = ($viewer & 4);
         }

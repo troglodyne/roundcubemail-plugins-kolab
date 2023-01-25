@@ -664,14 +664,14 @@ class kolab_auth extends rcube_plugin
         }
         // User email(s) for identity (first log in)
         foreach ((array)$email_attr as $field) {
-            $email = is_array($record[$field]) ? array_filter($record[$field]) : $record[$field];
+            $email = is_array($record[$field] ?? null) ? array_filter($record[$field]) : ($record[$field] ?? null);
             if (!empty($email)) {
                 $this->data['user_email'] = array_merge((array)($this->data['user_email'] ?? null), (array)$email);
             }
         }
         // Organization name for identity (first log in)
         foreach ((array)$org_attr as $field) {
-            $organization = is_array($record[$field]) ? $record[$field][0] : $record[$field];
+            $organization = is_array($record[$field] ?? null) ? $record[$field][0] : ($record[$field] ?? null);
             if (!empty($organization)) {
                 $this->data['user_organization'] = $organization;
                 break;

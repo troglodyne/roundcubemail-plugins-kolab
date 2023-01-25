@@ -616,7 +616,7 @@ class kolab_storage
             }
             else {
                 // For performance reasons ask for all folders, it will be cached as one cache entry
-                $metadata = self::$imap->get_metadata("*", array(self::NAME_KEY_PRIVATE, self::NAME_KEY_SHARED));
+                $metadata = self::$imap->get_metadata("*", [self::NAME_KEY_PRIVATE, self::NAME_KEY_SHARED]);
 
                 // If cache is disabled store result in memory
                 if (!self::$config->get('imap_cache')) {
@@ -643,13 +643,13 @@ class kolab_storage
      *
      * @return string Name of the folder-object
      */
-    public static function object_prettyname($folder, &$folder_ns=null)
+    public static function object_prettyname($folder, &$folder_ns = null)
     {
         self::setup();
 
         $found     = false;
         $namespace = self::$imap->get_namespace();
-        $prefix = null;
+        $prefix    = null;
 
         if (!empty($namespace['shared'])) {
             foreach ($namespace['shared'] as $ns) {
@@ -701,18 +701,21 @@ class kolab_storage
             }
         }
 
-        if (empty($delim))
+        if (empty($delim)) {
             $delim = self::$imap->get_hierarchy_delimiter();
+        }
 
         $folder = rcube_charset::convert($folder, 'UTF7-IMAP');
         $folder = html::quote($folder);
         $folder = str_replace(html::quote($delim), ' &raquo; ', $folder);
 
-        if ($prefix)
+        if ($prefix) {
             $folder = html::quote($prefix) . ($folder !== '' ? ' ' . $folder : '');
+        }
 
-        if (!$folder_ns)
+        if (empty($folder_ns)) {
             $folder_ns = 'personal';
+        }
 
         return $folder;
     }
@@ -916,6 +919,7 @@ class kolab_storage
             if ($filter == 'mail' && empty($type)) {
                 continue;
             }
+
             if (empty($type) || !preg_match($regexp, $type)) {
                 unset($folders[$idx]);
             }
