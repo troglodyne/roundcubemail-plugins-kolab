@@ -150,7 +150,7 @@ class tasklist_kolab_driver extends tasklist_driver
             'owner' => $folder->get_owner(),
             'parentfolder' => $folder->get_parent(),
             'default' => $folder->default,
-            'virtual' => $folder->virtual,
+            'virtual' => !empty($folder->virtual),
             'children' => true,  // TODO: determine if that folder indeed has child folders
             'subscribed' => (bool)$folder->is_subscribed(),
             'removable' => !$folder->default,
@@ -224,7 +224,7 @@ class tasklist_kolab_driver extends tasklist_driver
                     'parent'   => $parent_id,
                 );
             }
-            else if ($folder->virtual) {
+            else if (!empty($folder->virtual)) {
                 $lists[$list_id] = array(
                     'id'       => $list_id,
                     'name'     => $fullname,

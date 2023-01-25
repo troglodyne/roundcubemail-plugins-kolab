@@ -385,7 +385,7 @@ class kolab_contacts extends rcube_addressbook
                 $this->sortindex = array_merge($this->sortindex, $local_sortindex);
             }
         }
-        else if (is_array($this->filter['ids'])) {
+        else if ($this->filter && is_array($this->filter['ids'])) {
             $ids = $this->filter['ids'];
             if (count($ids)) {
                 $uids = array_map(array($this, 'id2uid'), $this->filter['ids']);
@@ -1134,13 +1134,13 @@ class kolab_contacts extends rcube_addressbook
 
         switch ($this->sort_col) {
         case 'name':
-            $str = $rec['name'] . $rec['prefix'];
+            $str = ($rec['name'] ?? null) . ($rec['prefix'] ?? null);
         case 'firstname':
-            $str .= $rec['firstname'] . $rec['middlename'] . $rec['surname'];
+            $str .= ($rec['firstname'] ?? null) . ($rec['middlename'] ?? null) . ($rec['surname'] ?? null);
             break;
 
         case 'surname':
-            $str = $rec['surname'] . $rec['firstname'] . $rec['middlename'];
+            $str = ($rec['surname'] ?? null) . ($rec['firstname'] ?? null) . ($rec['middlename'] ?? null);
             break;
 
         default:
@@ -1148,7 +1148,9 @@ class kolab_contacts extends rcube_addressbook
             break;
         }
 
-        $str .= is_array($rec['email']) ? $rec['email'][0] : $rec['email'];
+        if ($rec['email'] ?? null) {
+            $str .= is_array($rec['email']) ? $rec['email'][0] : $rec['email'];
+        }
         return mb_strtolower($str);
     }
 
@@ -1262,7 +1264,7 @@ class kolab_contacts extends rcube_addressbook
 
         // convert email, website, phone values
         foreach (array('email'=>'address', 'website'=>'url', 'phone'=>'number') as $col => $propname) {
-            if (is_array($record[$col])) {
+            if (is_array($record[$col] ?? null)) {
                 $values = $record[$col];
                 unset($record[$col]);
                 foreach ((array)$values as $i => $val) {
@@ -1272,7 +1274,7 @@ class kolab_contacts extends rcube_addressbook
             }
         }
 
-        if (is_array($record['address'])) {
+        if (is_array($record['address'] ?? null)) {
             $addresses = $record['address'];
             unset($record['address']);
             foreach ($addresses as $i => $adr) {
@@ -1288,7 +1290,7 @@ class kolab_contacts extends rcube_addressbook
         }
 
         // photo is stored as separate attachment
-        if ($record['photo'] && strlen($record['photo']) < 255 && !empty($record['_attachments'][$record['photo']])) {
+        if (($record['photo'] ?? null) && strlen($record['photo']) < 255 && !empty($record['_attachments'][$record['photo']])) {
             $att = $record['_attachments'][$record['photo']];
             // only fetch photo content if requested
             if ($this->action == 'photo') {

@@ -240,7 +240,7 @@ class kolab_addressbook extends rcube_plugin
             $source = $data[$id];
             $is_collapsed = strpos($this->rc->config->get('collapsed_abooks',''), '&'.rawurlencode($id).'&') !== false;
 
-            if ($folder->virtual) {
+            if (!empty($folder->virtual)) {
                 $source = $this->driver->abook_prop($folder->id, $folder);
             }
             else if (empty($source)) {

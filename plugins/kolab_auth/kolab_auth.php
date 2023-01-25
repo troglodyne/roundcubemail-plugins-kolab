@@ -656,7 +656,7 @@ class kolab_auth extends rcube_plugin
 
         // User name for identity (first log in)
         foreach ((array)$name_attr as $field) {
-            $name = is_array($record[$field]) ? $record[$field][0] : $record[$field];
+            $name = is_array($record[$field] ?? null) ? $record[$field][0] : ($record[$field] ?? null);
             if (!empty($name)) {
                 $this->data['user_name'] = $name;
                 break;

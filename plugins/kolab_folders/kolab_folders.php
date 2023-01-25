@@ -324,7 +324,7 @@ class kolab_folders extends rcube_plugin
         $ctype     = trim(rcube_utils::get_input_value('_ctype', rcube_utils::INPUT_POST));
         $subtype   = trim(rcube_utils::get_input_value('_subtype', rcube_utils::INPUT_POST));
         $mbox      = $args['record']['name'];
-        $old_mbox  = $args['record']['oldname'];
+        $old_mbox  = $args['record']['oldname'] ?? null;
         $subscribe = $args['record']['subscribe'];
 
         if (empty($ctype)) {

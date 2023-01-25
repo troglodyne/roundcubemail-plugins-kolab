@@ -457,7 +457,7 @@ class kolab_ldap extends rcube_ldap_generic
             $entry['displayname'] = rcube_addressbook::compose_search_name(
                 $entry,
                 $entry['email'],
-                $entry['name'],
+                $entry['name'] ?? null,
                 $this->conf['kolab_auth_user_displayname']
             );
         }
