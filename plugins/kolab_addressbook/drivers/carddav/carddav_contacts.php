@@ -524,7 +524,7 @@ class carddav_contacts extends rcube_addressbook
             $this->_fetch_groups();
             $count = count($this->distlists[$this->gid]['member']);
         }
-        else if (is_array($this->filter['ids'])) {
+        else if (isset($this->filter['ids']) && is_array($this->filter['ids'])) {
             $count = count($this->filter['ids']);
         }
         else {
@@ -728,14 +728,17 @@ class carddav_contacts extends rcube_addressbook
                 }
                 else {
                     // remove from distribution lists
-                    foreach ((array) $this->groupmembers[$id] as $gid) {
-                        if (!$is_mailto || $gid == $this->gid) {
-                            $this->remove_from_group($gid, $id);
+                    if (isset($this->groupmembers[$id])) {
+                        foreach ((array) $this->groupmembers[$id] as $gid) {
+                            if (!$is_mailto || $gid == $this->gid) {
+                                $this->remove_from_group($gid, $id);
+                            }
                         }
+
+                        // clear internal cache
+                        unset($this->groupmembers[$id]);
                     }
 
-                    // clear internal cache
-                    unset($this->groupmembers[$id]);
                     $count++;
                 }
             }
