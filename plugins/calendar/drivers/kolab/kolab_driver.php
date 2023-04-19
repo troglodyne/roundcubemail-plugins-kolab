@@ -596,7 +596,7 @@ class kolab_driver extends calendar_driver
     {
         if (is_array($event)) {
             $id  = !empty($event['id']) ? $event['id'] : $event['uid'];
-            $cal = $event['calendar'];
+            $cal = $event['calendar'] ?? null;
 
             // we're looking for a recurring instance: expand the ID to our internal convention for recurring instances
             if (empty($event['id']) && !empty($event['_instance'])) {
@@ -1810,12 +1810,12 @@ class kolab_driver extends calendar_driver
 
             foreach ($candidates as $id => $alarm) {
                 // skip dismissed alarms
-                if ($dbdata[$id]['dismissed']) {
+                if (!empty($dbdata[$id]['dismissed'])) {
                     continue;
                 }
 
                 // snooze function may have shifted alarm time
-                $notifyat = $dbdata[$id]['notifyat'] ? strtotime($dbdata[$id]['notifyat']) : $alarm['notifyat'];
+                $notifyat = !empty($dbdata[$id]['notifyat']) ? strtotime($dbdata[$id]['notifyat']) : $alarm['notifyat'];
                 if ($notifyat <= $time) {
                     $alarms[] = $alarm;
                 }
@@ -2257,7 +2257,7 @@ class kolab_driver extends calendar_driver
             }
 
             if (in_array($partstat, $partstats)) {
-                $event['className'] = trim($event['className'] . ' fc-invitation-' . strtolower($partstat));
+                $event['className'] = trim(($event['className'] ?? '') . ' fc-invitation-' . strtolower($partstat));
             }
         }
 

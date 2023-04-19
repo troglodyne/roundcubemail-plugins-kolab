@@ -28,8 +28,8 @@ use \Sabre\VObject\DateTimeParser;
  * Class to parse and build vCalendar (iCalendar) files
  *
  * Uses the Sabre VObject library, version 3.x.
- *
  */
+#[AllowDynamicProperties]
 class libcalendaring_vcalendar implements Iterator
 {
     private $timezone;
@@ -1280,7 +1280,7 @@ class libcalendaring_vcalendar implements Iterator
 
         if (!empty($event['attendees'])) {
             foreach ((array) $event['attendees'] as $attendee) {
-                if ($attendee['role'] == 'ORGANIZER') {
+                if (!empty($attendee['role']) && $attendee['role'] == 'ORGANIZER') {
                     if (empty($event['organizer']))
                         $event['organizer'] = $attendee;
                 }

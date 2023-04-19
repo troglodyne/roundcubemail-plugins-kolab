@@ -2116,7 +2116,7 @@ $("#rcmfd_new_category").keypress(function(event) {
         // check for organizer in attendees list
         $organizer = null;
         foreach ((array) $event['attendees'] as $i => $attendee) {
-            if ($attendee['role'] == 'ORGANIZER') {
+            if (!empty($attendee['role']) && $attendee['role'] == 'ORGANIZER') {
                 $organizer = $attendee;
             }
             if (!empty($attendee['status']) && $attendee['status'] == 'DELEGATED' && empty($attendee['rsvp'])) {
@@ -3380,7 +3380,7 @@ $("#rcmfd_new_category").keypress(function(event) {
                 '_instance' => isset($event['_instance']) ? $event['_instance'] : null,
                 'changed'   => is_object($event['changed']) ? $event['changed']->format('U') : 0,
                 'sequence'  => intval($event['sequence']),
-                'fallback'  => strtoupper($status),
+                'fallback'  => strtoupper((string) $status),
                 'method'    => $event['_method'],
                 'task'      => 'calendar',
             ];
@@ -3390,25 +3390,28 @@ $("#rcmfd_new_category").keypress(function(event) {
                 $organizer = null;
                 $emails = $this->get_user_emails();
                 foreach ($event['attendees'] as $i => $attendee) {
-                    if ($attendee['role'] == 'ORGANIZER') {
+                    $attendee_role = $attendee['role'] ?? null;
+                    $attendee_email = $attendee['email'] ?? null;
+
+                    if ($attendee_role == 'ORGANIZER') {
                         $organizer = $attendee;
                     }
-                    else if (!empty($attendee['email']) && in_array(strtolower($attendee['email']), $emails)) {
+                    else if ($attendee_email && in_array(strtolower($attendee_email), $emails)) {
                         $event['attendees'][$i]['status'] = strtoupper($status);
                         if (!in_array($event['attendees'][$i]['status'], ['NEEDS-ACTION', 'DELEGATED'])) {
                             $event['attendees'][$i]['rsvp'] = false;  // unset RSVP attribute
                         }
 
-                        $metadata['attendee'] = $attendee['email'];
-                        $metadata['rsvp']     = $attendee['role'] != 'NON-PARTICIPANT';
+                        $metadata['attendee'] = $attendee_email;
+                        $metadata['rsvp']     = $attendee_role != 'NON-PARTICIPANT';
 
-                        $reply_sender   = $attendee['email'];
+                        $reply_sender   = $attendee_email;
                         $event_attendee = $attendee;
                     }
                 }
 
                 // add attendee with this user's default identity if not listed
-                if (!$reply_sender) {
+                if (empty($reply_sender)) {
                     $sender_identity = $this->rc->user->list_emails(true);
                     $event['attendees'][] = [
                         'name'   => $sender_identity['name'],
@@ -3430,6 +3433,9 @@ $("#rcmfd_new_category").keypress(function(event) {
                     $existing = null;
                 }
 
+                $event_attendee   = null;
+                $update_attendees = [];
+
                 if ($existing) {
                     $calendar = $calendars[$existing['calendar']];
 
@@ -3439,9 +3445,6 @@ $("#rcmfd_new_category").keypress(function(event) {
                     // only update attendee status
                     if ($event['_method'] == 'REPLY') {
                         $existing_attendee_index  = -1;
-
-                        $event_attendee   = null;
-                        $update_attendees = [];
 
                         if ($attendee = $this->itip->find_reply_attendee($event)) {
                             $event_attendee       = $attendee;
@@ -3537,7 +3540,7 @@ $("#rcmfd_new_category").keypress(function(event) {
                         // show me as free when declined (#1670)
                         if ($status == 'declined'
                             || (!empty($event['status']) && $event['status'] == 'CANCELLED')
-                            || $event_attendee['role'] == 'NON-PARTICIPANT'
+                            || ($event_attendee && ($event_attendee['role'] ?? '') == 'NON-PARTICIPANT')
                         ) {
                             $event['free_busy'] = 'free';
                         }
@@ -3546,7 +3549,7 @@ $("#rcmfd_new_category").keypress(function(event) {
                     }
                     else if (!empty($status)) {
                         $existing['attendees'] = $event['attendees'];
-                        if ($status == 'declined' || $event_attendee['role'] == 'NON-PARTICIPANT') {
+                        if ($status == 'declined' || ($event_attendee && ($event_attendee['role'] ?? '') == 'NON-PARTICIPANT')) {
                             // show me as free when declined (#1670)
                             $existing['free_busy'] = 'free';
                         }
@@ -3559,7 +3562,7 @@ $("#rcmfd_new_category").keypress(function(event) {
                 else if (!$existing && ($status != 'declined' || $this->rc->config->get('kolab_invitation_calendars'))) {
                     if ($status == 'declined'
                         || $event['status'] == 'CANCELLED'
-                        || $event_attendee['role'] == 'NON-PARTICIPANT'
+                        || ($event_attendee && ($event_attendee['role'] ?? '') == 'NON-PARTICIPANT')
                     ) {
                         $event['free_busy'] = 'free';
                     }
@@ -3596,7 +3599,7 @@ $("#rcmfd_new_category").keypress(function(event) {
                     }
 
                     // save to the selected/default calendar
-                    if (!$master) {
+                    if (empty($master)) {
                         $event['calendar'] = $calendar['id'];
                         $success = $this->driver->new_event($event);
                     }

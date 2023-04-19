@@ -179,7 +179,7 @@ class caldav_calendar extends kolab_storage_dav_folder
             }
         }
 
-        return $this->events[$id];
+        return $this->events[$id] ?? null;
     }
 
     /**

@@ -564,7 +564,7 @@ class libcalendaring_itip
                 if ($attendee['email'] && in_array(strtolower($attendee['email']), $emails)) {
                     $status[strtolower($attendee['email'])] = $attendee['status'];
                 }
-                if ($attendee['role'] == 'ORGANIZER') {
+                if (!empty($attendee['role']) && $attendee['role'] == 'ORGANIZER') {
                     $attendee['status'] = 'ACCEPTED'; // sometimes is not set for exceptions
                     $existing['attendees'][$idx] = $attendee;
                 }
@@ -731,9 +731,10 @@ class libcalendaring_itip
 
             // check my status as an attendee
             foreach ($event['attendees'] as $attendee) {
-                if ($attendee['email'] && $attendee['role'] != 'ORGANIZER' && in_array(strtolower($attendee['email']), $emails)) {
+                $attendee_role = $attendee['role'] ?? '';
+                if (!empty($attendee['email']) && $attendee_role != 'ORGANIZER' && in_array(strtolower($attendee['email']), $emails)) {
                     $metadata['attendee'] = $attendee['email'];
-                    $metadata['rsvp']     = $attendee['rsvp'] || $attendee['role'] != 'NON-PARTICIPANT';
+                    $metadata['rsvp']     = $attendee['rsvp'] || $attendee_role != 'NON-PARTICIPANT';
                     $rsvp_status = !empty($attendee['status']) ? strtoupper($attendee['status']) : 'NEEDS-ACTION';
                     break;
                 }
