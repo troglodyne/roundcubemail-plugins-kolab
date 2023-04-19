@@ -1809,6 +1809,10 @@ class kolab_driver extends calendar_driver
             }
 
             foreach ($candidates as $id => $alarm) {
+                if (!array_key_exists($id, $dbdata)) {
+                    continue;
+                }
+
                 // skip dismissed alarms
                 if (!empty($dbdata[$id]['dismissed'])) {
                     continue;
