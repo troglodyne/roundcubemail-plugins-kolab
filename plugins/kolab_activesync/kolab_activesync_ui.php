@@ -135,7 +135,7 @@ class kolab_activesync_ui
                 $type = 'mail';
             }
 
-            if (!empty($folder_groups[$type])) {
+            if (array_key_exists($type, $folder_groups)) {
                 $folder_groups[$type][] = $folder;
 
                 if ($device_force_subscriptions && array_key_exists($folder, $device_force_subscriptions)) {
