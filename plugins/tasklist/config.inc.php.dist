@@ -1,7 +1,7 @@
 <?php
 
 // backend type (database, kolab, caldav)
-$config['tasklist_driver'] = 'database';
+$config['tasklist_driver'] = 'kolab';
 
 // CalDAV server location (required when tasklist_driver = caldav)
 $config['tasklist_caldav_server'] = "http://localhost";
