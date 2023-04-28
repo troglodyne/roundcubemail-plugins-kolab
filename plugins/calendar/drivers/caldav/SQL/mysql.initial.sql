@@ -1,6 +1,6 @@
-DROP TABLE `kolab_alarms` IF EXISTS;
+DROP TABLE IF EXISTS `kolab_alarms`;
 
-CREATE TABLE IF NOT EXISTS `kolab_alarms` (
+CREATE TABLE `kolab_alarms` (
   `alarm_id` VARCHAR(255) NOT NULL,
   `user_id` int(10) UNSIGNED NOT NULL,
   `notifyat` DATETIME DEFAULT NULL,
@@ -10,9 +10,9 @@ CREATE TABLE IF NOT EXISTS `kolab_alarms` (
     REFERENCES `users`(`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ROW_FORMAT=DYNAMIC ENGINE=INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-DROP TABLE `itipinvitations` IF EXISTS;
+DROP TABLE IF EXISTS `itipinvitations`;
 
-CREATE TABLE IF NOT EXISTS `itipinvitations` (
+CREATE TABLE `itipinvitations` (
   `token` VARCHAR(64) NOT NULL,
   `event_uid` VARCHAR(255) NOT NULL,
   `user_id` int(10) UNSIGNED NOT NULL DEFAULT '0',
