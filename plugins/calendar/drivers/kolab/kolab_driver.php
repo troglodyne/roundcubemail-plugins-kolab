@@ -1021,16 +1021,11 @@ class kolab_driver extends calendar_driver
 
             $old = $fromcalendar->get_event($event['id']);
 
-            if ($event['_savemode'] != 'new') {
+            if (empty($event['_savemode']) || $event['_savemode'] != 'new') {
                 if (!$fromcalendar->storage->move($old['uid'], $storage->storage)) {
                     return false;
                 }
-
-                $fromcalendar = $storage;
             }
-        }
-        else {
-            $fromcalendar = $storage;
         }
 
         $success  = false;

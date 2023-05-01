@@ -266,6 +266,25 @@ class kolab_storage_folder extends kolab_storage_folder_api
     }
 
     /**
+     * Getter for a single Kolab object identified by its UID
+     *
+     * @param string $uid Object UID
+     *
+     * @return array The Kolab object represented as hash array
+     */
+    public function get_object($uid)
+    {
+        if (!$this->valid || !$uid) {
+            return false;
+        }
+
+        // synchronize caches
+        $this->cache->synchronize();
+
+        return $this->cache->get_by_uid($uid);
+    }
+
+    /**
      * List Kolab objects matching the given query
      *
      * @param mixed Pseudo-SQL query as list of filter parameter triplets
@@ -363,25 +382,6 @@ class kolab_storage_folder extends kolab_storage_folder_api
         }
 
         return $query;
-    }
-
-    /**
-     * Getter for a single Kolab object identified by its UID
-     *
-     * @param string $uid Object UID
-     *
-     * @return array The Kolab object represented as hash array
-     */
-    public function get_object($uid)
-    {
-        if (!$this->valid || !$uid) {
-            return false;
-        }
-
-        // synchronize caches
-        $this->cache->synchronize();
-
-        return $this->cache->get_by_uid($uid);
     }
 
     /**

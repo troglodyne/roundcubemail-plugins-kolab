@@ -38,14 +38,6 @@ class kolab_storage_dav
     public function __construct($url)
     {
         $this->url = $url;
-        $this->setup();
-    }
-
-    /**
-     * Setup the environment
-     */
-    public function setup()
-    {
         $this->dav = new kolab_dav_client($this->url);
     }
 
@@ -58,7 +50,6 @@ class kolab_storage_dav
      */
     public function get_folders($type)
     {
-        // TODO: This should be cached
         $folders = $this->dav->listFolders($this->get_dav_type($type));
 
         if (is_array($folders)) {

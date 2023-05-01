@@ -921,6 +921,14 @@ class kolab_storage_cache
     }
 
     /**
+     * Reset the sync state, i.e. force sync when synchronize() is called again
+     */
+    public function reset()
+    {
+        $this->synched = null;
+    }
+
+    /**
      * Define ORDER BY clause for cache queries
      */
     public function set_order_by($sortcols)

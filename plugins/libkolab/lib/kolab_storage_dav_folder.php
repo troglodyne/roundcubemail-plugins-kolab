@@ -24,9 +24,15 @@
 #[AllowDynamicProperties]
 class kolab_storage_dav_folder extends kolab_storage_folder
 {
+    /** @var kolab_dav_client DAV Client */
     public $dav;
+
+    /** @var string Folder URL */
     public $href;
+
+    /** @var array Folder DAV attributes */
     public $attributes;
+
 
     /**
      * Object constructor
@@ -76,6 +82,13 @@ class kolab_storage_dav_folder extends kolab_storage_folder
      */
     public function get_ctag()
     {
+        // Refresh requested, get the current CTag from the DAV server
+        if ($this->attributes['ctag'] === false) {
+            if ($fresh = $this->dav->folderInfo($this->href)) {
+                $this->attributes['ctag'] = $fresh['ctag'];
+            }
+        }
+
         return $this->attributes['ctag'];
     }
 
@@ -330,6 +343,8 @@ class kolab_storage_dav_folder extends kolab_storage_folder
 
         if ($success) {
             $this->cache->set($uid, false);
+            $target_folder->reset();
+            $this->reset();
         }
 
         return $success;
@@ -460,6 +475,15 @@ class kolab_storage_dav_folder extends kolab_storage_folder
         }
 
         return $uids;
+    }
+
+    /**
+     * Reset the folder status
+     */
+    public function reset()
+    {
+        $this->cache->reset();
+        $this->attributes['ctag'] = false;
     }
 
     /**
