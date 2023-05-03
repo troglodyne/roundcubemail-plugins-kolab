@@ -761,17 +761,17 @@ class kolab_storage_cache
      * Select Kolab objects filtered by the given query
      *
      * @param array Pseudo-SQL query as list of filter parameter triplets
-     *   triplet: array('<colname>', '<comparator>', '<value>')
-     * @param boolean Set true to only return UIDs instead of complete objects
-     * @param boolean Use fast mode to fetch only minimal set of information
-     *                (no xml fetching and parsing, etc.)
+     *              triplet: array('<colname>', '<comparator>', '<value>')
+     * @param bool  Set true to only return UIDs instead of complete objects
+     * @param bool  Use fast mode to fetch only minimal set of information
+     *              (no xml fetching and parsing, etc.)
      *
-     * @return array List of Kolab data objects (each represented as hash array) or UIDs
+     * @return null|array|kolab_storage_dataset List of Kolab data objects
+     *                                          (each represented as hash array) or UIDs
      */
     public function select($query = array(), $uids = false, $fast = false)
     {
         $result = $uids ? array() : new kolab_storage_dataset($this);
-        $count = null;
 
         // read from local cache DB (assume it to be synchronized)
         if ($this->ready) {
@@ -779,11 +779,6 @@ class kolab_storage_cache
 
             // fetch full object data unless only uids are requested
             $fetchall = !$uids;
-
-            // skip SELECT if we know it will return nothing
-            if ($count === 0) {
-                return $result;
-            }
 
             $sql_query = "SELECT " . ($fetchall ? '*' : "`msguid` AS `_msguid`, `uid`")
                 . " FROM `{$this->cache_table}` WHERE `folder_id` = ?"

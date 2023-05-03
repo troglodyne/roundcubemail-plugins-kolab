@@ -414,19 +414,10 @@ class kolab_storage_dav_cache extends kolab_storage_cache
     public function select($query = [], $uids = false, $fast = false)
     {
         $result = $uids ? [] : new kolab_storage_dataset($this);
-        $count  = null;
 
         $this->_read_folder_data();
 
-        // fetch full object data on one query if a small result set is expected
-        $fetchall = !$uids && ($this->limit ? $this->limit[0] : ($count = $this->count($query))) < self::MAX_RECORDS;
-
-        // skip SELECT if we know it will return nothing
-        if ($count === 0) {
-            return $result;
-        }
-
-        $sql_query = "SELECT " . ($fetchall ? '*' : "`uid`")
+        $sql_query = "SELECT " . ($uids ? "`uid`" : '*')
             . " FROM `{$this->cache_table}` WHERE `folder_id` = ?"
             . $this->_sql_where($query)
             . (!empty($this->order_by) ? " ORDER BY " . $this->order_by : '');
@@ -445,13 +436,7 @@ class kolab_storage_dav_cache extends kolab_storage_cache
         }
 
         while ($sql_arr = $this->db->fetch_assoc($sql_result)) {
-            if ($uids) {
-                $result[] = $sql_arr['uid'];
-            }
-            else if (!$fetchall) {
-                $result[] = $sql_arr;
-            }
-            else if (($object = $this->_unserialize($sql_arr, true, $fast))) {
+            if (!$uids && ($object = $this->_unserialize($sql_arr, true, $fast))) {
                 $result[] = $object;
             }
             else {

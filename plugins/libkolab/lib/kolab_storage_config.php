@@ -26,7 +26,7 @@
 class kolab_storage_config
 {
     const FOLDER_TYPE   = 'configuration';
-    const MAX_RELATIONS = 499; // should be less than kolab_storage_cache::MAX_RECORDS
+    const MAX_RELATIONS = 499;
 
     /**
      * Singleton instace of kolab_storage_config
