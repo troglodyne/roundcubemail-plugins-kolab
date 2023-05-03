@@ -310,6 +310,7 @@ class kolab_format_contact extends kolab_format
 
         // organisation related properties (affiliation)
         $orgs = $this->obj->affiliations();
+        $org = null;
         if ($orgs->size()) {
             $org = $orgs->get(0);
             $object['organization']   = $org->organisation();

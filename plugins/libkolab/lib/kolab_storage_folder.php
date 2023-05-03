@@ -69,7 +69,7 @@ class kolab_storage_folder extends kolab_storage_folder_api
         }
 
         $oldtype = $this->type;
-        list($this->type, $suffix) = explode('.', $type_annotation);
+        list($this->type, $suffix) = array_pad(explode('.', $type_annotation), 2, null);
         $this->default      = $suffix == 'default';
         $this->subtype      = $this->default ? '' : $suffix;
         $this->id           = kolab_storage::folder_id($name);

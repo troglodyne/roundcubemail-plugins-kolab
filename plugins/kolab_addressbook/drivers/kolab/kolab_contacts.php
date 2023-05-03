@@ -476,6 +476,7 @@ class kolab_contacts extends rcube_addressbook
         }
 
         // advanced search
+        $advanced = false;
         if (is_array($value)) {
             $advanced = true;
             $value = array_map('mb_strtolower', $value);
