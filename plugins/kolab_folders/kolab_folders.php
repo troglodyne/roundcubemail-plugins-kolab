@@ -325,7 +325,7 @@ class kolab_folders extends rcube_plugin
         $subtype   = trim(rcube_utils::get_input_value('_subtype', rcube_utils::INPUT_POST));
         $mbox      = $args['record']['name'];
         $old_mbox  = $args['record']['oldname'] ?? null;
-        $subscribe = $args['record']['subscribe'];
+        $subscribe = $args['record']['subscribe'] ?? true;
 
         if (empty($ctype)) {
             return $args;
@@ -360,11 +360,8 @@ class kolab_folders extends rcube_plugin
 
         // Create folder
         if (!strlen($old_mbox)) {
-            // By default don't subscribe to non-mail folders
-            if ($subscribe)
-                $subscribe = (bool) preg_match('/^mail/', $ctype);
-
             $result = $storage->create_folder($mbox, $subscribe);
+
             // Set folder type
             if ($result) {
                 $this->set_folder_type($mbox, $ctype);
