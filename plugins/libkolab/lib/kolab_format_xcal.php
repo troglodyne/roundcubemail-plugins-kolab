@@ -135,6 +135,7 @@ abstract class kolab_format_xcal extends kolab_format
             );
         }
 
+        // Get the list of attendees (excluding the organizer)
         $role_map = array_flip($this->role_map);
         $cutype_map = array_flip($this->cutype_map);
         $part_status_map = array_flip($this->part_status_map);
@@ -142,7 +143,7 @@ abstract class kolab_format_xcal extends kolab_format
         for ($i=0; $i < $attvec->size(); $i++) {
             $attendee = $attvec->get($i);
             $cr = $attendee->contact();
-            if ($cr->email() != $object['organizer']['email']) {
+            if (empty($object['organizer']['email']) || strcasecmp($cr->email(), $object['organizer']['email'])) {
                 $delegators = $delegatees = array();
                 $vdelegators = $attendee->delegatedFrom();
                 for ($j=0; $j < $vdelegators->size(); $j++) {

@@ -765,8 +765,8 @@ function rcube_calendar_ui(settings)
 
         // select the correct organizer identity
         var identity_id = 0;
-        $.each(settings.identities, function(i,v){
-          if (organizer && typeof organizer == 'object' && v == organizer.email) {
+        $.each(settings.identities, function(i,v) {
+          if (organizer && typeof organizer == 'object' && organizer.email && v == organizer.email.toLowerCase()) {
             identity_id = i;
             return false;
           }

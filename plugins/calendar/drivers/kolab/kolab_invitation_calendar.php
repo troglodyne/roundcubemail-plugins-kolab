@@ -267,8 +267,8 @@ class kolab_invitation_calendar
                 if (!empty($event['attendees'])) {
                     foreach ($event['attendees'] as $attendee) {
                         if (
-                            in_array($attendee['email'], $user_emails)
-                            && in_array($attendee['status'], $this->partstats)
+                            !empty($attendee['email']) && in_array_nocase($attendee['email'], $user_emails)
+                            && !empty($attendee['status']) && in_array($attendee['status'], $this->partstats)
                         ) {
                             $match = true;
                             break;
