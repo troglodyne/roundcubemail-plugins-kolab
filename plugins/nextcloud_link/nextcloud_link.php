@@ -33,7 +33,7 @@ class nextcloud_link extends rcube_plugin
     {
         $this->rc = rcube::get_instance();
 
-        if ($this->rc->output->ajax_call || !empty($this->rc->output->env['framed'])) {
+        if ($this->rc->output->type !== 'html' || !empty($this->rc->output->env['framed'])) {
             return;
         }
 
