@@ -175,7 +175,7 @@ class kolab_format_event extends kolab_format_xcal
         }
 
         // organizer is part of the attendees list in Roundcube
-        if ($object['organizer']) {
+        if (!empty($object['organizer'])) {
             $object['organizer']['role'] = 'ORGANIZER';
             array_unshift($object['attendees'], $object['organizer']);
         }
@@ -183,9 +183,9 @@ class kolab_format_event extends kolab_format_xcal
         // status defines different event properties...
         $status = $this->obj->status();
         if ($status == kolabformat::StatusTentative)
-          $object['free_busy'] = 'tentative';
+            $object['free_busy'] = 'tentative';
         else if ($status == kolabformat::StatusCancelled)
-          $object['cancelled'] = true;
+            $object['cancelled'] = true;
 
         // this is an exception object
         if ($this->obj->recurrenceID()->isValid()) {
