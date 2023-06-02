@@ -256,7 +256,7 @@ class kolab_addressbook extends rcube_plugin
                 // copy group items...
                 if (preg_match('!<ul[^>]*>(.*)</ul>\n*$!Ums', $content, $m)) {
                     $child_html = $m[1] . $child_html;
-                    $content = substr($content, 0, -strlen($m[0]) - 1);
+                    $content = substr($content, 0, -strlen($m[0]));
                 }
                 // ... and re-create the subtree
                 if (!empty($child_html)) {
@@ -334,7 +334,7 @@ class kolab_addressbook extends rcube_plugin
 
         $out = html::tag('li', array(
                 'id' => 'rcmli' . rcube_utils::html_identifier($id, true),
-                'class' => join(' ', $classes), 
+                'class' => join(' ', $classes),
                 'noclose' => true,
             ),
             html::div(!empty($source['subscribed']) ? 'subscribed' : null, $inner)

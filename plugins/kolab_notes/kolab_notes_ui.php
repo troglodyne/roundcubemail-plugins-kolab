@@ -33,7 +33,7 @@ class kolab_notes_ui
         $this->plugin->include_stylesheet($this->plugin->local_skin_path() . '/notes.css');
 
         $this->ready = true;
-  }
+    }
 
     /**
     * Register handler methods for the template engine
@@ -83,7 +83,7 @@ class kolab_notes_ui
             $select = new html_select($attrib);
         }
 
-        $tree  = $is_select ? true : null;
+        $tree  = !$is_select ? true : null;
         $lists = $this->plugin->get_lists($tree);
         $jsenv = array();
 
