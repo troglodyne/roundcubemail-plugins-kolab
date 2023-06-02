@@ -219,7 +219,7 @@ class kolab_folders extends rcube_plugin
             return $args;
         }
 
-        if ($args['options']['is_root']) {
+        if (!empty($args['options']['is_root'])) {
             return $args;
         }
 
@@ -231,13 +231,15 @@ class kolab_folders extends rcube_plugin
         }
 
         // Get type of the folder or the parent
+        $subtype = '';
         if (strlen($mbox)) {
             list($ctype, $subtype) = $this->get_folder_type($mbox);
-            if (strlen($args['parent_name']) && $subtype == 'default')
+            if (strlen($args['parent_name']) && $subtype == 'default') {
                 $subtype = ''; // there can be only one
+            }
         }
 
-        if (!$ctype) {
+        if (empty($ctype)) {
             $ctype = 'mail';
         }
 
@@ -297,13 +299,13 @@ class kolab_folders extends rcube_plugin
         $args['form']['props']['fieldsets']['settings']['content']['folderctype'] = array(
             'label' => $this->gettext('folderctype'),
             'value' => html::div('input-group',
-                $type_select->show(isset($new_ctype) ? $new_ctype : $ctype)
-                . $sub_select->show(isset($new_subtype) ? $new_subtype : $subtype)
+                $type_select->show($new_ctype ?? $ctype)
+                . $sub_select->show($new_subtype ?? $subtype)
             ),
         );
 
         $this->rc->output->set_env('kolab_folder_subtypes', $sub_types);
-        $this->rc->output->set_env('kolab_folder_subtype', isset($new_subtype) ? $new_subtype : $subtype);
+        $this->rc->output->set_env('kolab_folder_subtype', $new_subtype ?? $subtype);
 
         $this->add_expire_input($args['form'], $args['name'], $ctype);
 

@@ -169,7 +169,7 @@ class kolab_storage
      * Get a list of storage folders for the given data type
      *
      * @param string Data type to list folders for (contact,distribution-list,event,task,note)
-     * @param boolean Enable to return subscribed folders only (null to use configured subscription mode)
+     * @param bool   Enable to return subscribed folders only (null to use configured subscription mode)
      *
      * @return array List of Kolab_Folder objects (folder names in UTF7-IMAP)
      */
@@ -334,8 +334,9 @@ class kolab_storage
     /**
      * Creates folder ID from folder name
      *
-     * @param string  $folder Folder name (UTF7-IMAP)
-     * @param boolean $enc    Use lossless encoding
+     * @param string $folder Folder name (UTF7-IMAP)
+     * @param bool   $enc    Use lossless encoding
+     *
      * @return string Folder ID string
      */
     public static function folder_id($folder, $enc = null)
@@ -850,7 +851,7 @@ class kolab_storage
      * @param string  Optional root folder
      * @param string  Optional name pattern
      * @param string  Data type to list folders for (contact,event,task,journal,file,note,mail,configuration)
-     * @param boolean Enable to return subscribed folders only (null to use configured subscription mode)
+     * @param bool    Enable to return subscribed folders only (null to use configured subscription mode)
      * @param array   Will be filled with folder-types data
      *
      * @return array List of folders
@@ -1216,18 +1217,20 @@ class kolab_storage
      * @param string $folder Folder name
      * @param string $type   Content type
      *
-     * @return boolean True on success
+     * @return bool True on success
      */
-    public static function set_folder_type($folder, $type='mail')
+    public static function set_folder_type($folder, $type = 'mail')
     {
         self::setup();
 
-        list($ctype, $subtype) = explode('.', $type);
+        list($ctype, $subtype) = strpos($type, '.') !== false ? explode('.', $type) : array($type, null);
 
         $success = self::$imap->set_metadata($folder, array(self::CTYPE_KEY => $ctype, self::CTYPE_KEY_PRIVATE => $subtype ? $type : null));
 
-        if (!$success)  // fallback: only set private annotation
+        if (!$success) {
+            // fallback: only set private annotation
             $success |= self::$imap->set_metadata($folder, array(self::CTYPE_KEY_PRIVATE => $type));
+        }
 
         return $success;
     }
@@ -1236,9 +1239,9 @@ class kolab_storage
      * Check subscription status of this folder
      *
      * @param string $folder Folder name
-     * @param boolean $temp  Include temporary/session subscriptions
+     * @param bool   $temp  Include temporary/session subscriptions
      *
-     * @return boolean True if subscribed, false if not
+     * @return bool True if subscribed, false if not
      */
     public static function folder_is_subscribed($folder, $temp = false)
     {
@@ -1257,9 +1260,9 @@ class kolab_storage
      * Change subscription status of this folder
      *
      * @param string $folder Folder name
-     * @param boolean $temp  Only subscribe temporarily for the current session
+     * @param bool   $temp   Only subscribe temporarily for the current session
      *
-     * @return True on success, false on error
+     * @return bool True on success, false on error
      */
     public static function folder_subscribe($folder, $temp = false)
     {
@@ -1287,9 +1290,9 @@ class kolab_storage
      * Change subscription status of this folder
      *
      * @param string $folder Folder name
-     * @param boolean $temp  Only remove temporary subscription
+     * @param bool   $temp   Only remove temporary subscription
      *
-     * @return True on success, false on error
+     * @return bool True on success, false on error
      */
     public static function folder_unsubscribe($folder, $temp = false)
     {
@@ -1315,7 +1318,7 @@ class kolab_storage
      *
      * @param string $folder Folder name
      *
-     * @return boolean True if active, false if not
+     * @return bool True if active, false if not
      */
     public static function folder_is_active($folder)
     {
@@ -1329,7 +1332,7 @@ class kolab_storage
      *
      * @param string $folder Folder name
      *
-     * @return True on success, false on error
+     * @return bool True on success, false on error
      */
     public static function folder_activate($folder)
     {
@@ -1343,7 +1346,7 @@ class kolab_storage
      *
      * @param string $folder Folder name
      *
-     * @return True on success, false on error
+     * @return bool True on success, false on error
      */
     public static function folder_deactivate($folder)
     {
@@ -1591,8 +1594,8 @@ class kolab_storage
     /**
      * Get a list of (virtual) top-level folders from the other users namespace
      *
-     * @param string  Data type to list folders for (contact,event,task,journal,file,note,mail,configuration)
-     * @param boolean Enable to return subscribed folders only (null to use configured subscription mode)
+     * @param string Data type to list folders for (contact,event,task,journal,file,note,mail,configuration)
+     * @param bool   Enable to return subscribed folders only (null to use configured subscription mode)
      *
      * @return array List of kolab_storage_folder_user objects
      */

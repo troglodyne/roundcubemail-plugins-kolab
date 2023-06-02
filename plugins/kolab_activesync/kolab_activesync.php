@@ -84,7 +84,7 @@ class kolab_activesync extends rcube_plugin
      */
     function folder_form($args)
     {
-        $mbox_imap = $args['options']['name'];
+        $mbox_imap = $args['options']['name'] ?? '';
 
         // Edited folder name (empty in create-folder mode)
         if (!strlen($mbox_imap)) {
