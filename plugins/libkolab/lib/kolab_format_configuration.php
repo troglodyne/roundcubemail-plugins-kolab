@@ -65,7 +65,7 @@ class kolab_format_configuration extends kolab_format
         case 'file_driver':
             $driver = new FileDriver($object['driver'], $object['title']);
 
-            $driver->setEnabled((bool) $object['enabled']);
+            $driver->setEnabled(!empty($object['enabled']));
 
             foreach ($this->driver_settings_fields as $field) {
                 $value = $object[$field];
@@ -78,7 +78,7 @@ class kolab_format_configuration extends kolab_format
             break;
 
         case 'relation':
-            $relation = new Relation(strval($object['name']), strval($object['category']));
+            $relation = new Relation(strval($object['name'] ?? ''), strval($object['category'] ?? ''));
 
             if (!empty($object['color'])) {
                 $relation->setColor($object['color']);

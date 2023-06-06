@@ -239,13 +239,13 @@ class kolab_format_event extends kolab_format_xcal
         $recurrence_id_format = libkolab::recurrence_id_format($object);
         $instance_id = $recurrence_id instanceof DateTimeInterface ? $recurrence_id->format($recurrence_id_format) : strval($recurrence_id);
 
-        if ($object['recurrence_date'] instanceof DateTimeInterface) {
+        if (!empty($object['recurrence_date']) && $object['recurrence_date'] instanceof DateTimeInterface) {
             if ($object['recurrence_date']->format($recurrence_id_format) == $instance_id) {
                 $result = $object;
             }
         }
 
-        if (!$result && is_array($object['exceptions'])) {
+        if (!$result && !empty($object['exceptions']) && is_array($object['exceptions'])) {
             foreach ($object['exceptions'] as $exception) {
                 if ($exception['_instance'] == $instance_id) {
                     $result = $exception;

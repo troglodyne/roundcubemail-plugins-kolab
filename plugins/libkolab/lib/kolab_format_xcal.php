@@ -423,14 +423,14 @@ abstract class kolab_format_xcal extends kolab_format
 
         if (!empty($object['recurrence']['FREQ'])) {
             $freq     = $object['recurrence']['FREQ'];
-            $bysetpos = explode(',', $object['recurrence']['BYSETPOS']);
+            $bysetpos = isset($object['recurrence']['BYSETPOS']) ? explode(',', $object['recurrence']['BYSETPOS']) : [];
 
             $rr->setFrequency($this->rrule_type_map[$freq]);
 
             if ($object['recurrence']['INTERVAL'])
                 $rr->setInterval(intval($object['recurrence']['INTERVAL']));
 
-            if ($object['recurrence']['BYDAY']) {
+            if (!empty($object['recurrence']['BYDAY'])) {
                 $byday = new vectordaypos;
                 foreach (explode(',', $object['recurrence']['BYDAY']) as $day) {
                     $occurrence = 0;
@@ -455,31 +455,37 @@ abstract class kolab_format_xcal extends kolab_format
                 $rr->setByday($byday);
             }
 
-            if ($object['recurrence']['BYMONTHDAY']) {
+            if (!empty($object['recurrence']['BYMONTHDAY'])) {
                 $bymday = new vectori;
-                foreach (explode(',', $object['recurrence']['BYMONTHDAY']) as $day)
+                foreach (explode(',', $object['recurrence']['BYMONTHDAY']) as $day) {
                     $bymday->push(intval($day));
+                }
                 $rr->setBymonthday($bymday);
             }
 
-            if ($object['recurrence']['BYMONTH']) {
+            if (!empty($object['recurrence']['BYMONTH'])) {
                 $bymonth = new vectori;
                 foreach (explode(',', $object['recurrence']['BYMONTH']) as $month)
                     $bymonth->push(intval($month));
                 $rr->setBymonth($bymonth);
             }
 
-            if ($object['recurrence']['COUNT'])
+            if (!empty($object['recurrence']['COUNT'])) {
                 $rr->setCount(intval($object['recurrence']['COUNT']));
-            else if ($object['recurrence']['UNTIL'])
+            }
+            else if (!empty($object['recurrence']['UNTIL'])) {
                 $rr->setEnd(self::get_datetime($object['recurrence']['UNTIL'], null, true, $start_tz));
+            }
 
             if ($rr->isValid()) {
                 // add exception dates (only if recurrence rule is valid)
-                $exdates = new vectordatetime;
-                foreach ((array)$object['recurrence']['EXDATE'] as $exdate)
-                    $exdates->push(self::get_datetime($exdate, null, true, $start_tz));
-                $this->obj->setExceptionDates($exdates);
+                if (!empty($object['recurrence']['EXDATE'])) {
+                    $exdates = new vectordatetime;
+                    foreach ((array)$object['recurrence']['EXDATE'] as $exdate) {
+                        $exdates->push(self::get_datetime($exdate, null, true, $start_tz));
+                    }
+                    $this->obj->setExceptionDates($exdates);
+                }
             }
             else {
                 rcube::raise_error(array(
@@ -495,8 +501,9 @@ abstract class kolab_format_xcal extends kolab_format
         // save recurrence dates (aka RDATE)
         if (!empty($object['recurrence']['RDATE'])) {
             $rdates = new vectordatetime;
-            foreach ((array)$object['recurrence']['RDATE'] as $rdate)
+            foreach ((array)$object['recurrence']['RDATE'] as $rdate) {
                 $rdates->push(self::get_datetime($rdate, null, true, $start_tz));
+            }
             $this->obj->setRecurrenceDates($rdates);
         }
 

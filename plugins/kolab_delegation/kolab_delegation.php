@@ -473,7 +473,7 @@ class kolab_delegation extends rcube_plugin
             $delegate = $engine->delegate_get($id);
         }
 
-        if ($delegate) {
+        if (!empty($delegate)) {
             $input = new html_hiddenfield(array('name' => $field_id, 'id' => $field_id, 'size' => 40));
             $input = rcube::Q($delegate['name']) . $input->show($id);
 
@@ -511,7 +511,7 @@ class kolab_delegation extends rcube_plugin
             $delegate = $engine->delegate_get($id);
         }
 
-        $folder_data   = $engine->list_folders($delegate['uid']);
+        $folder_data   = $engine->list_folders(!empty($delegate) ? $delegate['uid'] : null);
         $use_fieldsets = rcube_utils::get_boolean($attrib['use-fieldsets']);
         $rights        = array();
         $folder_groups = array();
@@ -520,6 +520,8 @@ class kolab_delegation extends rcube_plugin
             $folder_groups[$folder['type']][] = $folder_name;
             $rights[$folder_name] = $folder['rights'];
         }
+
+        $html = '';
 
         // build block for every folder type
         foreach ($folder_groups as $type => $group) {
@@ -550,8 +552,8 @@ class kolab_delegation extends rcube_plugin
     private function delegate_folders_block($a_folders, $attrib, $rights)
     {
         $path      = 'plugins/kolab_delegation/' . $this->skin_path . '/';
-        $read_ico  = $attrib['readicon'] ? html::img(array('src' =>  $path . $attrib['readicon'], 'title' => $this->gettext('read'))) : '';
-        $write_ico = $attrib['writeicon'] ? html::img(array('src' => $path . $attrib['writeicon'], 'title' => $this->gettext('write'))) : '';
+        $read_ico  = !empty($attrib['readicon']) ? html::img(array('src' =>  $path . $attrib['readicon'], 'title' => $this->gettext('read'))) : '';
+        $write_ico = !empty($attrib['writeicon']) ? html::img(array('src' => $path . $attrib['writeicon'], 'title' => $this->gettext('write'))) : '';
 
         $table = new html_table(array('cellspacing' => 0, 'class' => 'table-striped'));
         $table->add_header(array('class' => 'read checkbox-cell', 'title' => $this->gettext('read'), 'tabindex' => 0), $read_ico);

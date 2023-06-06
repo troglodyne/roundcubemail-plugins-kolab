@@ -445,7 +445,7 @@ class kolab_tags_engine
                 $class  = 'rcube_result_' . ($args['threading'] ? 'thread' : 'index');
                 $result = $args['threading'] ? '* THREAD' : '* SORT';
 
-                $args['result'] = new $class($folder, $result);
+                $args['result'] = new $class($args['folder'] ?? 'INBOX', $result);
             }
         }
 

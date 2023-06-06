@@ -38,6 +38,7 @@ class kolab_delegation_engine
     private $ldap_dn;
     private $cache = array();
     private $folder_types = array('mail', 'event', 'task');
+    private $supported;
 
     const ACL_READ  = 1;
     const ACL_WRITE = 2;
@@ -378,7 +379,7 @@ class kolab_delegation_engine
         // Definition of read and write ACL
         $right_types = $this->right_types();
 
-        $delegate_lc = strtolower($delegate);
+        $delegate_lc = strtolower((string) $delegate);
 
         foreach ($folders as $folder) {
             // get only folders in personal namespace
@@ -387,8 +388,8 @@ class kolab_delegation_engine
             }
 
             $rights = null;
-            $type   = $metadata[$folder] ?: 'mail';
-            list($class, $subclass) = explode('.', $type);
+            $type   = !empty($metadata[$folder]) ? $metadata[$folder] : 'mail';
+            list($class, $subclass) = strpos($type, '.') ? explode('.', $type) : [$type, ''];
 
             if (!in_array($class, $this->folder_types)) {
                 continue;
@@ -398,7 +399,7 @@ class kolab_delegation_engine
             if ($delegate) {
                 // @TODO: cache ACL
                 $imap_acl = $storage->get_acl($folder);
-                if (!empty($imap_acl) && (($acl = $imap_acl[$delegate]) || ($acl = $imap_acl[$delegate_lc]))) {
+                if (!empty($imap_acl) && (($acl = ($imap_acl[$delegate] ?? null)) || ($acl = ($imap_acl[$delegate_lc] ?? null)))) {
                     if ($this->acl_compare($acl, $right_types[self::ACL_WRITE])) {
                         $rights = self::ACL_WRITE;
                     }

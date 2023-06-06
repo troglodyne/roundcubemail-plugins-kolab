@@ -335,15 +335,15 @@ class tasklist_kolab_driver extends tasklist_driver
         $this->_read_lists();
 
         // create list and folder instance if necesary
-        if (!$this->lists[$id]) {
+        if (empty($this->lists[$id])) {
             $folder = kolab_storage::get_folder(kolab_storage::id_decode($id));
-            if ($folder->type) {
+            if ($folder && $folder->type) {
                 $this->folders[$id] = $folder;
                 $this->lists[$id] = $this->folder_props($folder, $this->rc->config->get('kolab_tasklists', array()));
             }
         }
 
-        return $this->folders[$id];
+        return $this->folders[$id] ?? null;
     }
 
 
@@ -455,8 +455,8 @@ class tasklist_kolab_driver extends tasklist_driver
                 $ret |= $folder->activate(intval($prop['active']));
 
             // apply to child folders, too
-            if ($prop['recursive']) {
-                foreach ((array)kolab_storage::list_folders($folder->name, '*', 'task') as $subfolder) {
+            if (!empty($prop['recursive'])) {
+                foreach ((array) kolab_storage::list_folders($folder->name, '*', 'task') as $subfolder) {
                     if (isset($prop['permanent']))
                         ($prop['permanent'] ? kolab_storage::folder_subscribe($subfolder) : kolab_storage::folder_unsubscribe($subfolder));
                     if (isset($prop['active']))
@@ -640,13 +640,13 @@ class tasklist_kolab_driver extends tasklist_driver
 
         // query Kolab storage
         $query = array();
-        if ($filter['mask'] & tasklist::FILTER_MASK_COMPLETE)
+        if (!empty($filter['mask']) && $filter['mask'] & tasklist::FILTER_MASK_COMPLETE)
             $query[] = array('tags','~','x-complete');
         else if (empty($filter['since']))
             $query[] = array('tags','!~','x-complete');
 
         // full text search (only works with cache enabled)
-        if ($filter['search']) {
+        if (!empty($filter['search'])) {
             $search = mb_strtolower($filter['search']);
             foreach (rcube_utils::normalize_string($search, true) as $word) {
                 $query[] = array('words', '~', $word);

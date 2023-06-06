@@ -1273,7 +1273,7 @@ class kolab_storage
             if (self::folder_is_subscribed($folder)) {
                 return true;
             }
-            else if (!is_array($_SESSION['kolab_subscribed_folders']) || !in_array($folder, $_SESSION['kolab_subscribed_folders'])) {
+            else if (empty($_SESSION['kolab_subscribed_folders']) || !in_array($folder, $_SESSION['kolab_subscribed_folders'])) {
                 $_SESSION['kolab_subscribed_folders'][] = $folder;
                 return true;
             }
@@ -1300,7 +1300,7 @@ class kolab_storage
 
         // temporary/session subscription
         if ($temp) {
-            if (is_array($_SESSION['kolab_subscribed_folders']) && ($i = array_search($folder, $_SESSION['kolab_subscribed_folders'])) !== false) {
+            if (!empty($_SESSION['kolab_subscribed_folders']) && ($i = array_search($folder, $_SESSION['kolab_subscribed_folders'])) !== false) {
                 unset($_SESSION['kolab_subscribed_folders'][$i]);
             }
             return true;
@@ -1608,7 +1608,7 @@ class kolab_storage
             $other_ns = rtrim(self::namespace_root('other'), $delimiter);
             $path_len = count(explode($delimiter, $other_ns));
 
-            foreach ((array)self::list_folders($other_ns . $delimiter, '*', '', $subscribed) as $foldername) {
+            foreach ((array) self::list_folders($other_ns . $delimiter, '*', '', $subscribed) as $foldername) {
                 if ($foldername == 'INBOX')  // skip INBOX which is added by default
                     continue;
 
@@ -1622,16 +1622,16 @@ class kolab_storage
                 // truncate folder path to top-level folders of the 'other' namespace
                 $foldername = join($delimiter, array_slice($path, 0, $path_len + 1));
 
-                if (!$folders[$foldername]) {
+                if (empty($folders[$foldername])) {
                     $folders[$foldername] = new kolab_storage_folder_user($foldername, $other_ns);
                 }
             }
 
             // for every (subscribed) user folder, list all (unsubscribed) subfolders
             foreach ($folders as $userfolder) {
-                foreach ((array)self::list_folders($userfolder->name . $delimiter, '*', $type, false, $folderdata) as $foldername) {
-                    if (!$folders[$foldername]) {
-                        $folders[$foldername] = new kolab_storage_folder($foldername, $type, $folderdata[$foldername]);
+                foreach ((array) self::list_folders($userfolder->name . $delimiter, '*', $type, false, $folderdata) as $foldername) {
+                    if (empty($folders[$foldername])) {
+                        $folders[$foldername] = new kolab_storage_folder($foldername, $type, $folderdata[$foldername] ?? null);
                         $userfolder->children[] = $folders[$foldername];
                     }
                 }

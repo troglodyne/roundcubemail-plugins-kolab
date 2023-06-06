@@ -532,7 +532,7 @@ class kolab_folders extends rcube_plugin
     /**
      * Checks if IMAP server supports any of METADATA, ANNOTATEMORE, ANNOTATEMORE2
      *
-     * @return boolean
+     * @return bool
      */
     function metadata_support()
     {
@@ -552,7 +552,13 @@ class kolab_folders extends rcube_plugin
      */
     function get_folder_type($folder)
     {
-        return explode('.', (string)kolab_storage::folder_type($folder));
+        $type = explode('.', (string)kolab_storage::folder_type($folder));
+
+        if (!isset($type[1])) {
+            $type[1] = null;
+        }
+
+        return $type;
     }
 
     /**
@@ -561,7 +567,7 @@ class kolab_folders extends rcube_plugin
      * @param string $folder Folder name
      * @param string $type   Content type
      *
-     * @return boolean True on success
+     * @return bool True on success
      */
     function set_folder_type($folder, $type = 'mail')
     {

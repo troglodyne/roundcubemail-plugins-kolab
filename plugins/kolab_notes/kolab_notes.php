@@ -484,10 +484,9 @@ class kolab_notes extends rcube_plugin
                 // post-filter search results
                 if (strlen($search)) {
                     $matches = 0;
-                    $contents = mb_strtolower(
-                        $record['title'] .
-                        ($this->is_html($record) ? strip_tags($record['description']) : $record['description'])
-                    );
+                    $desc = $this->is_html($record) ? strip_tags($record['description']) : ($record['description'] ?? '');
+                    $contents = mb_strtolower($record['title'] . $desc);
+
                     foreach ($words as $word) {
                         if (mb_strpos($contents, $word) !== false) {
                             $matches++;
@@ -615,7 +614,7 @@ class kolab_notes extends rcube_plugin
         $action = rcube_utils::get_input_value('_do', rcube_utils::INPUT_POST);
         $note   = rcube_utils::get_input_value('_data', rcube_utils::INPUT_POST, true);
 
-        $success = $silent = false;
+        $success = $silent = $refresh = false;
         switch ($action) {
             case 'new':
             case 'edit':
@@ -1266,7 +1265,9 @@ class kolab_notes extends rcube_plugin
     private function is_html($note)
     {
         // check for opening and closing <html> or <body> tags
-        return (preg_match('/<(html|body)(\s+[a-z]|>)/', $note['description'], $m) && strpos($note['description'], '</'.$m[1].'>') > 0);
+        return !empty($note['description'])
+            && preg_match('/<(html|body)(\s+[a-z]|>)/', $note['description'], $m)
+            && strpos($note['description'], '</' . $m[1] . '>') > 0;
     }
 
     /**

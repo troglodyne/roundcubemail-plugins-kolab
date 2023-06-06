@@ -609,7 +609,7 @@ class kolab_storage_folder extends kolab_storage_folder_api
 
         // copy attachments from old message
         $copyfrom = $object['_copyfrom'] ?? ($object['_msguid'] ?? null);
-        if (!empty($copyfrom) && ($old = $this->cache->get($copyfrom, $type, $object['_mailbox']))) {
+        if (!empty($copyfrom) && ($old = $this->cache->get($copyfrom, $type, $object['_mailbox'])) && !empty($old['_attachments'])) {
             foreach ((array)$old['_attachments'] as $key => $att) {
                 if (!isset($object['_attachments'][$key])) {
                     $object['_attachments'][$key] = $old['_attachments'][$key];
@@ -1003,7 +1003,7 @@ class kolab_storage_folder extends kolab_storage_folder_api
         foreach ((array)($object['_attachments'] ?? []) as $key => $att) {
             if (empty($att['content']) && !empty($att['id'])) {
                 // @TODO: use IMAP CATENATE to skip attachment fetch+push operation
-                $msguid = $object['_copyfrom'] ?: ($object['_msguid'] ?: $object['uid']);
+                $msguid = !empty($object['_copyfrom']) ? $object['_copyfrom'] : (!empty($object['_msguid']) ? $object['_msguid'] : $object['uid']);
                 if ($is_file) {
                     $att['path'] = tempnam($temp_dir, 'rcmAttmnt');
                     if (($fp = fopen($att['path'], 'w')) && $this->get_attachment($msguid, $att['id'], $object['_mailbox'], false, $fp, true)) {

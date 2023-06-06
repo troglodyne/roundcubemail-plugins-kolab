@@ -60,8 +60,9 @@ class kolab_format_distributionlist extends kolab_format
                 continue;
             }
 
-            if (!$seen[$key]++) {
+            if (empty($seen[$key])) {
                 $members->push($m);
+                $seen[$key] = true;
             }
             else {
                 // remove dupes for caching

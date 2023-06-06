@@ -778,14 +778,17 @@ class kolab_contacts extends rcube_addressbook
                 }
                 else {
                     // remove from distribution lists
-                    foreach ((array) $this->groupmembers[$id] as $gid) {
-                        if (!$is_mailto || $gid == $this->gid) {
-                            $this->remove_from_group($gid, $id);
+                    if (!empty($this->groupmembers[$id])) {
+                        foreach ((array) $this->groupmembers[$id] as $gid) {
+                            if (!$is_mailto || $gid == $this->gid) {
+                                $this->remove_from_group($gid, $id);
+                            }
                         }
+
+                        // clear internal cache
+                        unset($this->groupmembers[$id]);
                     }
 
-                    // clear internal cache
-                    unset($this->groupmembers[$id]);
                     $count++;
                 }
             }
@@ -1398,7 +1401,7 @@ class kolab_contacts extends rcube_addressbook
                 'birthday' => '',
                 'anniversary' => '',
                 'freebusyurl' => '',
-                'photo' => $contact['photo']
+                'photo' => $contact['photo'] ?? null
             );
     }
 }

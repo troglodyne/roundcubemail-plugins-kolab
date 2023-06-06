@@ -812,7 +812,7 @@ class kolab_calendar extends kolab_storage_folder_api
 
             // Modify invitation status class name, when invitation calendars are disabled
             // we'll use opacity only for declined/needs-action events
-            $record['className'] = str_replace('-invitation', '', $record['className']);
+            $record['className'] = str_replace('-invitation', '', $record['className'] ?? '');
         }
 
         // add instance identifier to first occurrence (master event)
