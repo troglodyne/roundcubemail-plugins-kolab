@@ -83,7 +83,8 @@ class kolab_format_event extends kolab_format_xcal
             $vexceptions = new vectorevent;
             foreach ($object['exceptions'] as $i => $exception) {
                 $exevent = new kolab_format_event;
-                $exevent->set($compacted = $this->compact_exception($exception, $object));  // only save differing values
+                $compacted = $this->compact_exception($exception, $object);
+                $exevent->set($compacted);  // only save differing values
 
                 // get value for recurrence-id
                 $recurrence_id = null;
