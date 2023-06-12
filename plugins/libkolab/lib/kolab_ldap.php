@@ -510,7 +510,7 @@ class kolab_ldap extends rcube_ldap_generic
         // if not set it means we use this LDAP object for other
         // purposes, e.g. kolab_delegation, then username with
         // correct domain is in a session
-        if (!$user) {
+        if (!$user && !empty($_SESSION['username'])) {
             $user = $_SESSION['username'];
         }
 
@@ -533,7 +533,7 @@ class kolab_ldap extends rcube_ldap_generic
             }
 
             // realmed username (with domain)
-            if (strpos($user, '@')) {
+            if ($user && strpos($user, '@')) {
                 list($usr, $dom) = explode('@', $user);
 
                 // unrealm domain, user login can contain a domain alias

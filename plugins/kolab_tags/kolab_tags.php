@@ -28,6 +28,8 @@ class kolab_tags extends rcube_plugin
     public $home;
 
     private $engine;
+    private $mail_headers_done = false;
+
 
     public function init()
     {

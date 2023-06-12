@@ -361,7 +361,7 @@ class kolab_tags_engine
 
         foreach ($taglist as $tag) {
             $tag = $this->parse_tag($tag, true, false);
-            if (in_array($uid, (array)$tag['uids'][$folder])) {
+            if (!empty($tag['uids'][$folder]) && in_array($uid, (array) $tag['uids'][$folder])) {
                 unset($tag['uids']);
                 $tags[] = $tag;
             }

@@ -346,7 +346,7 @@ class kolab_invitation_calendar
         // set classes according to PARTSTAT
         $event = kolab_driver::add_partstat_class($event, $this->partstats);
 
-        if (strpos($event['className'], 'fc-invitation-') !== false) {
+        if (!empty($event['className']) && strpos($event['className'], 'fc-invitation-') !== false) {
             $event['calendar'] = $this->id;
         }
 

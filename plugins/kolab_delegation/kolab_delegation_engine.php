@@ -531,7 +531,7 @@ class kolab_delegation_engine
             'realname' => $realname,
             'imap_uid' => $imap_uid,
             'email'    => $email,
-            'organization' => $organization,
+            'organization' => $organization ?? null,
         );
     }
 

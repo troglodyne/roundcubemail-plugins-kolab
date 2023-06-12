@@ -778,10 +778,10 @@ class kolab_storage_config
         }
 
         foreach ($tags as $tag) {
-            if ($search_uid && in_array($search_uid, (array) $tag['members'])) {
+            if (!empty($search_uid) && in_array($search_uid, (array) $tag['members'])) {
                 $result[] = $tag;
             }
-            else if ($search_msg) {
+            else if (!empty($search_msg)) {
                 foreach ($tag['members'] as $m) {
                     if (strpos($m, $search_msg) !== false) {
                         $result[] = $tag;

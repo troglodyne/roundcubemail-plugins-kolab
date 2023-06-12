@@ -358,7 +358,7 @@ class libkolab extends rcube_plugin
      */
     public static function recurrence_id_format($event)
     {
-        return $event['allday'] ? 'Ymd' : 'Ymd\THis';
+        return !empty($event['allday']) ? 'Ymd' : 'Ymd\THis';
     }
 
     /**

@@ -216,11 +216,11 @@ class libcalendaring_itip
             $replying_attendee = null;
             $reply_attendees = array();
             foreach ($event['attendees'] as $attendee) {
-                if ($attendee['role'] == 'ORGANIZER') {
+                if (!empty($attendee['role']) && $attendee['role'] == 'ORGANIZER') {
                     $reply_attendees[] = $attendee;
                 }
                 // we accept on behalf of a resource
-                else if (strcasecmp($attendee['email'], $event['_resource']) == 0) {
+                else if (isset($event['_resource']) && strcasecmp($attendee['email'], $event['_resource']) == 0) {
                     $replying_attendee = $attendee;
                     $replying_attendee['sent-by'] = 'mailto:' . $from_utf;
                 }
@@ -242,7 +242,7 @@ class libcalendaring_itip
                 array_unshift($reply_attendees, $replying_attendee);
                 $event['attendees'] = $reply_attendees;
             }
-            if ($event['recurrence']) {
+            if (!empty($event['recurrence'])) {
                 unset($event['recurrence']['EXCEPTIONS']);
             }
         }
@@ -488,12 +488,16 @@ class libcalendaring_itip
                     if ($attendee['role'] != 'ORGANIZER' && strcasecmp($attendee['email'], $event['attendee']) == 0) {
                         $status_lc = strtolower($status);
                         if (in_array($status_lc, $this->rsvp_status)) {
-                            $html = html::div('rsvp-status ' . $status_lc, $this->gettext(array(
-                                'name' => 'attendee' . $status_lc,
-                                'vars' => array(
-                                    'delegatedto' => rcube::Q($event['delegated-to'] ?: ($attendee['delegated-to'] ?: '?')),
-                                )
-                            )));
+                            $delegatee = !empty($event['delegated-to']) ? $event['delegated-to']
+                                : (!empty($attendee['delegated-to']) ? $attendee['delegated-to'] : '?');
+
+                            $html = html::div(
+                                'rsvp-status ' . $status_lc,
+                                $this->gettext([
+                                    'name' => 'attendee' . $status_lc,
+                                    'vars' => ['delegatedto' => rcube::Q($delegatee)]
+                                ])
+                            );
                         }
 
                         $action = $attendee['status'] == $status || !$latest ? '' : 'update';
@@ -624,6 +628,7 @@ class libcalendaring_itip
             'method'   => $method,
             'task'     => $task,
             'mime_id'  => $mime_id,
+            'rsvp'     => false,
         );
 
         // create buttons to be activated from async request checking existence of this event in local calendars
@@ -638,7 +643,7 @@ class libcalendaring_itip
             if ($attendee) {
                 $metadata['attendee'] = $attendee['email'];
                 $rsvp_status = strtoupper($attendee['status']);
-                if ($attendee['delegated-to']) {
+                if (!empty($attendee['delegated-to'])) {
                     $metadata['delegated-to'] = $attendee['delegated-to'];
                 }
             }
@@ -1007,7 +1012,7 @@ class libcalendaring_itip
      */
     public function find_attendee_by_email($attendees, $email_field, $email, $email_utf = null) {
         foreach ($attendees as $_attendee) {
-            if ($attendee['role'] == 'ORGANIZER') {
+            if (!empty($attendee['role']) && $attendee['role'] == 'ORGANIZER') {
                 continue;
             }
             if (!empty($attendee[$email_field]) && self::compare_email($attendee[$email_field], $email, $email_utf)) {

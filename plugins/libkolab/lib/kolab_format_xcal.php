@@ -348,7 +348,7 @@ abstract class kolab_format_xcal extends kolab_format
         $this->obj->setSummary($object['title']);
         $this->obj->setLocation($object['location'] ?? null);
         $this->obj->setDescription($object['description']);
-        $this->obj->setPriority($object['priority']);
+        $this->obj->setPriority($object['priority'] ?? null);
         $this->obj->setCategories(self::array2vector($object['categories'] ?? null));
         $this->obj->setUrl(strval($object['url'] ?? null));
 
@@ -359,10 +359,13 @@ abstract class kolab_format_xcal extends kolab_format
         // process event attendees
         $attendees = new vectorattendee;
         foreach ((array)($object['attendees'] ?? []) as $i => $attendee) {
-            if ($attendee['role'] == 'ORGANIZER') {
+            if (!empty($attendee['role']) && $attendee['role'] == 'ORGANIZER') {
                 $object['organizer'] = $attendee;
             }
-            else if ($attendee['email'] != $object['organizer']['email']) {
+            else if (
+                !empty($attendee['email'])
+                && (empty($object['organizer']['email']) || $attendee['email'] != $object['organizer']['email'])
+            ) {
                 $cr = new ContactReference(ContactReference::EmailReference, $attendee['email']);
                 $cr->setName($attendee['name']);
 
@@ -371,12 +374,16 @@ abstract class kolab_format_xcal extends kolab_format
                     $object['attendees'][$i]['rsvp'] = $attendee['rsvp'] = $reschedule;
                 }
 
+                $cutype   = $this->cutype_map[$attendee['cutype'] ?? -1] ?? null;
+                $partstat = $this->part_status_map[$attendee['status'] ?? -1] ?? null;
+                $role     = $this->role_map[$attendee['role'] ?? -1] ?? null;
+
                 $att = new Attendee;
                 $att->setContact($cr);
-                $att->setPartStat($this->part_status_map[$attendee['status']]);
-                $att->setRole($this->role_map[$attendee['role']] ?: kolabformat::Required);
-                $att->setCutype($this->cutype_map[$attendee['cutype']] ?: kolabformat::CutypeIndividual);
-                $att->setRSVP((bool)$attendee['rsvp']);
+                $att->setPartStat($partstat);
+                $att->setRole($role ?: kolabformat::Required);
+                $att->setCutype($cutype ?: kolabformat::CutypeIndividual);
+                $att->setRSVP(!empty($attendee['rsvp']));
 
                 if (!empty($attendee['delegated-from'])) {
                     $vdelegators = new vectorcontactref;
@@ -407,9 +414,9 @@ abstract class kolab_format_xcal extends kolab_format
         }
         $this->obj->setAttendees($attendees);
 
-        if ($object['organizer']) {
-            $organizer = new ContactReference(ContactReference::EmailReference, $object['organizer']['email']);
-            $organizer->setName($object['organizer']['name']);
+        if (!empty($object['organizer'])) {
+            $organizer = new ContactReference(ContactReference::EmailReference, $object['organizer']['email'] ?? null);
+            $organizer->setName($object['organizer']['name'] ?? '');
             $this->obj->setOrganizer($organizer);
         }
 
@@ -529,8 +536,8 @@ abstract class kolab_format_xcal extends kolab_format
                         $recipients->push(new ContactReference(ContactReference::EmailReference, $email));
                     }
                     $alarm = new Alarm(
-                        strval($valarm['summary'] ?: $object['title']),
-                        strval($valarm['description'] ?: $object['description']),
+                        strval(!empty($valarm['summary']) ? $valarm['summary'] : $object['title']),
+                        strval(!empty($valarm['description']) ? $valarm['description'] : $object['description']),
                         $recipients
                     );
                 }
@@ -566,15 +573,15 @@ abstract class kolab_format_xcal extends kolab_format
                         continue;
                     }
 
-                    $related = strtoupper($valarm['related']) == 'END' ? kolabformat::End : kolabformat::Start;
+                    $related = strtoupper($valarm['related'] ?? '') == 'END' ? kolabformat::End : kolabformat::Start;
                     $alarm->setRelativeStart($duration, $related);
                 }
 
-                if ($valarm['duration']) {
+                if (!empty($valarm['duration'])) {
                     try {
                         $d = new DateInterval($valarm['duration']);
                         $duration = new Duration($d->d, $d->h, $d->i, $d->s);
-                        $alarm->setDuration($duration, intval($valarm['repeat']));
+                        $alarm->setDuration($duration, intval($valarm['repeat'] ?? 0));
                     }
                     catch (Exception $e) {
                         // ignore

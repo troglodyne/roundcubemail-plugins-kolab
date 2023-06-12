@@ -1478,7 +1478,7 @@ class libcalendaring extends rcube_plugin
         // is not overriden by NEEDS-ACTION if it was already set
         // which could happen if you work with shared events
         foreach ((array) $new['attendees'] as $i => $attendee) {
-            if ($attendee['email'] && $attendee['status'] == 'NEEDS-ACTION') {
+            if ($attendee['email'] && ($attendee['status'] ?? '') == 'NEEDS-ACTION') {
                 foreach ($old['attendees'] as $_attendee) {
                     if ($attendee['email'] == $_attendee['email']) {
                         $new['attendees'][$i]['status'] = $_attendee['status'];

@@ -60,8 +60,8 @@ class kolab_format_event extends kolab_format_xcal
         parent::set($object);
 
         // do the hard work of setting object values
-        $this->obj->setStart(self::get_datetime($object['start'], null, $object['allday']));
-        $this->obj->setEnd(self::get_datetime($object['end'], null, $object['allday']));
+        $this->obj->setStart(self::get_datetime($object['start'], null, !empty($object['allday'])));
+        $this->obj->setEnd(self::get_datetime($object['end'], null, !empty($object['allday'])));
         $this->obj->setTransparency($object['free_busy'] == 'free');
 
         $status = kolabformat::StatusUndefined;
@@ -97,7 +97,8 @@ class kolab_format_event extends kolab_format_xcal
                     $compacted['recurrence_date'] = $recurrence_id;
                 }
 
-                $exevent->obj->setRecurrenceID(self::get_datetime($recurrence_id ?: $exception['start'], null,  $object['allday']), (bool)$exception['thisandfuture']);
+                $ex_dt = self::get_datetime($recurrence_id ?: $exception['start'], null,  !empty($object['allday']));
+                $exevent->obj->setRecurrenceID($ex_dt, !empty($exception['thisandfuture']));
 
                 $vexceptions->push($exevent->obj);
 
@@ -272,7 +273,7 @@ class kolab_format_event extends kolab_format_xcal
         $tags = parent::get_tags($obj);
         $object = $obj ?: $this->data;
 
-        foreach ((array)$object['categories'] as $cat) {
+        foreach ((array) ($object['categories'] ?? []) as $cat) {
             $tags[] = rcube_utils::normalize_string($cat);
         }
 
@@ -294,7 +295,7 @@ class kolab_format_event extends kolab_format_xcal
 
         // preserve this property for date serialization
         if (!isset($exception['allday'])) {
-            $exception['allday'] = $master['allday'];
+            $exception['allday'] = !empty($master['allday']);
         }
 
         return $exception;

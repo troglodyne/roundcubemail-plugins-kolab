@@ -3186,7 +3186,7 @@ $("#rcmfd_new_category").keypress(function(event) {
                 . ' - ' . $this->rc->format_date($end, $this->rc->config->get('time_format'));
         }
 
-        return html::div(rtrim('event-row ' . ($class ?: $event['className'])),
+        return html::div(rtrim('event-row ' . ($class ?: ($event['className'] ?? ''))),
             html::span('event-date', $time)
             . html::span('event-title', rcube::Q($event['title']))
         );
@@ -3561,7 +3561,7 @@ $("#rcmfd_new_category").keypress(function(event) {
                 }
                 else if (!$existing && ($status != 'declined' || $this->rc->config->get('kolab_invitation_calendars'))) {
                     if ($status == 'declined'
-                        || $event['status'] == 'CANCELLED'
+                        || ($event['status'] ?? '') == 'CANCELLED'
                         || ($event_attendee && ($event_attendee['role'] ?? '') == 'NON-PARTICIPANT')
                     ) {
                         $event['free_busy'] = 'free';
@@ -3642,8 +3642,8 @@ $("#rcmfd_new_category").keypress(function(event) {
         }
 
         // send iTip reply
-        if ($event['_method'] == 'REQUEST' && !empty($organizer) && !$noreply
-            && !in_array(strtolower($organizer['email']), $emails) && !$error_msg
+        if ($event['_method'] == 'REQUEST' && !empty($organizer) && !$noreply && !$error_msg && !empty($reply_sender)
+            && !in_array(strtolower($organizer['email']), $emails)
         ) {
             $event['comment'] = $comment;
             $itip = $this->load_itip();
