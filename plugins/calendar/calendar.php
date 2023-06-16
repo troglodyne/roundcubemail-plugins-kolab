@@ -2115,22 +2115,24 @@ $("#rcmfd_new_category").keypress(function(event) {
 
         // check for organizer in attendees list
         $organizer = null;
-        foreach ((array) $event['attendees'] as $i => $attendee) {
-            if (!empty($attendee['role']) && $attendee['role'] == 'ORGANIZER') {
-                $organizer = $attendee;
-            }
-            if (!empty($attendee['status']) && $attendee['status'] == 'DELEGATED' && empty($attendee['rsvp'])) {
-                $event['attendees'][$i]['noreply'] = true;
-            }
-            else {
-                unset($event['attendees'][$i]['noreply']);
+        if (!empty($event['attendees'])) {
+            foreach ((array) $event['attendees'] as $i => $attendee) {
+                if (!empty($attendee['role']) && $attendee['role'] == 'ORGANIZER') {
+                    $organizer = $attendee;
+                }
+                if (!empty($attendee['status']) && $attendee['status'] == 'DELEGATED' && empty($attendee['rsvp'])) {
+                    $event['attendees'][$i]['noreply'] = true;
+                }
+                else {
+                    unset($event['attendees'][$i]['noreply']);
+                }
             }
         }
 
         if ($organizer === null && !empty($event['organizer'])) {
             $organizer = $event['organizer'];
             $organizer['role'] = 'ORGANIZER';
-            if (!is_array($event['attendees'])) {
+            if (!isset($event['attendees']) || !is_array($event['attendees'])) {
                 $event['attendees'] = [$organizer];
             }
         }

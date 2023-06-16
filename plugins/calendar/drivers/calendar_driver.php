@@ -507,7 +507,7 @@ abstract class calendar_driver
                 // add to output if in range
                 if (($next_event['start'] <= $end && $next_event['end'] >= $start)) {
                     $next_event['_instance'] = $next_event['start']->format($recurrence_id_format);
-                    $next_event['id'] = $next_event['uid'] . '-' . $exception['_instance'];
+                    $next_event['id'] = $next_event['uid'] . '-' . $next_event['_instance'];
                     $next_event['recurrence_id'] = $event['uid'];
                     $events[] = $next_event;
                 }
@@ -647,7 +647,7 @@ abstract class calendar_driver
         $year2  = $end->format('Y');
 
         $events = [];
-        $search = mb_strtolower($search);
+        $search = mb_strtolower((string) $search);
         $rcmail = rcmail::get_instance();
         $cache  = $rcmail->get_cache('calendar.birthdays', 'db', 3600);
         $cache->expunge();
@@ -786,18 +786,14 @@ abstract class calendar_driver
         }
 
         try {
-            $bday = $contact['birthday'];
-            if (!$bday instanceof DateTimeInterface) {
-                $bday = new DateTime($bday, new DateTimeZone('UTC'));
-            }
-            $bday->_dateonly = true;
+            $bday = libcalendaring_datetime::createFromAny($contact['birthday'], true);
         }
         catch (Exception $e) {
             rcube::raise_error([
                     'code' => 600,
                     'file' => __FILE__,
                     'line' => __LINE__,
-                    'message' => 'BIRTHDAY PARSE ERROR: ' . $e->getMessage()
+                    'message' => 'Failed to parse contact birthday: ' . $e->getMessage()
                 ],
                 true, false
             );

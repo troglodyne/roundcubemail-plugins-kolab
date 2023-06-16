@@ -26,4 +26,30 @@
 class libcalendaring_datetime extends DateTime
 {
     public $_dateonly = false;
+
+    /**
+     * Create an instance from a date string or object
+     *
+     * @param DateTimeInterface|string $date     Date
+     * @param bool                     $dateonly Date only (ignore time)
+     */
+    public static function createFromAny($date, bool $dateonly = false)
+    {
+        if (!$date instanceof DateTimeInterface) {
+            $date = new DateTime($date, new DateTimeZone('UTC'));
+        }
+
+        // Note: On PHP8 we have DateTime::createFromInterface(), but not on PHP7
+
+        $result = self::createFromFormat(
+            'Y-m-d\\TH:i:s',
+            $date->format('Y-m-d\\TH:i:s'),
+            // Sabre will loose timezone on all-day events, use the event start's timezone
+            $date->getTimezone()
+        );
+
+        $result->_dateonly = $dateonly;
+
+        return $result;
+    }
 }

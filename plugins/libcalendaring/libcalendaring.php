@@ -853,7 +853,7 @@ class libcalendaring extends rcube_plugin
             return $this->gettext('ondate') . ' ' . join(', ', $rdates) . ($more ? '...' : '');
         }
 
-        $output  = sprintf('%s %d ', $this->gettext('every'), $rrule['INTERVAL'] ?: 1);
+        $output  = sprintf('%s %d ', $this->gettext('every'), !empty($rrule['INTERVAL']) ? $rrule['INTERVAL'] : 1);
 
         switch ($rrule['FREQ']) {
         case 'DAILY':
