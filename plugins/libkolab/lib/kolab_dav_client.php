@@ -256,10 +256,13 @@ class kolab_dav_client
         foreach ($response->getElementsByTagName('response') as $element) {
             $folder = $this->getFolderPropertiesFromResponse($element);
 
-            // Note: Addressbooks don't have 'types' specified
-            if (($component == 'VCARD' && in_array('addressbook', $folder['resource_type']))
-                || in_array($component, (array) $folder['types'])
-            ) {
+            // Filter out the folders of other type
+            if ($component == 'VCARD') {
+                if (in_array('addressbook', $folder['resource_type'])) {
+                    $folders[] = $folder;
+                }
+            }
+            else if (in_array('calendar', $folder['resource_type']) && in_array($component, (array) $folder['types'])) {
                 $folders[] = $folder;
             }
         }
