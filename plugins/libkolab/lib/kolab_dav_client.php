@@ -131,12 +131,6 @@ class kolab_dav_client
             }
         }
 
-        $roots = [
-            'VEVENT' => 'calendars',
-            'VTODO' => 'calendars',
-            'VCARD' => 'addressbooks',
-        ];
-
         $path = parse_url($this->url, PHP_URL_PATH);
 
         $body = '<?xml version="1.0" encoding="utf-8"?>'
@@ -147,7 +141,7 @@ class kolab_dav_client
             . '</d:propfind>';
 
         // Note: Cyrus CardDAV service requires Depth:1 (CalDAV works without it)
-        $response = $this->request('/' . $roots[$component], 'PROPFIND', $body, ['Depth' => 1, 'Prefer' => 'return-minimal']);
+        $response = $this->request('/', 'PROPFIND', $body, ['Depth' => 1, 'Prefer' => 'return-minimal']);
 
         if (empty($response)) {
             return false;
@@ -200,14 +194,12 @@ class kolab_dav_client
             }
         }
 
-        if (!empty($root_href)) {
-            if ($path && strpos($root_href, $path) === 0) {
-                $root_href = substr($root_href, strlen($path));
-            }
+        if (empty($root_href)) {
+            return false;
         }
-        else {
-            // Kolab iRony's calendar root
-            $root_href = '/' . $roots[$component] . '/' . rawurlencode($this->user);
+
+        if ($path && strpos($root_href, $path) === 0) {
+            $root_href = substr($root_href, strlen($path));
         }
 
         if ($cache) {
