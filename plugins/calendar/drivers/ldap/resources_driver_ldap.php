@@ -124,14 +124,16 @@ class resources_driver_ldap extends resources_driver
 
         $attributes = [];
 
-        foreach ((array) $rec['attributes'] as $sattr) {
-            $sattr = trim($sattr);
-            if (!empty($sattr) && $sattr[0] === '{') {
-                $attr = @json_decode($sattr, true);
-                $attributes += $attr;
-            }
-            else if (!empty($sattr) && empty($rec['description'])) {
-                $rec['description'] = $sattr;
+        if (!empty($rec['attributes'])) {
+            foreach ((array) $rec['attributes'] as $sattr) {
+                $sattr = trim($sattr);
+                if (!empty($sattr) && $sattr[0] === '{') {
+                    $attr = @json_decode($sattr, true);
+                    $attributes += $attr;
+                }
+                else if (!empty($sattr) && empty($rec['description'])) {
+                    $rec['description'] = $sattr;
+                }
             }
         }
 
