@@ -519,6 +519,10 @@ abstract class kolab_format_xcal extends kolab_format
         $valarm_hashes = array();
         if (!empty($object['valarms'])) {
             foreach ($object['valarms'] as $valarm) {
+                if (empty($valarm['action']) || empty($valarm['trigger'])) {
+                    continue;
+                }
+
                 if (!array_key_exists($valarm['action'], $this->alarm_type_map)) {
                     continue;  // skip unknown alarm types
                 }
@@ -548,10 +552,10 @@ abstract class kolab_format_xcal extends kolab_format
                 }
                 else {
                     // action == DISPLAY
-                    $alarm = new Alarm(strval($valarm['summary'] ?: $object['title']));
+                    $alarm = new Alarm(strval(!empty($valarm['summary']) ? $valarm['summary'] : $object['title']));
                 }
 
-                if (is_object($valarm['trigger']) && $valarm['trigger'] instanceof DateTimeInterface) {
+                if ($valarm['trigger'] instanceof DateTimeInterface) {
                     $alarm->setStart(self::get_datetime($valarm['trigger'], new DateTimeZone('UTC')));
                 }
                 else if (preg_match('/^@([0-9]+)$/', $valarm['trigger'], $m)) {
@@ -584,7 +588,8 @@ abstract class kolab_format_xcal extends kolab_format
                         $alarm->setDuration($duration, intval($valarm['repeat'] ?? 0));
                     }
                     catch (Exception $e) {
-                        // ignore
+                        // ignore, but log
+                        rcube::raise_error($e, true);
                     }
                 }
 
