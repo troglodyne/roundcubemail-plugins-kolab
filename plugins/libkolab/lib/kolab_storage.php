@@ -279,11 +279,12 @@ class kolab_storage
     {
         $rcmail = rcube::get_instance();
 
-        $url = 'https://' . $_SESSION['imap_host'] . '/freebusy';
-        $url = $rcmail->config->get('kolab_freebusy_server', $url);
-        $url = rcube_utils::resolve_url($url);
+        if ($url = $rcmail->config->get('kolab_freebusy_server')) {
+            $url = rcube_utils::resolve_url($url);
+            $url = unslashify($url);
+        }
 
-        return unslashify($url);
+        return $url;
     }
 
     /**
@@ -293,10 +294,16 @@ class kolab_storage
      * @param object DateTime Start of the query range (optional)
      * @param object DateTime End of the query range (optional)
      *
-     * @return string Fully qualified URL to query free/busy data
+     * @return ?string Fully qualified URL to query free/busy data
      */
     public static function get_freebusy_url($email, $start = null, $end = null)
     {
+        $url = self::get_freebusy_server();
+
+        if (empty($url)) {
+            return null;
+        }
+
         $query = '';
         $param = array();
         $utc = new \DateTimeZone('UTC');
@@ -316,8 +323,6 @@ class kolab_storage
         if (!empty($param)) {
             $query = '?' . http_build_query($param);
         }
-
-        $url = self::get_freebusy_server();
 
         if (strpos($url, '%u')) {
             // Expected configured full URL, just replace the %u variable

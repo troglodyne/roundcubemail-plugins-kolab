@@ -1099,13 +1099,14 @@ class kolab_storage_folder extends kolab_storage_folder_api
     {
         $owner = $this->get_owner();
         $result = false;
+        $url = kolab_storage::get_freebusy_server();
 
-        switch($this->type) {
+        switch ($this->type) {
         case 'event':
-            if ($this->get_namespace() == 'personal') {
+            if ($url && $this->get_namespace() == 'personal') {
                 $result = $this->trigger_url(
                     sprintf('%s/trigger/%s/%s.pfb',
-                        kolab_storage::get_freebusy_server(),
+                        $url,
                         urlencode($owner),
                         urlencode($this->imap->mod_folder($this->name))
                     ),
@@ -1119,7 +1120,7 @@ class kolab_storage_folder extends kolab_storage_folder_api
             return true;
         }
 
-        if ($result && is_object($result) && is_a($result, 'PEAR_Error')) {
+        if ($result instanceof PEAR_Error) {
             return PEAR::raiseError(
                 sprintf("Failed triggering folder %s. Error was: %s", $this->name, $result->getMessage())
             );

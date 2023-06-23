@@ -342,6 +342,7 @@ class calendar extends rcube_plugin
         $this->rc->output->set_env('timezone', $this->timezone->getName());
         $this->rc->output->set_env('calendar_driver', $this->rc->config->get('calendar_driver'), false);
         $this->rc->output->set_env('calendar_resources', (bool)$this->rc->config->get('calendar_resources_driver'));
+        $this->rc->output->set_env('calendar_resources_freebusy', !empty($this->rc->config->get('kolab_freebusy_server')));
         $this->rc->output->set_env('identities-selector', $this->ui->identity_select([
                 'id'         => 'edit-identities-list',
                 'aria-label' => $this->gettext('roleorganizer'),

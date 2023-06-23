@@ -149,7 +149,7 @@ class kolab_storage_dav
      * @param object DateTime Start of the query range (optional)
      * @param object DateTime End of the query range (optional)
      *
-     * @return string Fully qualified URL to query free/busy data
+     * @return ?string Fully qualified URL to query free/busy data
      */
     public static function get_freebusy_url($email, $start = null, $end = null)
     {

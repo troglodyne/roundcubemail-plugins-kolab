@@ -2016,6 +2016,12 @@ class kolab_driver extends calendar_driver
             return false;
         }
 
+        $url = $this->storage->get_freebusy_url($email);
+
+        if (empty($url)) {
+            return false;
+        }
+
         // map vcalendar fbtypes to internal values
         $fbtypemap = [
             'FREE'            => calendar::FREEBUSY_FREE,
@@ -2031,7 +2037,7 @@ class kolab_driver extends calendar_driver
                 'follow_redirects' => true,
             ];
 
-            $request  = libkolab::http_request($this->storage->get_freebusy_url($email), 'GET', $request_config);
+            $request  = libkolab::http_request($url, 'GET', $request_config);
             $response = $request->send();
 
             // authentication required
