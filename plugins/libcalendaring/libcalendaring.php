@@ -1545,6 +1545,10 @@ class libcalendaring extends rcube_plugin
      */
     public static function to_php_date_format($from)
     {
+        if (!is_string($from)) {
+            return '';
+        }
+
         // "dd.MM.yyyy HH:mm:ss" => "d.m.Y H:i:s"
         return strtr(strtr($from, array(
             'YYYY' => 'Y',
@@ -1581,6 +1585,10 @@ class libcalendaring extends rcube_plugin
      */
     public static function from_php_date_format($from)
     {
+        if (!is_string($from)) {
+            return '';
+        }
+
         // "d.m.Y H:i:s" => "dd.MM.yyyy HH:mm:ss"
         return strtr($from, array(
             'y' => 'YY',
