@@ -273,9 +273,13 @@ class calendar extends rcube_plugin
 
             $this->itip = new calendar_itip($this);
 
+            $rsvp_actions = ['accepted','tentative','declined','delegated'];
+
             if ($this->rc->config->get('kolab_invitation_calendars')) {
-                $this->itip->set_rsvp_actions(['accepted','tentative','declined','delegated','needs-action']);
+                $rsvp_actions[] = 'needs-action';
             }
+
+            $this->itip->set_rsvp_actions($this->rc->config->get('calendar_rsvp_actions', $rsvp_actions));
         }
 
         return $this->itip;
