@@ -142,7 +142,7 @@ class libcalendaring extends rcube_plugin
                 'statusorganizer', 'statusaccepted', 'statusdeclined',
                 'statusdelegated', 'statusunknown', 'statusneeds-action',
                 'statustentative', 'statuscompleted', 'statusin-process',
-                'delegatedto', 'delegatedfrom', 'showmore'
+                'delegatedto', 'delegatedfrom', 'showmore', 'savein'
             );
         }
 

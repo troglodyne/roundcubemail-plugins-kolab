@@ -1319,7 +1319,8 @@ rcube_libcalendaring.itip_delegate_dialog = function(callback, selector)
         width: 460,
         open: function(event, ui) {
             $(this).parent().find('button:not(.ui-dialog-titlebar-close)').first().addClass('mainaction');
-            $(this).find('#itip-saveto').val('');
+            $(this).find('#itip-saveto').val('')
+                .click(function(e) { e.stopPropagation(); }) // fixes a bug on click (in Elastic)
 
             // initialize autocompletion
             var ac_props, rcm = rcmail.is_framed() ? parent.rcmail : rcmail;
