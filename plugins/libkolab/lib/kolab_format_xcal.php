@@ -347,7 +347,7 @@ abstract class kolab_format_xcal extends kolab_format
 
         $this->obj->setSummary($object['title']);
         $this->obj->setLocation($object['location'] ?? null);
-        $this->obj->setDescription($object['description']);
+        $this->obj->setDescription($object['description'] ?? null);
         $this->obj->setPriority($object['priority'] ?? null);
         $this->obj->setCategories(self::array2vector($object['categories'] ?? null));
         $this->obj->setUrl(strval($object['url'] ?? null));
@@ -367,7 +367,7 @@ abstract class kolab_format_xcal extends kolab_format
                 && (empty($object['organizer']['email']) || $attendee['email'] != $object['organizer']['email'])
             ) {
                 $cr = new ContactReference(ContactReference::EmailReference, $attendee['email']);
-                $cr->setName($attendee['name']);
+                $cr->setName($attendee['name'] ?? null);
 
                 // set attendee RSVP if missing
                 if (!isset($attendee['rsvp'])) {
