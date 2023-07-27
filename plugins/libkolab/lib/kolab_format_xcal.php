@@ -345,7 +345,7 @@ abstract class kolab_format_xcal extends kolab_format
             $reschedule = true;
         }
 
-        $this->obj->setSummary($object['title']);
+        $this->obj->setSummary($object['title'] ?? null);
         $this->obj->setLocation($object['location'] ?? null);
         $this->obj->setDescription($object['description'] ?? null);
         $this->obj->setPriority($object['priority'] ?? null);
@@ -664,8 +664,9 @@ abstract class kolab_format_xcal extends kolab_format
 
             if ($field) {
                 $a = array();
-                foreach ((array) $object[$col] as $attr)
-                    $a[] = $attr[$field];
+                foreach ((array) $object[$col] as $attr) {
+                    $a[] = $attr[$field] ?? null;
+                }
                 $val = join(' ', $a);
             }
             else {
