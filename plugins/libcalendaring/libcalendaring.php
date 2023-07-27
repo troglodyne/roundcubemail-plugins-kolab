@@ -1139,6 +1139,8 @@ class libcalendaring extends rcube_plugin
      */
     public function mail_message_load($p)
     {
+        $this->ical_parts = [];
+        $this->mail_ical_parser = null;
         $this->ical_message = $p['object'];
         $itip_part          = null;
 
