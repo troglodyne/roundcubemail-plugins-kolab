@@ -401,8 +401,8 @@ class libcalendaring_itip
                 $emails = $this->lib->get_user_emails();
 
                 foreach ($existing['attendees'] as $attendee) {
-                    if ($attendee['email'] && in_array(strtolower($attendee['email']), $emails)) {
-                        $status = strtoupper($attendee['status']);
+                    if (!empty($attendee['email']) && in_array(strtolower($attendee['email']), $emails)) {
+                        $status = !empty($attendee['status']) ? strtoupper($attendee['status']) : '';
                         break;
                     }
                 }
@@ -619,12 +619,12 @@ class libcalendaring_itip
         $rsvp_buttons = '';
 
         // pass some metadata about the event and trigger the asynchronous status check
-        $changed = is_object($event['changed']) ? $event['changed'] : $message_date;
+        $changed = !empty($event['changed']) && is_object($event['changed']) ? $event['changed'] : $message_date;
         $metadata = array(
             'uid'      => $event['uid'],
             '_instance' => isset($event['_instance']) ? $event['_instance'] : null,
             'changed'  => $changed ? $changed->format('U') : 0,
-            'sequence' => intval($event['sequence']),
+            'sequence' => intval($event['sequence'] ?? 0),
             'method'   => $method,
             'task'     => $task,
             'mime_id'  => $mime_id,
@@ -683,7 +683,7 @@ class libcalendaring_itip
         // when receiving iTip REQUEST messages:
         else if ($method == 'REQUEST') {
             $emails = $this->lib->get_user_emails();
-            $title = $event['sequence'] > 0 ? $this->gettext('itipupdate') : $this->gettext('itipinvitation');
+            $title = !empty($event['sequence']) ? $this->gettext('itipupdate') : $this->gettext('itipinvitation');
             $metadata['rsvp'] = true;
 
             if (is_object($event['start'])) {
@@ -983,17 +983,17 @@ class libcalendaring_itip
      */
     public static function get_custom_property($event, $name)
     {
-      $ret = false;
+        $ret = false;
 
-      if (is_array($event['x-custom'])) {
-          array_walk($event['x-custom'], function($prop, $i) use ($name, &$ret) {
-              if (strcasecmp($prop[0], $name) === 0) {
-                  $ret = $prop[1];
-              }
-          });
-      }
+        if (is_array($event['x-custom'])) {
+            array_walk($event['x-custom'], function($prop, $i) use ($name, &$ret) {
+                if (strcasecmp($prop[0], $name) === 0) {
+                    $ret = $prop[1];
+                }
+            });
+        }
 
-      return $ret;
+        return $ret;
     }
 
     /**
@@ -1010,7 +1010,8 @@ class libcalendaring_itip
     /**
      * Find an attendee that is not the organizer and has an email matching $email_field
      */
-    public function find_attendee_by_email($attendees, $email_field, $email, $email_utf = null) {
+    public function find_attendee_by_email($attendees, $email_field, $email, $email_utf = null)
+    {
         foreach ($attendees as $_attendee) {
             if (!empty($attendee['role']) && $attendee['role'] == 'ORGANIZER') {
                 continue;
@@ -1019,16 +1020,19 @@ class libcalendaring_itip
                 return $attendee;
             }
         }
+
         return null;
     }
 
     /**
      * Find the replying attendee in a REPLY
      */
-    public static function find_reply_attendee($event) {
+    public static function find_reply_attendee($event)
+    {
         // remove the organizer
-        $itip_attendees = array_filter($event['attendees'], function($item) { return $item['role'] != 'ORGANIZER' && !empty($item['email']); });
-        $attendee = null;
+        $itip_attendees = array_filter($event['attendees'], function($item) {
+            return (empty($item['role']) || $item['role'] != 'ORGANIZER') && !empty($item['email']);
+        });
 
         // According to rfc there should only be one attendee for a REPLY
         if (count($itip_attendees) == 1) {

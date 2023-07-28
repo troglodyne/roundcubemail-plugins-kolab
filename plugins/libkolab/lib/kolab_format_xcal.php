@@ -552,7 +552,8 @@ abstract class kolab_format_xcal extends kolab_format
                 }
                 else {
                     // action == DISPLAY
-                    $alarm = new Alarm(strval(!empty($valarm['summary']) ? $valarm['summary'] : $object['title']));
+                    $title = !empty($valarm['summary']) ? $valarm['summary'] : ($object['title'] ?? '');
+                    $alarm = new Alarm($title);
                 }
 
                 if ($valarm['trigger'] instanceof DateTimeInterface) {
@@ -638,7 +639,7 @@ abstract class kolab_format_xcal extends kolab_format
      */
     public function get_reference_date()
     {
-        if ($this->data['start'] && $this->data['start'] instanceof DateTimeInterface) {
+        if (!empty($this->data['start']) && $this->data['start'] instanceof DateTimeInterface) {
             return $this->data['start'];
         }
 

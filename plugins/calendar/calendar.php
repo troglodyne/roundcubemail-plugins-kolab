@@ -2331,8 +2331,8 @@ $("#rcmfd_new_category").keypress(function(event) {
     private function write_preprocess(&$event, $action)
     {
         // Remove double timezone specification (T2313)
-        $event['start'] = preg_replace('/\s*\(.*\)/', '', $event['start']);
-        $event['end']   = preg_replace('/\s*\(.*\)/', '', $event['end']);
+        $event['start'] = preg_replace('/\s*\(.*\)/', '', $event['start'] ?? '');
+        $event['end']   = preg_replace('/\s*\(.*\)/', '', $event['end'] ?? '');
 
         // convert dates into DateTime objects in user's current timezone
         $event['start']  = new DateTime($event['start'], $this->timezone);
@@ -3386,7 +3386,7 @@ $("#rcmfd_new_category").keypress(function(event) {
                 'uid'       => $event['uid'],
                 '_instance' => isset($event['_instance']) ? $event['_instance'] : null,
                 'changed'   => is_object($event['changed']) ? $event['changed']->format('U') : 0,
-                'sequence'  => intval($event['sequence']),
+                'sequence'  => intval($event['sequence'] ?? 0),
                 'fallback'  => strtoupper((string) $status),
                 'method'    => $event['_method'],
                 'task'      => 'calendar',

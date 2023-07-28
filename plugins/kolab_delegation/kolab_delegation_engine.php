@@ -891,7 +891,7 @@ class kolab_delegation_engine
             }
 
             // add Sender: header with current user default identity
-            if ($context) {
+            if (!empty($context)) {
                 $identity = $this->rc->user->get_identity();
                 $sender   = format_email_recipient($identity['email'], $identity['name']);
 

@@ -1230,7 +1230,7 @@ class kolab_notes extends rcube_plugin
      */
     public function mail_message_load($p)
     {
-        if (!$p['object']->headers->others['x-kolab-type']) {
+        if (empty($p['object']->headers->others['x-kolab-type'])) {
             $this->message_notes = $this->get_message_notes($p['object']->headers, $p['object']->folder);
         }
     }
