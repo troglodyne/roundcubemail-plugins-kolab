@@ -3441,6 +3441,11 @@ $("#rcmfd_new_category").keypress(function(event) {
                     $existing = null;
                 }
 
+                // Use only free_busy values that make sense in this context (T853612)
+                if (!in_array($event['free_busy'] ?? '', ['free', 'busy'])) {
+                    unset($event['free_busy']);
+                }
+
                 $event_attendee   = null;
                 $update_attendees = [];
 
