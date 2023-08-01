@@ -3333,6 +3333,7 @@ $("#rcmfd_new_category").keypress(function(event) {
         $error_msg = $this->gettext('errorimportingevent');
         $success   = false;
         $deleted   = false;
+        $dontsave  = false;
 
         if ($status == 'delegated') {
             $to = rcube_utils::get_input_value('_to', rcube_utils::INPUT_POST, true);
