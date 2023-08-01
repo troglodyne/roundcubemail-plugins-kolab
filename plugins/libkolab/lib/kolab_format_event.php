@@ -62,15 +62,18 @@ class kolab_format_event extends kolab_format_xcal
         // do the hard work of setting object values
         $this->obj->setStart(self::get_datetime($object['start'], null, !empty($object['allday'])));
         $this->obj->setEnd(self::get_datetime($object['end'], null, !empty($object['allday'])));
-        $this->obj->setTransparency($object['free_busy'] == 'free');
+        $this->obj->setTransparency(!empty($object['free_busy']) && $object['free_busy'] == 'free');
 
         $status = kolabformat::StatusUndefined;
-        if ($object['free_busy'] == 'tentative')
+        if (!empty($object['free_busy']) && $object['free_busy'] == 'tentative') {
             $status = kolabformat::StatusTentative;
-        if (!empty($object['cancelled']))
+        }
+        if (!empty($object['cancelled'])) {
             $status = kolabformat::StatusCancelled;
-        else if (!empty($object['status']) && array_key_exists($object['status'], $this->status_map))
+        }
+        else if (!empty($object['status']) && array_key_exists($object['status'], $this->status_map)) {
             $status = $this->status_map[$object['status']];
+        }
         $this->obj->setStatus($status);
 
         // save (recurrence) exceptions

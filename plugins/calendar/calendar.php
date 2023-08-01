@@ -2994,7 +2994,7 @@ $("#rcmfd_new_category").keypress(function(event) {
                 // TODO: skip events with free_busy == 'free' ?
                 if ($event['uid'] == $data['uid']
                     || $event['end'] < $day_start || $event['start'] > $day_end
-                    || $event['status'] == 'CANCELLED'
+                    || (!empty($event['status']) && $event['status'] == 'CANCELLED')
                     || (!empty($event['className']) && strpos($event['className'], 'declined') !== false)
                 ) {
                     continue;
