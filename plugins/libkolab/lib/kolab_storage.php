@@ -897,7 +897,7 @@ class kolab_storage
         // then the metadata will already contain all folder names and we can avoid the LIST below.
         if (!$subscribed && $filter != 'mail' && $prefix == '*') {
             foreach ($folderdata as $folder => $type) {
-                if (!preg_match($regexp, $type)) {
+                if (!preg_match($regexp, (string) $type)) {
                     unset($folderdata[$folder]);
                 }
             }
