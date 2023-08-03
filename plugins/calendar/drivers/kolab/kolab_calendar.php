@@ -529,6 +529,11 @@ class kolab_calendar extends kolab_storage_folder_api
             return false;
         }
 
+        // When updating an event (e.g. when restoring an event occurrence)
+        // the message UID might be outdated. Use the updated UID from database.
+        // See kolab_driver::restore_event().
+        $event['_msguid'] = $old['_msguid'];
+
         // email links are stored separately
         $links = !empty($event['links']) ? $event['links'] : [];
         unset($event['links']);

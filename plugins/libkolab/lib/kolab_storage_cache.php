@@ -533,7 +533,7 @@ class kolab_storage_cache
         }
 
         $this->check_error();
-        return $this->objects[$msguid];
+        return $this->objects[$msguid] ?? null;
     }
 
     /**

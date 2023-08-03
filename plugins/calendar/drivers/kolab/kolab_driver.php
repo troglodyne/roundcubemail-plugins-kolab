@@ -880,7 +880,7 @@ class kolab_driver extends calendar_driver
 
             switch ($savemode) {
             case 'current':
-                $_SESSION['calendar_restore_event_data'] = $master;
+                $_SESSION['calendar_restore_event_data'] = serialize(array_diff_key($master, ['_formatobj' => 1]));
 
                 // remove the matching RDATE entry
                 if (!empty($master['recurrence']['RDATE'])) {
@@ -901,7 +901,7 @@ class kolab_driver extends calendar_driver
             case 'future':
                 $master['_instance'] = libcalendaring::recurrence_instance_identifier($master);
                 if ($master['_instance'] != $event['_instance']) {
-                    $_SESSION['calendar_restore_event_data'] = $master;
+                    $_SESSION['calendar_restore_event_data'] = serialize(array_diff_key($master, ['_formatobj' => 1]));
 
                     // set until-date on master event
                     $master['recurrence']['UNTIL'] = clone $event['start'];
@@ -984,7 +984,7 @@ class kolab_driver extends calendar_driver
     {
         if ($storage = $this->get_calendar($event['calendar'])) {
             if (!empty($_SESSION['calendar_restore_event_data'])) {
-                $success = $storage->update_event($event = $_SESSION['calendar_restore_event_data']);
+                $success = $storage->update_event($event = unserialize($_SESSION['calendar_restore_event_data']));
             }
             else {
                 $success = $storage->restore_event($event);
