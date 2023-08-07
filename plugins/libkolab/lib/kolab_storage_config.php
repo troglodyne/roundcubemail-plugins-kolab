@@ -313,7 +313,7 @@ class kolab_storage_config
                 // Note: this assumes there's only one other users namespace root
                 if ($ns = $storage->get_namespace('other')) {
                     if ($prefix = $ns[0][0]) {
-                        list($otheruser, $path) = explode('/', substr($folder, strlen($prefix)), 2);
+                        list($otheruser, $path) = array_pad(explode('/', substr($folder, strlen($prefix)), 2), 2, '');
                         $folder = 'user/' . $otheruser . $domain . '/' . $path;
                     }
                 }
@@ -330,7 +330,7 @@ class kolab_storage_config
 
         // UID is optional here because sometimes we want
         // to build just a member uri prefix
-        if ($params['uid']) {
+        if (!empty($params['uid'])) {
             $url .= '/' . $params['uid'];
         }
 
