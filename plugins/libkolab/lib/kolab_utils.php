@@ -48,7 +48,7 @@ class kolab_utils
 
         // create form output
         foreach ($form as $tab) {
-            if (is_array($tab['fields']) && empty($tab['content'])) {
+            if (isset($tab['fields']) && is_array($tab['fields']) && empty($tab['content'])) {
                 $table = new html_table(array('cols' => 2, 'class' => 'propform'));
                 foreach ($tab['fields'] as $col => $colprop) {
                     $label = !empty($colprop['label']) ? $colprop['label'] : $rcmail->gettext("$domain.$col");
@@ -88,6 +88,10 @@ class kolab_utils
                 'name'    => $folder
         ));
 
-        return $acl['form']['sharing']['content'] ?: html::div('hint', $rcmail->gettext('libkolab.aclnorights'));
+        if (!empty($acl['form']['sharing']['content'])) {
+            return $acl['form']['sharing']['content'];
+        }
+        
+        return html::div('hint', $rcmail->gettext('libkolab.aclnorights'));
     }
 }

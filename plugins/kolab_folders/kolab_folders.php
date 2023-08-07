@@ -234,7 +234,7 @@ class kolab_folders extends rcube_plugin
         $subtype = '';
         if (strlen($mbox)) {
             list($ctype, $subtype) = $this->get_folder_type($mbox);
-            if (strlen($args['parent_name']) && $subtype == 'default') {
+            if (isset($args['parent_name']) && strlen($args['parent_name']) && $subtype == 'default') {
                 $subtype = ''; // there can be only one
             }
         }

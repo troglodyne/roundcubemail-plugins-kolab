@@ -109,7 +109,7 @@ class kolab_delegation_engine
         $folders     = $update ? $this->list_folders($uid) : array();
 
         foreach ($acl as $folder_name => $rights) {
-            $r = $right_types[$rights];
+            $r = $right_types[$rights] ?? null;
             if ($r) {
                 $storage->set_acl($folder_name, $uid, $r);
             }
@@ -123,7 +123,7 @@ class kolab_delegation_engine
         }
 
         foreach ($folders as $folder_name => $folder) {
-            if ($folder['rights']) {
+            if (!empty($folder['rights'])) {
                 $storage->delete_acl($folder_name, $uid);
             }
         }

@@ -545,7 +545,7 @@ class kolab_storage
             }
         }
 
-        if (!empty($options) && ($options['protected'] || $options['norename'])) {
+        if (!empty($options) && (!empty($options['protected']) || !empty($options['norename']))) {
             $folder = $oldfolder;
         }
         else if (strlen($parent)) {
@@ -1101,13 +1101,13 @@ class kolab_storage
                 if (!empty($parents)) {
                     $parents = array_reverse($parents);
                     foreach ($parents as $parent) {
-                        $parent_node = $refs[$parent->parent] ?: $tree;
+                        $parent_node = !empty($refs[$parent->parent]) ? $refs[$parent->parent] : $tree;
                         $parent_node->children[] = $parent;
                         $_folders[] = $parent;
                     }
                 }
 
-                $parent_node = $refs[$folder->parent] ?: $tree;
+                $parent_node = !empty($refs[$folder->parent]) ? $refs[$folder->parent] : $tree;
                 $parent_node->children[] = $folder;
             }
 
