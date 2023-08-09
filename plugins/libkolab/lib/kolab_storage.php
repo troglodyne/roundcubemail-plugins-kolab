@@ -135,7 +135,7 @@ class kolab_storage
 
         if (!is_array($config)) {
             $ldap_config = (array)self::$config->get('ldap_public');
-            $config = $ldap_config[$config];
+            $config = $ldap_config[$config] ?? null;
         }
 
         if (empty($config)) {
@@ -153,7 +153,7 @@ class kolab_storage
 
         // Fallback to kolab_auth_login, which is not attribute, but field name
         if (!$user_field && ($user_field = self::$config->get('kolab_auth_login', 'email'))) {
-            $user_attrib = $config['fieldmap'][$user_field];
+            $user_attrib = $config['fieldmap'][$user_field] ?? null;
         }
 
         if ($user_field && $user_attrib) {
@@ -785,6 +785,7 @@ class kolab_storage
         $delim = self::$imap->get_hierarchy_delimiter();
         $names = array();
         $len   = strlen($current);
+        $p_len = 0;
 
         if ($len && ($rpos = strrpos($current, $delim))) {
             $parent = substr($current, 0, $rpos);
@@ -809,11 +810,11 @@ class kolab_storage
                 }
             }
 
-            // always show the parent of current folder
             if ($p_len && $name == $parent) {
+                // always show the parent of current folder
             }
-            // skip folders where user have no rights to create subfolders
             else if ($c_folder->get_owner() != $_SESSION['username']) {
+                // skip folders where user have no rights to create subfolders
                 $rights = $c_folder->get_myrights();
                 if (!preg_match('/[ck]/', $rights)) {
                     continue;
