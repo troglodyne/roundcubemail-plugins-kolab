@@ -980,7 +980,7 @@ class kolab_storage_folder extends kolab_storage_folder_api
         $mime->headers($headers);
         $mime->setTXTBody("This is a Kolab Groupware object. "
             . "To view this object you will need an email client that understands the Kolab Groupware format. "
-            . "For a list of such email clients please visit http://www.kolab.org/\n\n");
+            . "For a list of such email clients please visit https://www.kolab.org/\n\n");
 
         $ctype = kolab_storage::$version == '2.0' ? $format->CTYPEv2 : $format->CTYPE;
         // Convert new lines to \r\n, to wrokaround "NO Message contains bare newlines"
