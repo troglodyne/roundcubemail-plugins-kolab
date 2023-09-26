@@ -377,8 +377,27 @@ class kolab_dav_client
      */
     public function folderCreate($location, $component, $properties = [])
     {
+        $ns    = 'xmlns:d="DAV:"';
+        $props = '';
+
+        if ($component == 'VCARD') {
+            $ns .= ' xmlns:c="urn:ietf:params:xml:ns:carddav"';
+            $props = '<d:resourcetype><d:collection/><c:addressbook/></d:resourcetype>';
+        }
+        else {
+            $ns .= ' xmlns:c="urn:ietf:params:xml:ns:caldav"';
+            $props = '<d:resourcetype><d:collection/><c:calendar/></d:resourcetype>';
+        }
+
+        $body = '<?xml version="1.0" encoding="utf-8"?>'
+            . '<d:mkcol ' . $ns . '>'
+                . '<d:set>'
+                    . '<d:prop>' . $props . '</d:prop>'
+                . '</d:set>'
+            . '</d:mkcol>';
+
         // Create the collection
-        $response = $this->request($location, 'MKCOL');
+        $response = $this->request($location, 'MKCOL', $body);
 
         if (empty($response)) {
             return false;
