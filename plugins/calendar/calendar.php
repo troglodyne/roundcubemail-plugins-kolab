@@ -3464,7 +3464,7 @@ $("#rcmfd_new_category").keypress(function(event) {
                             $update_attendees[]   = $attendee;
                             $metadata['fallback'] = $attendee['status'];
                             $metadata['attendee'] = $attendee['email'];
-                            $metadata['rsvp']     = !empty($attendee['rsvp']) || $attendee['role'] != 'NON-PARTICIPANT';
+                            $metadata['rsvp']     = !empty($attendee['rsvp']) || empty($attendee['role']) || $attendee['role'] != 'NON-PARTICIPANT';
 
                             $existing_attendee_emails = [];
 

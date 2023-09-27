@@ -162,8 +162,8 @@ class carddav_contacts_driver
         $result = $storage->folder_update($prop);
 
         if ($result && ($abook = $this->get_address_book($prop['id'] ?: $result))) {
-            $abook->id = $prop['id'] ?: $result;
-            $props = $this->abook_prop($abook->id, $abook);
+            $abook_id = $prop['id'] ?: $result;
+            $props = $this->abook_prop($abook_id, $abook);
 
             $this->rc->output->show_message('kolab_addressbook.book'.$type.'d', 'confirmation');
             $this->rc->output->command('book_update', $props, $prop['id']);
