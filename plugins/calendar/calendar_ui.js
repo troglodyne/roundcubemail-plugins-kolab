@@ -2569,6 +2569,10 @@ function rcube_calendar_ui(settings)
     // mouse-click handler to check if the show dialog is still open and prevent default action
     var dialog_check = function(e)
     {
+      if (!e) {
+        return false;
+      }
+
       var showd = $("#eventshow");
       if (showd.is(':visible') && !$(e.target).closest('.ui-dialog').length && !$(e.target).closest('.popupmenu').length) {
         showd.dialog('close');
