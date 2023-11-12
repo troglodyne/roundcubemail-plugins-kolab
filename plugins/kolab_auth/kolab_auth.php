@@ -506,9 +506,9 @@ class kolab_auth extends rcube_plugin
         }
 
         if (!empty($imap_attr) && !empty($record[$imap_attr])) {
-            $default_host = $rcmail->config->get('default_host');
-            if (!empty($default_host)) {
-                rcube::write_log("errors", "Both default host and kolab_auth_mailhost set. Incompatible.");
+            $imap_host = $rcmail->config->get('imap_host', $rcmail->config->get('default_host'));
+            if (!empty($imap_host)) {
+                rcube::write_log("errors", "Both imap host and kolab_auth_mailhost set. Incompatible.");
             } else {
                 $args['host'] = "tls://" . $record[$imap_attr];
             }
