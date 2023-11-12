@@ -9,9 +9,8 @@ CREATE TABLE kolab_folders (
     resource varchar(255) NOT NULL,
     "type" varchar(32) NOT NULL,
     synclock integer NOT NULL DEFAULT 0,
-    ctag varchar(40) DEFAULT NULL,
-    changed timestamp with time zone DEFAULT NULL,
-    objectcount integer DEFAULT NULL
+    ctag varchar(128) DEFAULT NULL,
+    changed timestamp with time zone DEFAULT NULL
 );
 
 CREATE INDEX kolab_folders_resource_type_idx ON kolab_folders(resource, "type");
@@ -204,4 +203,4 @@ CREATE TABLE kolab_cache_dav_task (
     PRIMARY KEY(folder_id, uid)
 );
 
-INSERT INTO "system" (name, "value") VALUES ('libkolab-version', '2022122800');
+INSERT INTO "system" (name, "value") VALUES ('libkolab-version', '2023111200');

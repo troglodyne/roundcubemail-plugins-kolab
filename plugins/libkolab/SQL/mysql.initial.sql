@@ -7,9 +7,8 @@ CREATE TABLE `kolab_folders` (
   `resource` VARCHAR(255) BINARY NOT NULL,
   `type` VARCHAR(32) NOT NULL,
   `synclock` INT(10) NOT NULL DEFAULT '0',
-  `ctag` VARCHAR(40) DEFAULT NULL,
+  `ctag` VARCHAR(128) DEFAULT NULL,
   `changed` DATETIME DEFAULT NULL,
-  `objectcount` BIGINT DEFAULT NULL,
   PRIMARY KEY(`folder_id`),
   INDEX `resource_type` (`resource`, `type`)
 ) ROW_FORMAT=DYNAMIC ENGINE=INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -230,4 +229,4 @@ CREATE TABLE `kolab_cache_dav_task` (
 
 SET FOREIGN_KEY_CHECKS=1;
 
-REPLACE INTO `system` (`name`, `value`) VALUES ('libkolab-version', '2022122800');
+REPLACE INTO `system` (`name`, `value`) VALUES ('libkolab-version', '2023111200');
