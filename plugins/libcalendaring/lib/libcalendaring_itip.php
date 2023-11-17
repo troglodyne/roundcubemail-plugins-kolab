@@ -474,7 +474,7 @@ class libcalendaring_itip
                             }
                             $value = $existing[$key] instanceof DateTimeInterface ? $existing[$key]->format('c') : $existing[$key];
                             $num++;
-                            $got += intval($value == $event[$key]);
+                            $got += intval($value == ($event[$key] ?? null));
                         }
                     }
 
