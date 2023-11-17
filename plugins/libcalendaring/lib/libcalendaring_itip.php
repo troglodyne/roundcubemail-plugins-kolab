@@ -261,7 +261,7 @@ class libcalendaring_itip
             }
         }
         else if ($method == 'CANCEL') {
-            if ($event['recurrence']) {
+            if (!empty($event['recurrence'])) {
                 unset($event['recurrence']['EXCEPTIONS']);
             }
         }
