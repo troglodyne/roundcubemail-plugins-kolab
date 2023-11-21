@@ -31,6 +31,7 @@ class kolab_config extends rcube_plugin
     public $task = 'utils|mail';
 
     private $config;
+    private $loaded = false;
     private $dicts = array();
 
     const O_TYPE = 'dictionary';
@@ -139,9 +140,9 @@ class kolab_config extends rcube_plugin
      * Load dictionary config objects from Kolab storage
      *
      * @param string The language (2 chars) to load
-     * @param boolean Only load objects from default folder
+     * @param bool   Only load objects from default folder
      *
-     * @return array Dictionary object as hash array
+     * @return array|null Dictionary object as hash array
      */
     private function read_dictionary($lang, $default = false)
     {
@@ -153,7 +154,7 @@ class kolab_config extends rcube_plugin
 
         foreach ($this->config->get_objects($query, $default, null, 100) as $object) {
             if ($object['language'] == $lang || $object['language'] == 'XX') {
-                if (is_array($this->dicts[$lang]))
+                if (isset($this->dicts[$lang]) && is_array($this->dicts[$lang]))
                     $this->dicts[$lang]['e'] = array_merge((array)$this->dicts[$lang]['e'], $object['e']);
                 else
                     $this->dicts[$lang] = $object;
@@ -167,6 +168,6 @@ class kolab_config extends rcube_plugin
             }
         }
 
-        return $this->dicts[$lang];
+        return $this->dicts[$lang] ?? null;
     }
 }
