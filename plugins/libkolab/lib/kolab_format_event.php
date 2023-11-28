@@ -81,40 +81,38 @@ class kolab_format_event extends kolab_format_xcal
             $object['exceptions'] = $object['recurrence']['EXCEPTIONS'];
         }
 
-        if (!empty($object['exceptions'])) {
-            $recurrence_id_format = libkolab::recurrence_id_format($object);
-            $vexceptions = new vectorevent;
-            foreach ($object['exceptions'] as $i => $exception) {
-                $exevent = new kolab_format_event;
-                $compacted = $this->compact_exception($exception, $object);
-                $exevent->set($compacted);  // only save differing values
+        $recurrence_id_format = libkolab::recurrence_id_format($object);
+        $vexceptions = new vectorevent;
+        foreach (($object['exceptions'] ?? []) as $i => $exception) {
+            $exevent = new kolab_format_event;
+            $compacted = $this->compact_exception($exception, $object);
+            $exevent->set($compacted);  // only save differing values
 
-                // get value for recurrence-id
-                $recurrence_id = null;
-                if (!empty($exception['recurrence_date']) && $exception['recurrence_date'] instanceof DateTimeInterface) {
-                    $recurrence_id = $exception['recurrence_date'];
-                    $compacted['_instance'] = $recurrence_id->format($recurrence_id_format);
-                }
-                else if (!empty($exception['_instance']) && strlen($exception['_instance']) > 4) {
-                    $recurrence_id = rcube_utils::anytodatetime($exception['_instance'], $object['start']->getTimezone());
-                    $compacted['recurrence_date'] = $recurrence_id;
-                }
-
-                $ex_dt = self::get_datetime($recurrence_id ?: $exception['start'], null,  !empty($object['allday']));
-                $exevent->obj->setRecurrenceID($ex_dt, !empty($exception['thisandfuture']));
-
-                $vexceptions->push($exevent->obj);
-
-                // write cleaned-up exception data back to memory/cache
-                $object['exceptions'][$i] = $this->expand_exception($exevent->data, $object);
-                $object['exceptions'][$i]['_instance'] = $compacted['_instance'];
+            // get value for recurrence-id
+            $recurrence_id = null;
+            if (!empty($exception['recurrence_date']) && $exception['recurrence_date'] instanceof DateTimeInterface) {
+                $recurrence_id = $exception['recurrence_date'];
+                $compacted['_instance'] = $recurrence_id->format($recurrence_id_format);
             }
-            $this->obj->setExceptions($vexceptions);
-
-            // link with recurrence.EXCEPTIONS for compatibility
-            if (is_array($object['recurrence'] ?? null)) {
-                $object['recurrence']['EXCEPTIONS'] = &$object['exceptions'];
+            else if (!empty($exception['_instance']) && strlen($exception['_instance']) > 4) {
+                $recurrence_id = rcube_utils::anytodatetime($exception['_instance'], $object['start']->getTimezone());
+                $compacted['recurrence_date'] = $recurrence_id;
             }
+
+            $ex_dt = self::get_datetime($recurrence_id ?: $exception['start'], null,  !empty($object['allday']));
+            $exevent->obj->setRecurrenceID($ex_dt, !empty($exception['thisandfuture']));
+
+            $vexceptions->push($exevent->obj);
+
+            // write cleaned-up exception data back to memory/cache
+            $object['exceptions'][$i] = $this->expand_exception($exevent->data, $object);
+            $object['exceptions'][$i]['_instance'] = $compacted['_instance'];
+        }
+        $this->obj->setExceptions($vexceptions);
+
+        // link with recurrence.EXCEPTIONS for compatibility
+        if (isset($object['exceptions']) && is_array($object['recurrence'] ?? null)) {
+            $object['recurrence']['EXCEPTIONS'] = &$object['exceptions'];
         }
 
         if (!empty($object['recurrence_date']) && $object['recurrence_date'] instanceof DateTimeInterface) {
