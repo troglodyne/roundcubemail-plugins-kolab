@@ -1230,7 +1230,7 @@ class kolab_driver extends calendar_driver
             // save properties to a recurrence exception instance
             if (!empty($old['_instance']) && isset($master['recurrence']['EXCEPTIONS'])) {
                 if ($this->update_recurrence_exceptions($master, $event, $old, $savemode)) {
-                    $success = $storage->update_event($master, $old['id']);
+                    $success = $storage->update_event($master, $old['id'] ?? null);
                     break;
                 }
             }

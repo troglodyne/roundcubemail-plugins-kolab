@@ -931,7 +931,7 @@ class libcalendaring_itip
         }
         if (!empty($event['recurrence_date'])) {
             $table->add('label', '');
-            $table->add('recurrence-id', $this->gettext($event['thisandfuture'] ? 'itipfutureoccurrence' : 'itipsingleoccurrence'));
+            $table->add('recurrence-id', $this->gettext(!empty($event['thisandfuture']) ? 'itipfutureoccurrence' : 'itipsingleoccurrence'));
         }
         else if (!empty($event['recurrence'])) {
             $table->add('label', $this->gettext('recurring'));
