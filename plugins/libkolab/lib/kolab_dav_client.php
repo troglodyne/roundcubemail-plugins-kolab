@@ -46,8 +46,8 @@ class kolab_dav_client
             $url = str_replace(rawurlencode($this->user) . ':' . rawurlencode($this->password) . '@', '', $url);
         }
         else {
-            $this->user     = $this->rc->user->get_username();
-            $this->password = $this->rc->decrypt($_SESSION['password']);
+            $this->user     = $this->rc->get_user_name();
+            $this->password = $this->rc->get_user_password();
         }
 
         $this->url = $url;
