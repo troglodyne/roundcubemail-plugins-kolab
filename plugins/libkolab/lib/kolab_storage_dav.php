@@ -232,7 +232,7 @@ class kolab_storage_dav
      *  - subscribed: Subscribed flag (IMAP subscription)
      *  - active:     Activation flag (client-side subscription)
      *
-     * @return string|false New folder ID or False on failure
+     * @return string|false Folder ID or False on failure
      */
     public function folder_update(&$prop)
     {
@@ -251,30 +251,32 @@ class kolab_storage_dav
         if (!empty($prop['id'])) {
             if ($folder = $this->get_folder($prop['id'], $prop['type'])) {
                 $result = $this->dav->folderUpdate($folder->href, $folder->get_dav_type(), $prop);
-            }
-            else {
-                $result = false;
-            }
-        }
-        else {
-            $rcube = rcube::get_instance();
-            $uid   = rtrim(chunk_split(md5($prop['name'] . $rcube->get_user_name() . uniqid('-', true)), 12, '-'), '-');
-            $type  = $this->get_dav_type($prop['type']);
-            $home  = $this->dav->discover($type);
 
-            if ($home === false) {
-                return false;
+                if ($result) {
+                    return $prop['id'];
+                }
             }
 
-            $location = unslashify($home) . '/' . $uid;
-            $result   = $this->dav->folderCreate($location, $type, $prop);
-
-            if ($result !== false) {
-                $result = self::folder_id($this->dav->url, $location);
-            }
+            return false;
         }
 
-        return $result;
+        $rcube = rcube::get_instance();
+        $uid   = rtrim(chunk_split(md5($prop['name'] . $rcube->get_user_name() . uniqid('-', true)), 12, '-'), '-');
+        $type  = $this->get_dav_type($prop['type']);
+        $home  = $this->dav->discover($type);
+
+        if ($home === false) {
+            return false;
+        }
+
+        $location = unslashify($home) . '/' . $uid;
+        $result   = $this->dav->folderCreate($location, $type, $prop);
+
+        if ($result) {
+            return self::folder_id($this->dav->url, $location);
+        }
+
+        return false;
     }
 
     /**
