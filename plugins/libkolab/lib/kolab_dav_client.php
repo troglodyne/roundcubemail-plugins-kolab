@@ -812,7 +812,9 @@ class kolab_dav_client
             $request->setConfig($http_config);
 
             // proxy User-Agent string
-            $request->setHeader('user-agent', $_SERVER['HTTP_USER_AGENT']);
+            if (isset($_SERVER['HTTP_USER_AGENT'])) {
+                $request->setHeader('user-agent', $_SERVER['HTTP_USER_AGENT']);
+            }
 
             // cleanup
             $request->setBody('');
