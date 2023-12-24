@@ -1179,8 +1179,8 @@ class kolab_files_engine
         $this->rc->output->add_label('uploadprogress', 'GB', 'MB', 'KB', 'B');
         $this->rc->output->set_pagetitle($this->plugin->gettext('files'));
         $this->rc->output->set_env('file_mimetypes', $this->get_mimetypes());
-        $this->rc->output->set_env('files_quota', $caps['QUOTA']);
-        $this->rc->output->set_env('files_max_upload', $caps['MAX_UPLOAD']);
+        $this->rc->output->set_env('files_quota', $caps['QUOTA'] ?? null);
+        $this->rc->output->set_env('files_max_upload', $caps['MAX_UPLOAD'] ?? null);
         $this->rc->output->set_env('files_progress_name', $caps['PROGRESS_NAME'] ?? null);
         $this->rc->output->set_env('files_progress_time', $caps['PROGRESS_TIME'] ?? null);
         $this->rc->output->send('kolab_files.files');
