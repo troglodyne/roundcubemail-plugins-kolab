@@ -280,11 +280,6 @@ class libcalendaring extends rcube_plugin
 
         // derive format variants from basic date format
         $format_sets = $this->rc->config->get('calendar_date_format_sets', $this->defaults['calendar_date_format_sets']);
-        if ($format_set = $format_sets[$this->defaults['calendar_date_format']]) {
-            $this->defaults['calendar_date_long'] = $format_set[0];
-            $this->defaults['calendar_date_short'] = $format_set[1];
-            $this->defaults['calendar_date_agenda'] = $format_set[2];
-        }
     }
 
     /**
