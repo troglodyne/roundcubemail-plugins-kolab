@@ -35,10 +35,10 @@ class kolab_storage_dav
     /**
      * Object constructor
      */
-    public function __construct($url)
+    public function __construct($url,$ssl_verify=true)
     {
         $this->url = $url;
-        $this->dav = new kolab_dav_client($this->url);
+        $this->dav = new kolab_dav_client($this->url, $ssl_verify);
     }
 
     /**

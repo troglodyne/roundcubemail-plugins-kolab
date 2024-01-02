@@ -53,7 +53,8 @@ class caldav_driver extends kolab_driver
 
         // Initialize the CalDAV storage
         $url = $this->rc->config->get('calendar_caldav_server', 'http://localhost');
-        $this->storage = new kolab_storage_dav($url);
+        $ssl_verify = $this->rc->config->get( 'calendar_caldav_ssl_verify', true );
+        $this->storage = new kolab_storage_dav($url, $ssl_verify);
 
         $this->cal->register_action('push-freebusy', [$this, 'push_freebusy']);
         $this->cal->register_action('calendar-acl', [$this, 'calendar_acl']);

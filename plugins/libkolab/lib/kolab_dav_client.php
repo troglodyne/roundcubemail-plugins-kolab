@@ -25,6 +25,7 @@ class kolab_dav_client
 {
     public $url;
 
+    protected $ssl_verify;
     protected $user;
     protected $password;
     protected $rc;
@@ -33,7 +34,7 @@ class kolab_dav_client
     /**
      * Object constructor
      */
-    public function __construct($url)
+    public function __construct($url, $ssl_verify=true)
     {
         $this->rc = rcube::get_instance();
 
@@ -51,10 +52,16 @@ class kolab_dav_client
         }
 
         $this->url = $url;
+        $this->ssl_verify = $ssl_verify;
     }
 
     /**
      * Execute HTTP request to a DAV server
+     * Args:
+     *  * $path: path to request. Should be obvious.
+     *  * $method: HTTP verb used in request.
+     *  * $body: Body of the request.
+     *  * $headers: ARRAY of *request* headers. See setHeader invocations here.
      */
     protected function request($path, $method, $body = '', $headers = [])
     {
@@ -64,6 +71,8 @@ class kolab_dav_client
         $request_config = [
             'store_body'       => true,
             'follow_redirects' => true,
+            'ssl_verify_peer'  => $this->ssl_verify,
+            'ssl_verify_host'  => $this->ssl_verify,
         ];
 
         $this->responseHeaders = [];
