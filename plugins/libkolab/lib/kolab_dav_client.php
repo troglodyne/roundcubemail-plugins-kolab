@@ -160,7 +160,7 @@ class kolab_dav_client
 
         foreach ($elements as $element) {
             foreach ($element->getElementsByTagName('current-user-principal') as $prop) {
-                $principal_href = $prop->nodeValue;
+                $principal_href = trim($prop->nodeValue);
                 break;
             }
         }
@@ -198,7 +198,7 @@ class kolab_dav_client
 
         foreach ($elements as $element) {
             foreach ($element->getElementsByTagName($homes[$component]) as $prop) {
-                $root_href = $prop->nodeValue;
+                $root_href = trim($prop->nodeValue);
                 break;
             }
         }
