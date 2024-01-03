@@ -1542,7 +1542,7 @@ class libcalendaring extends rcube_plugin
      */
     public static function to_php_date_format($from)
     {
-        if (!is_string($from)) {
+        if ( empty($from) || !is_string($from) ) {
             return '';
         }
 
