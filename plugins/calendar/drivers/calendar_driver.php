@@ -632,7 +632,7 @@ abstract class calendar_driver
      *
      * @return array A list of event records
      */
-    public function load_birthday_events($start, $end, $search = null, $modifiedsince = null)
+    public function load_birthday_events($start, $end, $search = '', $modifiedsince = null)
     {
         // ignore update requests for simplicity reasons
         if (!empty($modifiedsince)) {
