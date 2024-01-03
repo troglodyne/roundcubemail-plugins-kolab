@@ -156,7 +156,7 @@ CREATE TABLE kolab_cache_dav_contact (
   PRIMARY KEY(folder_id, uid)
 );
 
-CREATE INDEX ix_contact_type ON kolab_cache_dav_contact(folder_id, type);
+CREATE INDEX ix_contact_type_dav ON kolab_cache_dav_contact(folder_id, type);
 
 CREATE TABLE kolab_cache_dav_event (
   folder_id INTEGER NOT NULL,
