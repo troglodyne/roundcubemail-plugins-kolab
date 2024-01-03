@@ -1045,7 +1045,9 @@ class calendar extends rcube_plugin
 
             $birthdays_alarm_offset = rcube_utils::get_input_value('_birthdays_alarm_offset', rcube_utils::INPUT_POST);
             $birthdays_alarm_value  = rcube_utils::get_input_value('_birthdays_alarm_value', rcube_utils::INPUT_POST);
-            $birthdays_alarm_value  = $birthdays_alarm_offset[0] . intval($birthdays_alarm_value) . $birthdays_alarm_offset[1];
+            if ( !empty($birthdays_alarm_offset) ) {
+                $birthdays_alarm_value  = $birthdays_alarm_offset[0] . intval($birthdays_alarm_value) . $birthdays_alarm_offset[1];
+            }
 
             $p['prefs'] = [
                 'calendar_default_view' => rcube_utils::get_input_value('_default_view', rcube_utils::INPUT_POST),
