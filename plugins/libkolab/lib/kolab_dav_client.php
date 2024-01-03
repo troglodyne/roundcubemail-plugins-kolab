@@ -188,7 +188,7 @@ class kolab_dav_client
                 . '</d:prop>'
             . '</d:propfind>';
 
-        $response = $this->request($principal_href, 'PROPFIND', $body);
+        $response = $this->request($principal_href, 'PROPFIND', $body, ['Depth => 0 ]);
 
         if (empty($response)) {
             return false;
