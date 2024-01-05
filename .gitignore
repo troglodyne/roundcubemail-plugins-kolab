@@ -3,3 +3,4 @@
 *.patch
 plugins/*/config.inc.php
 skins/*
+plugins/libkolab/skins/elastic/libkolab.min.css
